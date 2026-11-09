@@ -308,7 +308,7 @@ A **settings page** (in the Planner tab) edits the synced settings.
 | Recurrence engine | `pomade-kit:E-003` |
 | Date phrases | `pomade-kit:E-004` |
 
-Gaps sent to `../Pomade/docs/auxiliary/platform-intake.md`: the quick-add overlay surface,
+Gaps sent to `../Pomade/docs/PLATFORM-INTAKE.md`: the quick-add overlay surface,
 starting the app at Pomade launch without opening it, machine-local app state through the Host
 API, the app opening its own tab at a route, the workspace root for commands run without
 Pomade, and "Workspace" as an active context with nested group paths.
