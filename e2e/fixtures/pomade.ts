@@ -15,6 +15,7 @@ import { dirname, join, resolve } from "node:path";
 import { _electron as electron, expect, type ElectronApplication, type Page } from "@playwright/test";
 
 import { pomadeDir } from "../../scripts/pomade-dir.mjs";
+import { frameShown } from "./frames";
 
 const REPO = resolve(import.meta.dirname, "../..");
 
@@ -156,16 +157,11 @@ export async function launchPomade(
 
 /**
  * Wait until Pomade has finished showing the panel of strip icon `icon` (its test id): the icon
- * pressed, then two frames of Pomade's window. A launch panel frame (`startOnLaunch`) is loaded
- * long before it is shown, so its content is there at once — a click sent in the same frame as
- * the show can be lost.
+ * pressed, then the frames its out-of-process frame needs to take input (`frameShown`). A launch
+ * panel frame (`startOnLaunch`) is loaded long before it is shown, so its content is there at
+ * once, but a click sent before it is drawn is dropped.
  */
 export async function panelShown(page: Page, icon: string): Promise<void> {
   await expect(page.getByTestId(icon)).toHaveAttribute("aria-pressed", "true");
   await frameShown(page);
-}
-
-/** Wait until a frame Pomade has just shown — a hidden tab or panel brought back — takes input: two animation frames. */
-export async function frameShown(page: Page): Promise<void> {
-  await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
 }

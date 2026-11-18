@@ -3,6 +3,8 @@
 
 import { expect, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
+import { frameShown } from "./frames";
+
 export const card = (app: FrameLocator, id: string): Locator => app.locator(`[data-testid="card"][data-id="${id}"]`);
 export const column = (app: FrameLocator, status: string): Locator => app.locator(`[data-testid="column"][data-status="${status}"]`);
 export const cardsIn = (app: FrameLocator, status: string): Locator => column(app, status).getByTestId("card");
@@ -23,9 +25,9 @@ async function centre(locator: Locator): Promise<{ x: number; y: number }> {
  * runs while the card is held over the target — to look at the board mid-drag, or to change the file.
  */
 export async function drag(page: Page, source: Locator, target: Locator, during?: () => Promise<void>): Promise<void> {
-  // A frame Pomade has just shown again lays out on its next frames; grab the card once it has.
+  // A frame Pomade has just shown again takes the pointer only once the window has drawn it.
   await source.hover();
-  await source.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  await frameShown(page);
   const from = await centre(source);
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();

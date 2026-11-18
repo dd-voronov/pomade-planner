@@ -12,8 +12,9 @@ import { join, resolve } from "node:path";
 
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
+import { frameShown } from "./fixtures/frames";
 import { quickAdded, row, settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, frameShown, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
