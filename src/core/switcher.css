@@ -1,0 +1,40 @@
+/* The switcher both apps head a view with: the Board's areas, the Planner's views. */
+
+.area-switcher {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+}
+
+.area-switcher__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--panel-raised);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.area-switcher__tab:hover,
+.area-switcher__tab[aria-selected="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--badge-fg);
+}
+
+.area-switcher__tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.area-switcher__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}

@@ -1,0 +1,10 @@
+{
+  "id": "pomade-board",
+  "name": "Board",
+  "version": "0.1.0",
+  "hostApi": 0,
+  "icon": "board.svg",
+  "capabilities": ["project.read", "project.write", "files.read", "files.write", "tabs.open"],
+  "events": { "subscribe": ["project.created", "project.renamed", "project.updated"] },
+  "strip": [{ "id": "board", "title": "Board", "action": "both", "route": "board", "panelRoute": "needs-you" }]
+}

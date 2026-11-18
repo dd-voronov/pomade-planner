@@ -1,0 +1,433 @@
+/* Base styles. The page background matches the Pomade surface the frame sits in: a tab and an
+   overlay on --panel-raised, the side panel on --bg (Pomade's AppPane and side-panel slot). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  background: var(--panel-raised);
+  color: var(--text);
+  font: var(--fs-base) / var(--lh) var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-surface="panel"] {
+  background: var(--bg);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--hover-bg);
+}
+
+.connecting {
+  height: 100%;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+}
+
+.empty-state__glyph {
+  display: flex;
+  color: var(--text-faint);
+  margin-bottom: var(--space-1);
+}
+
+.empty-state__title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  line-height: 1.3;
+}
+
+.empty-state__text {
+  max-width: 320px;
+  margin: 0;
+  color: var(--text-muted);
+  text-wrap: balance;
+}
+
+.empty-state__action {
+  margin-top: var(--space-2);
+}
+
+.empty-state__error {
+  max-width: 360px;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+/* ── Controls, after Pomade's (components/dialog.module.css buttons, EditorPane icon buttons,
+   components/ContextMenu.module.css). ── */
+
+button {
+  font: inherit;
+}
+
+.btn {
+  height: 30px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.btn--primary {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn--primary:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  border: 1px solid var(--border-strong);
+  background: var(--panel-raised);
+  color: var(--text-muted);
+}
+
+.btn--ghost:hover {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+
+.btn--danger {
+  border: 1px solid var(--danger);
+  background: var(--danger);
+  color: var(--accent-contrast);
+}
+
+.btn--danger:hover {
+  border-color: #b93a4b;
+  background: #b93a4b;
+}
+
+.btn--danger:disabled,
+.btn--ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--ghost.btn--danger-text {
+  color: var(--danger);
+}
+
+.btn--ghost.btn--danger-text:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.btn:focus-visible,
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.icon-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-btn);
+  height: var(--icon-btn);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+/* Pomade's Settings gear: the same character, at its icon size. */
+.gear-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.icon-btn:hover,
+.icon-btn[aria-expanded="true"] {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+
+.icon-btn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--badge-fg);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.icon-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.menu-wrap {
+  position: relative;
+  display: flex;
+}
+
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-menu) - 1);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-2);
+}
+
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu__item:hover,
+.menu__item:focus-visible {
+  outline: none;
+  background: var(--accent-soft);
+  color: var(--badge-fg);
+}
+
+.menu__item code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.menu__glyph {
+  display: inline-flex;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+.menu__separator {
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+  background: var(--border);
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  z-index: var(--z-toast);
+  max-width: min(480px, calc(100% - 2 * var(--space-4)));
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+  transform: translateX(-50%);
+}
+
+.toast__close {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+/* ── Popovers and their forms: the Board's create form, card popover and triage picker, the
+   Planner's quick add (after Pomade's components/Popover and fields) ── */
+
+.popover-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-menu) - 1);
+}
+
+.popover {
+  position: fixed;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-2);
+}
+
+.popover--form {
+  width: 320px;
+}
+
+.pop-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.pop-form__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.pop-form__head--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.pop-form__title {
+  flex: none;
+  font-weight: var(--fw-semibold);
+}
+
+.pop-form__meta {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pop-form__head:not(.pop-form__head--stack) .pop-form__meta {
+  margin-left: auto;
+}
+
+.pop-form__id {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.pop-form__subject {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pop-form__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+.pop-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.pop-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.pop-field__label {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.pop-field__hint {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-weight: normal;
+}
+
+.field-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--panel-raised);
+  color: var(--text);
+  font: inherit;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.field-input::placeholder {
+  color: var(--text-faint);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.field-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}

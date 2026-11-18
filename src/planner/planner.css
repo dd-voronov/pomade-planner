@@ -1,0 +1,1896 @@
+/* The Planner: the side panel (240px and up), its full tab, the settings page and the quick-add
+   form. Metrics follow the Board and Pomade's own panels: a 36px header on --panel, the view
+   switcher as the Board's area toggles, rows as Needs-you rows. */
+
+.planner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+/* ── Header: view switcher, + and ⋯ ── */
+
+.planner__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: var(--tabstrip-h);
+  padding: 0 var(--space-1) 0 var(--space-2);
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.planner--tab .planner__header {
+  padding: 0 var(--space-2) 0 var(--space-3);
+}
+
+.planner__header-title {
+  margin-right: auto;
+  font-weight: var(--fw-semibold);
+}
+
+.planner__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.planner__notice {
+  flex: none;
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--warning-soft);
+  color: var(--git-modified);
+  font-size: var(--fs-sm);
+}
+
+/* ── Sub-header: the planner day, or Show done; the tasks root. Where All's two toggles don't fit
+   side by side (the narrowest panels), Show archived wraps under Show done. ── */
+
+.planner__subheader {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--space-2);
+  min-height: 28px;
+  padding: 4px var(--space-2) 4px var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.planner__day {
+  flex: none;
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+}
+
+.planner__toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.planner__toggle input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.planner__root {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  /* Cut at the start: the folder's own name is the part worth seeing. */
+  direction: rtl;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Body and rows ── */
+
+.planner__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.planner__body > .empty-state {
+  flex: 1;
+}
+
+.planner--tab .planner__subheader,
+.planner--tab .task-list,
+.planner--tab .settings {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-3);
+  list-style: none;
+}
+
+.task-row {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-raised);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.task-row:hover {
+  border-color: var(--border-strong);
+}
+
+.task-row__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px var(--space-2) 7px 0;
+  border: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-row__main:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.task-row__line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.task-row__importance {
+  flex: none;
+  margin-left: auto;
+  padding-top: 1px;
+  color: var(--badge-fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  line-height: 16px;
+}
+
+.task-row__title {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.planner--tab .task-row__title {
+  font-size: var(--fs-base);
+}
+
+.task-row__hints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  font-size: var(--fs-xs);
+  line-height: 16px;
+}
+
+.task-row--done .task-row__title {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-faint);
+}
+
+.task-row--done .task-row__hints {
+  opacity: 0.6;
+}
+
+/* A row's actions (a recurring item's Skip, a note's Archive, a thought's Resolve, the pin): over
+   the row's right end on hover or keyboard focus, never taking the title's room. */
+.task-row--actions {
+  position: relative;
+}
+
+.task-row__actions {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.task-row__action {
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--panel-raised);
+  box-shadow: -10px 0 8px -2px var(--panel-raised);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  opacity: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.task-row__action + .task-row__action {
+  box-shadow: none;
+}
+
+.task-row__action--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+}
+
+.task-row__action--on {
+  color: var(--badge-fg);
+}
+
+.task-row--actions:hover .task-row__action,
+.task-row__action:focus-visible {
+  opacity: 1;
+}
+
+.task-row__action:hover {
+  border-color: var(--accent);
+  color: var(--badge-fg);
+}
+
+.task-row__action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.task-row__pin {
+  display: inline-flex;
+  flex: none;
+  padding-top: 3px;
+  color: var(--badge-fg);
+}
+
+.task-row__excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.task-row--done .task-row__excerpt {
+  opacity: 0.6;
+}
+
+.task-row--archived {
+  border-style: dashed;
+  background: transparent;
+}
+
+.task-row--archived .task-row__title {
+  color: var(--text-muted);
+}
+
+/* A note's, thought's or daily note's glyph in the checkbox's place. */
+.task-kind {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--text-faint);
+}
+
+.task-kind--thought {
+  color: var(--syntax-type);
+}
+
+.task-kind--daily-note {
+  color: var(--badge-fg);
+}
+
+.task-kind--done {
+  opacity: 0.5;
+}
+
+/* ── Pinned: above the list, in pin order ── */
+
+.task-list--pinned {
+  flex: none;
+  padding-bottom: var(--space-2);
+}
+
+.task-list--pinned + .task-list,
+.task-list--pinned + .empty-state {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+
+.task-list--pinned + .task-list {
+  margin-top: 0;
+}
+
+.planner--tab .task-list--pinned + .task-list {
+  border-top: none;
+}
+
+/* In the tab the divider spans the cards' width, not the list's padding. */
+.planner--tab .task-list--pinned {
+  background: linear-gradient(var(--border), var(--border)) center bottom / calc(100% - 2 * var(--space-2)) 1px no-repeat;
+}
+
+.task-row--pinned {
+  border-color: var(--border-strong);
+}
+
+/* ── The daily note's card, pinned on the Workspace Today ── */
+
+.daily-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.daily-card:hover {
+  border-color: var(--accent);
+}
+
+.daily-card__main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 7px 30px 7px var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.daily-card__main:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.daily-card__glyph {
+  display: inline-flex;
+  flex: none;
+  color: var(--badge-fg);
+}
+
+.daily-card__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.daily-card__title {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner--tab .daily-card__title {
+  font-size: var(--fs-base);
+}
+
+.daily-card__meta {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.daily-card__date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.daily-card__date::before {
+  content: "·";
+  margin-right: 6px;
+}
+
+.daily-card__progress {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.daily-card__count {
+  color: var(--badge-fg);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 14px;
+}
+
+.daily-card__bar {
+  position: relative;
+  width: 36px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+
+.daily-card__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width var(--dur-fast) var(--ease);
+}
+
+.daily-card__unpin {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--badge-fg);
+  cursor: pointer;
+}
+
+.daily-card__unpin:hover {
+  background: var(--active-bg);
+}
+
+.daily-card__unpin:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.task-row--unreadable {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: transparent;
+}
+
+.task-row--unreadable .task-row__title {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+/* ── Sections: the Workspace Today and Project, one per project ── */
+
+.task-section {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  padding: var(--space-2) 2px 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.01em;
+}
+
+.task-section:first-child {
+  padding-top: 2px;
+}
+
+.task-section__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-section__qualifier {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-section__count {
+  flex: none;
+  margin-left: auto;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Chips: the mix-ins of a project context, the All filters ── */
+
+.chip-bar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 var(--space-2) var(--space-2) var(--space-3);
+}
+
+/* ── All's select mode (DESIGN §3.6 "Trimming"): the bar under the filters, rows that select ── */
+
+.select-bar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--space-2);
+  min-width: 0;
+  margin: 0 var(--space-2) var(--space-2);
+  padding: 4px 4px 4px 6px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+}
+
+.planner--tab .select-bar {
+  width: calc(100% - 2 * var(--space-2));
+  max-width: calc(720px - 2 * var(--space-2));
+  margin-inline: auto;
+}
+
+.select-bar__all {
+  display: inline-flex;
+  flex: 1 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--badge-fg);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.select-bar__all input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.select-bar__count {
+  white-space: nowrap;
+}
+
+.select-bar__actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.planner--selecting .task-row--selectable {
+  user-select: none;
+}
+
+.task-row--selectable .task-row__main {
+  cursor: default;
+}
+
+.task-row--selected,
+.task-row--selected:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.task-row--selected.task-row--unreadable {
+  border-style: solid;
+}
+
+.task-row__failure {
+  color: var(--danger);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* ── The delete confirmation: a modal over the Planner ── */
+
+.dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  background: rgba(31, 41, 51, 0.28);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 380px;
+  max-height: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-2);
+}
+
+.dialog__title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+}
+
+.dialog__text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.dialog__files {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 200px;
+  margin: 0;
+  padding: 2px 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  list-style: none;
+}
+
+.dialog__files:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.dialog__file {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 4px var(--space-2);
+}
+
+.dialog__file + .dialog__file {
+  border-top: 1px solid var(--border);
+}
+
+.dialog__file-title {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialog__file-path {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  /* Cut at the start: the file's own name is the part worth seeing. */
+  direction: rtl;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialog__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.planner--tab .chip-bar {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--badge-fg);
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.chip--on {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--badge-fg);
+}
+
+.chip--menu {
+  border-style: solid;
+}
+
+.chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip__x {
+  display: inline-flex;
+  flex: none;
+  margin-right: -2px;
+  opacity: 0.7;
+}
+
+.chip:hover .chip__x {
+  opacity: 1;
+}
+
+/* ── The All filter menus ── */
+
+.popover--filter {
+  width: 240px;
+}
+
+.filter-menu {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.filter-menu__search {
+  flex: none;
+  width: auto;
+  height: 28px;
+  margin: var(--space-2) var(--space-2) 0;
+  font-size: var(--fs-sm);
+}
+
+.filter-menu__options {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 220px;
+  padding: var(--space-1);
+  overflow-y: auto;
+}
+
+.filter-option {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.filter-option:hover {
+  background: var(--hover-bg);
+}
+
+.filter-option input {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.filter-option__label {
+  flex: none;
+  max-width: 65%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-option__meta {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-menu__empty {
+  padding: 5px 6px;
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.filter-menu__foot {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Hints ── */
+
+.hint {
+  white-space: nowrap;
+}
+
+.hint--muted {
+  color: var(--text-muted);
+}
+
+/* A mixed-in or All row's project. */
+.hint--source {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  background: var(--active-bg);
+  color: var(--text-muted);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+}
+
+.hint--danger {
+  color: var(--danger);
+}
+
+.hint--accent {
+  color: var(--badge-fg);
+}
+
+/* A recurring item's rule: one line, cut at the end (the whole rule is its title). */
+.hint--repeat {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hint--problem {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.hint__glyph {
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+
+.hint--warning {
+  color: var(--git-modified);
+}
+
+.hint--chip {
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.hint--chip.hint--danger {
+  background: var(--danger-soft);
+}
+
+.hint--chip.hint--warning {
+  background: var(--warning-soft);
+}
+
+.hint--chip.hint--accent {
+  background: var(--accent-soft);
+}
+
+.hint--chip.hint--muted {
+  background: var(--active-bg);
+}
+
+/* ── Checkbox: Pomade's task-list checkbox, a 14px rounded square ── */
+
+.task-check {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.task-check input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.task-check__box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--panel-raised);
+  color: var(--accent-contrast);
+  pointer-events: none;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.task-check__glyph {
+  opacity: 0;
+}
+
+.task-check:hover .task-check__box {
+  border-color: var(--accent);
+}
+
+.task-check input:focus-visible + .task-check__box {
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.task-check input:checked + .task-check__box {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.task-check input:checked + .task-check__box .task-check__glyph {
+  opacity: 1;
+}
+
+.task-check--blank {
+  cursor: default;
+}
+
+/* A recurring item's checkbox is round: ticking it moves the item on rather than crossing it out. */
+.task-check__box--recurring {
+  border-radius: 50%;
+}
+
+.task-check--locked,
+.task-check--locked input {
+  cursor: default;
+}
+
+.task-check--locked .task-check__box {
+  border-style: dashed;
+  background: transparent;
+}
+
+.task-check--locked:hover .task-check__box {
+  border-color: var(--border-strong);
+}
+
+.task-check--blank .task-check__box {
+  border-style: dashed;
+  background: transparent;
+}
+
+/* ── The panel's ⋯ menu ── */
+
+.menu--compact {
+  min-width: 168px;
+}
+
+/* ── Settings page ── */
+
+.btn--sm {
+  height: 24px;
+  padding: 0 var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+}
+
+.settings__problem {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  color: var(--git-modified);
+  font-size: var(--fs-sm);
+}
+
+.settings__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings__name {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+}
+
+.settings__help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.settings__control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.settings__path {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  height: 30px;
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings__time {
+  width: 88px;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings__file {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.settings__warning {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--git-modified);
+  font-size: var(--fs-sm);
+}
+
+.settings__error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+.settings__foot {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.settings__foot code {
+  font-size: var(--fs-xs);
+}
+
+.settings__saved {
+  color: var(--badge-fg);
+}
+
+@media (max-width: 520px) {
+  .settings__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── The add form: its fields (its placements are in add-form.css) ── */
+
+.quick-add {
+  height: 100%;
+  background: var(--panel-raised);
+}
+
+.qa {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The form's fields, hidden (not unmounted) while the project picker takes their place. */
+.qa__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.qa__body[hidden] {
+  display: none;
+}
+
+.qa__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.qa__title {
+  flex: none;
+  font-weight: var(--fw-semibold);
+}
+
+.qa__root {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa__name {
+  height: 32px;
+  font-size: var(--fs-base);
+}
+
+.qa__fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.qa-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* The label, and on its line what the typed text comes to. */
+.qa-field__top {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.qa-field__label {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 16px;
+}
+
+.qa-field__input {
+  height: 28px;
+  font-size: var(--fs-sm);
+}
+
+.qa-field__note {
+  min-width: 0;
+  min-height: 16px;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--badge-fg);
+  font-size: var(--fs-xs);
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa-field__note--error {
+  margin-left: 0;
+  color: var(--danger);
+}
+
+/* A problem takes the whole line; the label still names the field for a screen reader. */
+.qa-field__top:has(.qa-field__note--error) .qa-field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.qa__foot {
+  display: flex;
+  align-items: center;
+  min-height: 16px;
+  margin-top: auto;
+  font-size: var(--fs-xs);
+  line-height: 16px;
+}
+
+.qa__keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  color: var(--text-faint);
+}
+
+.qa__keys kbd {
+  font-family: var(--font-ui);
+  color: var(--text-muted);
+}
+
+.qa__error {
+  color: var(--danger);
+}
+
+/* The project field: its label beside it, the project and its group path in one button. */
+.qa-project {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.qa-project__label {
+  flex: none;
+  width: 48px;
+}
+
+.qa-project__button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 28px;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.qa-project__button:hover {
+  border-color: var(--accent);
+}
+
+.qa-project__name {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa-project__group,
+.qa-project__none {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qa-project__group {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.qa-project__chevron {
+  display: inline-flex;
+  flex: none;
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+/* The type: a two-segment control before the project, as Pomade's segmented toggles. */
+.qa-kind {
+  display: inline-flex;
+  flex: none;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--active-bg);
+}
+
+.qa-kind__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.qa-kind__option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.qa-kind__option--on {
+  background: var(--panel-raised);
+  box-shadow: 0 1px 2px rgba(31, 41, 51, 0.12);
+  color: var(--text);
+}
+
+.qa-kind__option:has(input:focus-visible) {
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+/* Five types in the space of two: each a glyph, the chosen one with its name. */
+.qa-kind__option {
+  gap: 5px;
+  padding: 0 6px;
+}
+
+.qa-kind__glyph {
+  flex: none;
+}
+
+.qa-kind__label {
+  display: none;
+}
+
+.qa-kind__option--on .qa-kind__label {
+  display: inline;
+}
+
+.qa-project__button:disabled {
+  background: var(--panel);
+  cursor: default;
+}
+
+.qa-project__button:disabled:hover {
+  border-color: var(--border);
+}
+
+/* The daily note has no title to type; the field keeps the focus it had. */
+.qa__name:read-only {
+  background: var(--panel);
+}
+
+.qa__name:read-only:not(:focus) {
+  border-color: var(--border);
+}
+
+.qa__about {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: 16px;
+}
+
+/* The repeat editor: two rows of inline-labelled fields in the space of the task's date fields. */
+.qa-repeat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.qa-repeat__row {
+  display: flex;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+
+.qa-repeat__group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.qa-repeat__group--grow {
+  flex: 1;
+}
+
+.qa-repeat__label {
+  flex: none;
+  width: 48px;
+}
+
+/* "on [5]": wraps to a line of its own when the row is narrow. */
+.qa-repeat__on {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 96px;
+}
+
+.qa-repeat__group--grow {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.qa-repeat__inline-label {
+  flex: none;
+}
+
+.qa-repeat__select {
+  flex: none;
+  width: auto;
+  height: 28px;
+  padding: 0 22px 0 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none'%3E%3Cpath d='M3 4.5 6 7.5l3-3' stroke='%235a6b7a' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 6px center;
+  background-repeat: no-repeat;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  appearance: none;
+}
+
+.qa-repeat__select:hover {
+  border-color: var(--accent);
+}
+
+.qa-repeat__count {
+  flex: none;
+  width: 38px;
+  height: 28px;
+  padding: 0 4px;
+  font-size: var(--fs-sm);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.qa-repeat__text {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  height: 28px;
+  font-size: var(--fs-sm);
+}
+
+.qa-repeat__unit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.qa-repeat [aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+/* The foot of a recurring item: the rule in the kit's words and its first date. */
+.qa__repeat {
+  display: flex;
+  min-width: 0;
+  color: var(--badge-fg);
+  white-space: nowrap;
+}
+
+.qa__repeat-rule {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa__repeat-first {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.qa__error--line {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── The two-step project picker: in quick add (in the form's place) and the mix-in popover ── */
+
+.project-picker {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.project-picker__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-width: 0;
+  height: 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-picker__back {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  max-width: 55%;
+  height: 20px;
+  margin-left: 4px;
+  padding: 0 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--badge-fg);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.project-picker__crumb {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-picker__filter {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.project-picker__filter:focus {
+  outline: none;
+}
+
+.project-picker__filter::placeholder {
+  color: var(--text-faint);
+}
+
+.project-picker__options {
+  flex: 1;
+  min-height: 0;
+  max-height: 184px;
+  margin: 0;
+  padding: 2px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.quick-add .project-picker__options {
+  max-height: none;
+}
+
+.picker-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 var(--space-2) 0 6px;
+  border-radius: 3px;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.picker-option--active {
+  background: var(--accent-soft);
+  color: var(--badge-fg);
+}
+
+.picker-option__check {
+  display: inline-flex;
+  flex: none;
+  width: 12px;
+  color: var(--accent);
+}
+
+.picker-option__name {
+  flex: none;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-option__none {
+  color: var(--text-muted);
+}
+
+.picker-option__meta {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-option__meta--group {
+  margin-left: var(--space-1);
+}
+
+.picker-option__chevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-faint);
+}
+
+.picker-option__meta + .picker-option__chevron {
+  margin-left: 2px;
+}
+
+.project-picker__empty {
+  padding: 5px var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.popover--picker {
+  width: 280px;
+}
+
+/* In a popover the popover is the frame. */
+.popover--picker .project-picker {
+  flex: none;
+  border: none;
+  box-shadow: none;
+}
+
+.popover--picker .project-picker__bar {
+  height: 32px;
+}
+
+/* The view switcher shrinks with the header; when the views and their counts don't fit, the
+   counts go (Planner.tsx ViewSwitcher), never the views. The side panel (240px by default) sets
+   them tighter. */
+.planner__switcher {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.area-switcher--compact .area-switcher__count {
+  display: none;
+}
+
+.area-switcher__glyph {
+  display: none;
+}
+
+.planner .area-switcher--tight {
+  gap: 2px;
+}
+
+.planner .area-switcher--tight .area-switcher__tab {
+  padding: 0 3px;
+}
+
+/* A label giving way to its glyph stays named for a screen reader. */
+.area-switcher--glyphs .area-switcher__label--first,
+.area-switcher--icons .area-switcher__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.area-switcher--glyphs .area-switcher__glyph--first,
+.area-switcher--icons .area-switcher__glyph {
+  display: inline-flex;
+}
+
+.area-switcher--glyphs .area-switcher__tab {
+  position: relative;
+}
+
+.planner .area-switcher--icons .area-switcher__tab {
+  padding: 0 4px;
+}
+
+/* The 160px panel: the four glyphs as one strip, each tab sharing a border with the next. */
+.planner .area-switcher.area-switcher--joined {
+  gap: 0;
+}
+
+.planner .area-switcher--joined .area-switcher__tab {
+  padding: 0 2px;
+  border-radius: 0;
+}
+
+.planner .area-switcher--joined .area-switcher__tab + .area-switcher__tab {
+  margin-left: -1px;
+}
+
+.planner .area-switcher--joined .area-switcher__tab:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.planner .area-switcher--joined .area-switcher__tab:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.planner .area-switcher--joined .area-switcher__tab:hover,
+.planner .area-switcher--joined .area-switcher__tab[aria-selected="true"],
+.planner .area-switcher--joined .area-switcher__tab:focus-visible {
+  z-index: 1;
+}
+
+@media (max-width: 259px) {
+  .planner__header {
+    gap: var(--space-1);
+    padding-left: 6px;
+  }
+
+  .planner__actions {
+    gap: 0;
+  }
+
+  .planner .area-switcher {
+    gap: 2px;
+  }
+
+  .planner .area-switcher__tab {
+    gap: 4px;
+    padding: 0 5px;
+  }
+}
+
+/* The narrowest panel (160px): a tighter label column, selects that shrink, the project field
+   without its visible label (still named for a screen reader). */
+@media (max-width: 220px) {
+  /* The daily card keeps its title and count; the unpin button shows on hover or focus. */
+  .daily-card__glyph,
+  .daily-card__bar {
+    display: none;
+  }
+
+  .daily-card__main {
+    padding-right: var(--space-2);
+  }
+
+  .daily-card__unpin {
+    background: var(--accent-soft);
+    opacity: 0;
+  }
+
+  .daily-card:hover .daily-card__unpin,
+  .daily-card__unpin:focus-visible {
+    opacity: 1;
+  }
+
+  /* Five glyphs only; the form's title names the type. */
+  .qa-kind__option--on .qa-kind__label {
+    display: none;
+  }
+
+  .qa-kind__option {
+    min-width: 0;
+    padding: 0 4px;
+  }
+
+  .qa-repeat__label,
+  .qa-repeat__group .qa-repeat__inline-label:first-child {
+    width: 36px;
+  }
+
+  .qa-repeat__group--grow > .qa-repeat__count:first-child {
+    margin-left: 0;
+  }
+
+  .qa-repeat__group > .qa-repeat__select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .qa-project__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "pomade-planner",
+  "name": "Planner",
+  "version": "0.1.0",
+  "hostApi": 0,
+  "icon": "planner.svg",
+  "capabilities": ["project.read", "files.read", "files.write", "tabs.open"],
+  "events": { "subscribe": ["pomade.ready", "project.created", "project.renamed", "project.updated"] },
+  "strip": [{ "id": "planner", "title": "Planner", "action": "panel", "route": "planner" }],
+  "startOnLaunch": true,
+  "shortcuts": [{ "id": "quick-add", "title": "Quick add a task", "key": "Cmd+Shift+A", "action": "overlay", "route": "quick-add" }],
+  "commands": [{ "name": "pomade-planner", "entry": "cli/main.mjs", "title": "pomade-planner today [--project <name>] [--json] [--date YYYY-MM-DD] — the Planner's Today" }]
+}

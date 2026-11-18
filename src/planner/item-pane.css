@@ -1,0 +1,263 @@
+/* An item's compact view in the Planner tab: a pane beside the lists, and — in a tab too narrow for
+   both — in their place. Its fields are the add form's (planner.css, add-form.css). */
+
+.planner-split {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  container: planner-split / inline-size;
+}
+
+.planner-split > .planner {
+  flex: 1 1 0;
+}
+
+.item-pane {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: clamp(340px, 44%, 520px);
+  min-height: 0;
+  border-left: 1px solid var(--border);
+  background: var(--panel-raised);
+}
+
+.item-pane:focus {
+  outline: none;
+}
+
+/* ── Head: the type, the row's own actions, Open in tab, close ── */
+
+.item-pane__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--tabstrip-h);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.item-pane .item-pane__back {
+  display: none;
+  margin-left: calc(-1 * var(--space-1));
+}
+
+.item-pane__type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.item-pane__type > svg {
+  flex: none;
+}
+
+.item-pane__type-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-pane__type .hint {
+  font-size: var(--fs-xs);
+}
+
+.item-pane__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.item-pane__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+/* ── A file that changed elsewhere ── */
+
+.item-pane__notice {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 6px var(--space-2) 6px var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--warning-soft);
+  color: var(--git-modified);
+  font-size: var(--fs-sm);
+}
+
+.item-pane__notice > span {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.item-pane__notice .icon-btn {
+  color: inherit;
+}
+
+/* ── Body: the fields, Details as long as its text, the log; it scrolls as one ── */
+
+.item-pane__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+
+.item-pane__form {
+  flex: none;
+}
+
+.item-pane__check {
+  margin-left: -8px;
+}
+
+.item-pane__form .qa__name {
+  font-weight: var(--fw-semibold);
+}
+
+.item-pane__form .qa__details {
+  min-height: 92px;
+  max-height: none;
+  overflow-y: hidden;
+}
+
+.item-pane__log {
+  flex: none;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.item-pane__log-title {
+  margin: 0 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 16px;
+}
+
+.item-pane__log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item-pane__log-date {
+  display: inline-block;
+  min-width: 92px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Foot: a recurring item's rule in words, the file, what was saved ── */
+
+.item-pane__foot {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  line-height: 16px;
+}
+
+.item-pane__problems {
+  color: var(--git-modified);
+  overflow-wrap: anywhere;
+}
+
+.item-pane__where {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.item-pane__path {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  /* Cut at the start: the file's own name is the part worth seeing. */
+  direction: rtl;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-pane__status {
+  flex: none;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-pane__status--muted {
+  color: var(--text-muted);
+}
+
+.item-pane__status--accent {
+  color: var(--badge-fg);
+  font-weight: var(--fw-medium);
+}
+
+.item-pane__status--danger {
+  max-width: none;
+  color: var(--danger);
+  white-space: normal;
+}
+
+/* ── The open item's row ── */
+
+.task-row--open,
+.task-row--open:hover,
+.daily-card--open,
+.daily-card--open:hover {
+  border-color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* ── A tab too narrow for the lists and the view side by side: the view takes the lists' place,
+   and its close button is a way back at the head's start ── */
+
+@container planner-split (max-width: 719px) {
+  .planner-split > .planner:has(~ .item-pane) {
+    display: none;
+  }
+
+  .item-pane {
+    width: 100%;
+    border-left: none;
+  }
+
+  .item-pane .item-pane__back {
+    display: inline-flex;
+  }
+
+  .item-pane .item-pane__close {
+    display: none;
+  }
+}
