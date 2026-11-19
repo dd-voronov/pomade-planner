@@ -3,6 +3,7 @@ import type { HostClient } from "pomade-kit/sdk";
 import type { Time } from "pomade-kit/schedule";
 
 import { errorText } from "../core/host";
+import { openFileInItsProject } from "../core/open-file";
 import type { QuickAddPrefill } from "../core/views";
 import { AddForm, type Added } from "./AddForm";
 import type { Clock } from "./clock";
@@ -202,7 +203,7 @@ export function AddFoot({ add, host, clock, root, boundary, projects, folders, t
           onAdded={async (item, openIt) => {
             // The day's note opens in an editor tab; any other item asked to open, in its compact view.
             if (item.kind === "daily-note") {
-              await host.tabs.openFile({ path: item.path }).catch((e: unknown) => onError(`Couldn't open ${item.path}: ${errorText(e)}`));
+              await openFileInItsProject(host, item.path).catch((e: unknown) => onError(`Couldn't open ${item.path}: ${errorText(e)}`));
               add.close(true);
               return;
             }

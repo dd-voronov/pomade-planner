@@ -7,7 +7,8 @@
 // in the panel a click on a note brings up the Planner tab with the note open — through the tab's
 // route, for a tab already open and for the same note asked again — and Open in tab opens
 // Pomade's editor; ⌘-click on a row opens the editor and no view; ⇧⌘↵ in the overlay opens the
-// editor too.
+// editor too; from a project's view the editor tab opens in the Workspace that holds the file, with no
+// "Outside this project" mark (T-012).
 
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -228,5 +229,21 @@ test.describe("an item opened in place in a real Pomade", () => {
     await page.keyboard.press("Shift+Meta+Enter");
     await expect(page.getByTestId("tabstrip").getByRole("tab", { name: /2026-11-17-post-the-parcel/, selected: true })).toBeVisible();
     await expect(page.getByTestId("app-overlay")).toHaveCount(0);
+  });
+
+  test("from a project's view an item's editor tab opens in the Workspace that holds its file, with no “Outside this project” mark", async () => {
+    const ALPHA_TASK = "Alpha/2026-11-16-ship-the-beta.md";
+    await mkdir(todo("Alpha"), { recursive: true });
+    await writeFile(todo(ALPHA_TASK), "---\ntype: task\ntitle: Ship the beta\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-16\n---\n");
+    await page.getByTestId("project-proj-alpha").click();
+    await expect(page.getByTestId("project-proj-alpha")).toHaveAttribute("data-active", "true");
+    const p = await openPanel();
+    await expect(p.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "proj-alpha");
+    await view(p, "all");
+    await row(p, "Ship the beta").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    const editor = page.getByTestId("tabstrip").getByRole("tab", { name: /2026-11-16-ship-the-beta/, selected: true });
+    await expect(editor).toBeVisible();
+    await expect(page.getByTestId("project-__workspace__")).toHaveAttribute("data-active", "true");
+    await expect(editor.locator('[data-testid^="tab-scope-"]')).toHaveCount(0);
   });
 });

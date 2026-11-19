@@ -2,6 +2,7 @@ import type { HostClient } from "pomade-kit/sdk";
 
 import { EmptyState } from "../core/EmptyState";
 import { errorText, useActiveProject } from "../core/host";
+import { openFileInItsProject } from "../core/open-file";
 import { parseQuickAddRoute, ROUTES } from "../core/views";
 import { useClock } from "./clock";
 import { AddForm } from "./AddForm";
@@ -70,7 +71,7 @@ export function QuickAdd({ host, route }: { host: HostClient; route: string }) {
         initialDoOn={prefill.doOn}
         testId="quick-add-form"
         onAdded={async ({ path }, open) => {
-          if (open) await host.tabs.openFile({ path }).catch((e: unknown) => console.error(`Couldn't open ${path}: ${errorText(e)}`));
+          if (open) await openFileInItsProject(host, path).catch((e: unknown) => console.error(`Couldn't open ${path}: ${errorText(e)}`));
           await close();
         }}
       />
