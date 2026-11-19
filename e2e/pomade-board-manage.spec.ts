@@ -141,7 +141,7 @@ test.describe("E-002 in a real Pomade", () => {
     git(abs(POMADE), "commit", "-qm", "T-004 P1");
   });
 
-  test("a project with no signals shows an empty Signals board with “+ New signal”; it creates S-001 with kind: signal, status: new, source: daniil", async () => {
+  test("a project with no signals shows an empty Signals board with “+ New signal”; it creates S-001 with kind: signal, status: new, reporter: d.voronov and no source", async () => {
     const b = board(page);
     await b.getByTestId("area-signals").click();
     await expect(b.getByTestId("area-empty")).toBeVisible();
@@ -154,10 +154,13 @@ test.describe("E-002 in a real Pomade", () => {
     const text = await readFile(path, "utf8");
     expect(text).toContain("\nkind: signal\n");
     expect(text).toContain("\nstatus: new\n");
-    expect(text).toContain("\nsource: daniil\n");
+    expect(text).toContain("\nreporter: d.voronov\n");
+    expect(text).not.toContain("\nsource:");
     await expect(page.getByTestId("tabstrip").getByRole("tab", { name: "S-001-board-missed-a-rename.md", selected: true })).toBeVisible();
     await page.getByTestId("tabstrip").getByRole("tab", { name: BOARD_TAB }).click();
-    await expect(column(board(page), "new").locator('[data-id="S-001"]').getByTestId("card-source")).toHaveText("daniil");
+    const created = column(board(page), "new").locator('[data-id="S-001"]');
+    await expect(created.getByTestId("card-reporter")).toHaveText("d.voronov");
+    await expect(created.getByTestId("card-source")).toHaveCount(0);
     await shot(page, "e002-pomade-signals-board");
   });
 

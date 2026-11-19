@@ -132,9 +132,9 @@ describe("ticketFileName / newTicketPath", () => {
 });
 
 describe("newTicketContent", () => {
-  const base: NewTicket = { id: "T-042", kind: "task", title: "Verify T-199", status: "planned", priority: "P2", parent: "E-017", source: "", today: "2026-11-17" };
+  const base: NewTicket = { id: "T-042", kind: "task", title: "Verify T-199", status: "planned", priority: "P2", parent: "E-017", reporter: "d.voronov", source: "", today: "2026-11-17" };
 
-  it("a task: the convention's keys in order, epic: as parent, Goal and Acceptance", () => {
+  it("a task: the convention's keys in order, epic: as parent, reporter after updated, no source; Goal and Acceptance", () => {
     expect(newTicketContent(base)).toBe(
       [
         "---",
@@ -147,7 +147,7 @@ describe("newTicketContent", () => {
         "epic: E-017",
         "created: 2026-11-17",
         "updated: 2026-11-17",
-        "source: daniil",
+        "reporter: d.voronov",
         "---",
         "",
         "# T-042 — Verify T-199",
@@ -162,23 +162,41 @@ describe("newTicketContent", () => {
 
   it("an epic: problem: as parent, Goal · Scope · Acceptance", () => {
     expect(newTicketContent({ ...base, id: "E-021", kind: "epic", title: "Sync", parent: "P-002", priority: "P1" })).toBe(
-      "---\nid: E-021\nkind: epic\ntitle: Sync\nstatus: planned\ntype: feature\npriority: P1\nproblem: P-002\ncreated: 2026-11-17\nupdated: 2026-11-17\nsource: daniil\n---\n\n# E-021 — Sync\n\n## Goal\n\n## Scope\n\n## Acceptance\n",
+      "---\nid: E-021\nkind: epic\ntitle: Sync\nstatus: planned\ntype: feature\npriority: P1\nproblem: P-002\ncreated: 2026-11-17\nupdated: 2026-11-17\nreporter: d.voronov\n---\n\n# E-021 — Sync\n\n## Goal\n\n## Scope\n\n## Acceptance\n",
     );
   });
 
   it("a problem: no parent key, Problem · Outcome", () => {
     expect(newTicketContent({ ...base, id: "P-004", kind: "problem", title: "Slow", status: "backlog", parent: "E-1" })).toBe(
-      "---\nid: P-004\nkind: problem\ntitle: Slow\nstatus: backlog\ntype: feature\npriority: P2\ncreated: 2026-11-17\nupdated: 2026-11-17\nsource: daniil\n---\n\n# P-004 — Slow\n\n## Problem\n\n## Outcome\n",
+      "---\nid: P-004\nkind: problem\ntitle: Slow\nstatus: backlog\ntype: feature\npriority: P2\ncreated: 2026-11-17\nupdated: 2026-11-17\nreporter: d.voronov\n---\n\n# P-004 — Slow\n\n## Problem\n\n## Outcome\n",
     );
   });
 
-  it("a signal: [[convention-areas-columns]]'s keys (source after status and priority, no type), the description under the heading", () => {
+  it("a signal: the same order without type; source after reporter when named; the description under the heading", () => {
     expect(newTicketContent({ ...base, id: "S-001", kind: "signal", title: "Cmd+click opened files", status: "new", parent: null })).toBe(
-      "---\nid: S-001\nkind: signal\ntitle: Cmd+click opened files\nstatus: new\npriority: P2\nsource: daniil\ncreated: 2026-11-17\nupdated: 2026-11-17\n---\n\n# S-001 — Cmd+click opened files\n",
+      "---\nid: S-001\nkind: signal\ntitle: Cmd+click opened files\nstatus: new\npriority: P2\ncreated: 2026-11-17\nupdated: 2026-11-17\nreporter: d.voronov\n---\n\n# S-001 — Cmd+click opened files\n",
     );
     expect(newTicketContent({ ...base, id: "S-002", kind: "signal", title: "x", status: "triaged", parent: "P-012", source: " review " })).toContain(
-      "priority: P2\nsource: review\nproblem: P-012\ncreated:",
+      "priority: P2\nproblem: P-012\ncreated: 2026-11-17\nupdated: 2026-11-17\nreporter: d.voronov\nsource: review\n---",
     );
+  });
+
+  it.each([
+    ["d.voronov", "reporter: d.voronov\n"],
+    ["claude", "reporter: claude\n"],
+    [" a.person ", "reporter: a.person\n"],
+  ])("the reporter setting %j is written as %j", (reporter, line) => {
+    expect(newTicketContent({ ...base, reporter })).toContain(`updated: 2026-11-17\n${line}---`);
+  });
+
+  it("no reporter and no source: neither key", () => {
+    const text = newTicketContent({ ...base, reporter: "", source: "  " });
+    expect(text).not.toMatch(/^reporter:/m);
+    expect(text).not.toMatch(/^source:/m);
+  });
+
+  it("source on a task, when named: after reporter", () => {
+    expect(newTicketContent({ ...base, source: "session-2026-11-19" })).toContain("updated: 2026-11-17\nreporter: d.voronov\nsource: session-2026-11-19\n---");
   });
 
   it("no parent: no parent key", () => {

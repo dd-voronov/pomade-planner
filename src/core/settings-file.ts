@@ -3,6 +3,10 @@
 // names and keeps every other key. A missing file means every default; an app creates its file on
 // its first settings write, never on a read.
 
+import { HostError, type HostClient } from "pomade-kit/sdk";
+
+import { diskReason, errorText, isNotFound } from "./host";
+
 /** Workspace-relative path of the synced settings file of the app `appId`. */
 export const settingsPathOf = (appId: string): string => `Apps/${appId}/settings.json`;
 
@@ -37,4 +41,30 @@ export function mergeSettingsText(text: string | null, patch: Record<string, Set
     else next[key] = value;
   }
   return { ok: true, text: `${JSON.stringify(next, null, 2)}\n` };
+}
+
+/** A settings write that didn't happen, in words for the form. */
+export class SettingsWriteError extends Error {}
+
+const reasonOf = (error: unknown): string => (error instanceof HostError ? diskReason(error.message) : errorText(error));
+
+/**
+ * Apply `patch` to the settings file at `path` (`mergeSettingsText`): the file is created when it
+ * is missing; a file that isn't a JSON object is never overwritten. Throws `SettingsWriteError`.
+ */
+export async function saveSettingsFile(host: HostClient, path: string, patch: Record<string, SettingsValue | undefined>): Promise<void> {
+  let text: string | null = null;
+  try {
+    text = (await host.files.readFile({ path })).content;
+  } catch (error) {
+    if (!isNotFound(error)) throw new SettingsWriteError(`Couldn't read ${path}: ${reasonOf(error)}.`);
+  }
+  const merged = mergeSettingsText(text, patch, path);
+  if (!merged.ok) throw new SettingsWriteError(`Not saved: ${merged.problem}. Fix the file first.`);
+  try {
+    if (text === null) await host.files.create({ path, content: merged.text });
+    else await host.files.write({ path, content: merged.text });
+  } catch (error) {
+    throw new SettingsWriteError(`Couldn't save ${path}: ${reasonOf(error)}.`);
+  }
 }

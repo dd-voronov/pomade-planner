@@ -20,6 +20,7 @@ export function t(id: string, over: Partial<Ticket> = {}): Ticket {
     status: "planned",
     priority: null,
     parent: null,
+    reporter: null,
     source: null,
     inDone,
     mtimeMs: 1,

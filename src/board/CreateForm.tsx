@@ -5,7 +5,7 @@ import { Popover } from "../core/Popover";
 import { PrioritySelect } from "./PrioritySelect";
 import type { ColumnDef } from "./model/areas";
 import { normalizeTitle } from "../core/text";
-import { DEFAULT_PRIORITY, DEFAULT_SOURCE, KIND_NAME } from "./model/create";
+import { DEFAULT_PRIORITY, KIND_NAME } from "./model/create";
 import { parentCandidates } from "./model/parents";
 import type { Rect } from "../core/place";
 import { PARENT_KIND, type Kind, type Ticket } from "./model/ticket";
@@ -41,7 +41,7 @@ export function CreateForm({ anchor, align, column, kinds, initialKind, tickets,
   const [title, setTitle] = useState("");
   const [parent, setParent] = useState<string | null>(null);
   const [priority, setPriority] = useState(DEFAULT_PRIORITY);
-  const [source, setSource] = useState(DEFAULT_SOURCE);
+  const [source, setSource] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const titleInput = useRef<HTMLInputElement>(null);
@@ -149,12 +149,14 @@ export function CreateForm({ anchor, align, column, kinds, initialKind, tickets,
 
         {kind === "signal" ? (
           <label className="pop-field">
-            <span className="pop-field__label">Source</span>
+            <span className="pop-field__label">
+              Source <span className="pop-field__hint">optional</span>
+            </span>
             <input
               className="field-input"
               type="text"
               data-testid="create-source"
-              placeholder={DEFAULT_SOURCE}
+              placeholder="Where it came from: a session, a review…"
               value={source}
               disabled={busy}
               onChange={(e) => setSource(e.target.value)}

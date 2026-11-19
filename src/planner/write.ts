@@ -13,7 +13,7 @@ import { formatSchedule, type LocalDate } from "pomade-kit/schedule";
 import { joinPath } from "pomade-kit/protocol";
 
 import { diskReason, errorText, isNotFound } from "../core/host";
-import { mergeSettingsText, parseSettingsText, type SettingsValue } from "../core/settings-file";
+import { parseSettingsText, saveSettingsFile, type SettingsValue } from "../core/settings-file";
 import { archivePath, restorePath } from "./model/archive";
 import { newTaskContent, taskFilePath, type NewTask } from "./model/create";
 import { dailyNotePath, dailyNoteText, type TemplateRead } from "./model/daily";
@@ -261,19 +261,10 @@ export async function saveProjectFolders(host: HostClient, entries: FolderMap): 
 
 /** Set (or, with `undefined`, remove) the Planner's keys in the synced settings file, keeping every other key; the app's other frames re-read it. */
 export async function saveSettings(host: HostClient, patch: Record<string, SettingsValue | undefined>): Promise<void> {
-  let text: string | null = null;
   try {
-    text = (await host.files.readFile({ path: SYNCED_SETTINGS_PATH })).content;
+    await saveSettingsFile(host, SYNCED_SETTINGS_PATH, patch);
   } catch (error) {
-    if (!isNotFound(error)) throw new WriteError(`Couldn't read ${SYNCED_SETTINGS_PATH}: ${hostReason(error)}.`);
-  }
-  const merged = mergeSettingsText(text, patch, SYNCED_SETTINGS_PATH);
-  if (!merged.ok) throw new WriteError(`Not saved: ${merged.problem}. Fix the file first.`);
-  try {
-    if (text === null) await host.files.create({ path: SYNCED_SETTINGS_PATH, content: merged.text });
-    else await host.files.write({ path: SYNCED_SETTINGS_PATH, content: merged.text });
-  } catch (error) {
-    throw new WriteError(`Couldn't save ${SYNCED_SETTINGS_PATH}: ${hostReason(error)}.`);
+    throw new WriteError(errorText(error));
   }
   await host.state.set(SETTINGS_CHANGED_KEY, Date.now()).catch(() => undefined);
 }

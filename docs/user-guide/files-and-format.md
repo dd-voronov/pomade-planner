@@ -171,7 +171,8 @@ A ticket is a Markdown file directly in the backlog folder or its `done/` sub-fo
 | `priority` | `P0` · `P1` · `P2` · `P3` |
 | `problem` | an epic's or a signal's problem ID |
 | `epic` | a task's epic ID |
-| `source` | who or what produced it (signals) |
+| `reporter` | who raised it: a person's handle (`d.voronov`), or `claude` when an agent filed it on its own; shown on the card |
+| `source` | where it came from: a testing round, `session-YYYY-MM-DD`, `review`, intake… — never a person; shown on a signal's card |
 | `type` | `feature` (written on create, not read) |
 | `created`, `updated` | `YYYY-MM-DD` |
 
@@ -199,7 +200,7 @@ priority: P2
 epic: E-003
 created: 2026-11-19
 updated: 2026-11-19
-source: daniil
+reporter: d.voronov
 ---
 
 # T-014 — Show card age
@@ -209,9 +210,10 @@ source: daniil
 ## Acceptance
 ```
 
-Body sections: problem — Problem, Outcome; epic — Goal, Scope, Acceptance; task — Goal, Acceptance;
-signal — none. A signal's keys: `id`, `kind`, `title`, `status`, `priority`, `source`, `problem`,
-`created`, `updated` (no `type`).
+`reporter` is the Board's reporter setting ([settings](settings.md#board)); `source` is written
+only when the create form names one (Signals). Body sections: problem — Problem, Outcome; epic —
+Goal, Scope, Acceptance; task — Goal, Acceptance; signal — none. A signal's keys are the same, in
+the same order, without `type`.
 
 ## What the apps write
 
@@ -233,6 +235,7 @@ body stay byte for byte.
 | **Board** — drag | `status`, `updated` (+ `problem` on triage); moves into / out of `done/` |
 | popover | `priority` or the parent key, and `updated` |
 | **+** | a new ticket file |
+| ⋯ → Reporter for new tickets… | `reporter` in `Apps/pomade-board/settings.json` |
 
 **Never:** a file without a known `type:`/`kind:`, a ticket's title or body, a `BACKLOG.md` index,
 anything else in the tasks folder or backlog. Files whose frontmatter can't be parsed are shown

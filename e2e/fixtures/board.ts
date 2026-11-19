@@ -82,17 +82,24 @@ export function createdTicket(t: {
   status: string;
   priority?: string;
   parent?: string;
+  /** Default `d.voronov`, the Board's reporter setting out of the box. */
+  reporter?: string;
   source?: string;
 }): string {
   const day = today();
-  const priority = t.priority ?? "P2";
-  const source = t.source ?? "daniil";
-  const parent = t.parent === undefined ? [] : [`${t.kind === "task" ? "epic" : "problem"}: ${t.parent}`];
-  const head = [`id: ${t.id}`, `kind: ${t.kind}`, `title: ${t.titleYaml ?? t.title}`, `status: ${t.status}`];
-  const fields =
-    t.kind === "signal"
-      ? [...head, `priority: ${priority}`, `source: ${source}`, ...parent, `created: ${day}`, `updated: ${day}`]
-      : [...head, "type: feature", `priority: ${priority}`, ...parent, `created: ${day}`, `updated: ${day}`, `source: ${source}`];
+  const fields = [
+    `id: ${t.id}`,
+    `kind: ${t.kind}`,
+    `title: ${t.titleYaml ?? t.title}`,
+    `status: ${t.status}`,
+    ...(t.kind === "signal" ? [] : ["type: feature"]),
+    `priority: ${t.priority ?? "P2"}`,
+    ...(t.parent === undefined ? [] : [`${t.kind === "task" ? "epic" : "problem"}: ${t.parent}`]),
+    `created: ${day}`,
+    `updated: ${day}`,
+    `reporter: ${t.reporter ?? "d.voronov"}`,
+    ...(t.source === undefined ? [] : [`source: ${t.source}`]),
+  ];
   const sections = { problem: ["Problem", "Outcome"], epic: ["Goal", "Scope", "Acceptance"], task: ["Goal", "Acceptance"], signal: [] }[t.kind];
   return `---\n${fields.join("\n")}\n---\n\n# ${t.id} — ${t.title}\n${sections.map((s) => `\n## ${s}\n`).join("")}`;
 }

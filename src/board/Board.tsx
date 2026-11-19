@@ -14,8 +14,12 @@ import { columnCollision, columnKeyboardCoordinates, KEYBOARD_CODES } from "./dn
 import { buildArea, canTake, countByArea, creatableKinds, createTarget, refusalText, type AreaDef, type ColumnDef } from "./model/areas";
 import { KIND_NAME } from "./model/create";
 import { describeFailure, localDay, planDrop, planEdit, type EditableField } from "./model/drop";
+import { errorText } from "../core/host";
 import type { Rect } from "../core/place";
-import type { BacklogLocation, ProjectBoardSettings } from "./model/settings";
+import { saveSettingsFile } from "../core/settings-file";
+import { ReporterForm } from "./ReporterForm";
+import { DEFAULT_REPORTER, normalizeReporter, SYNCED_KEYS, SYNCED_SETTINGS_PATH, type BacklogLocation, type ProjectBoardSettings } from "./model/settings";
+import { readSyncedSettings } from "./useBoardData";
 import type { Backlog, Kind, Ticket } from "./model/ticket";
 import { isCollapsed, parseView, serializeView, setCollapsed, viewKey, type BoardView } from "./model/view-state";
 import { createTicket, failureOf, step, writeFields } from "./write";
@@ -35,13 +39,18 @@ interface BoardProps {
   reload: () => Promise<void>;
   onToggleMoveDone: () => void;
   onChangeFolder: () => void;
+  /** The synced settings file was written: re-read it. */
+  onSettingsSaved: () => void;
 }
 
 /** A popover, form or picker open over the board, with what it hangs off. */
 type Overlay =
   | { kind: "create"; column: ColumnDef; initialKind?: Kind; anchor: Rect; align: "start" | "end"; focusBack: string }
   | { kind: "edit"; path: string; anchor: Rect }
-  | { kind: "triage"; ticket: Ticket; target: ColumnDef; anchor: Rect };
+  | { kind: "triage"; ticket: Ticket; target: ColumnDef; anchor: Rect }
+  | { kind: "reporter"; initial: string; anchor: Rect };
+
+const MENU_BUTTON = '[data-testid="board-menu-button"]';
 
 const rectOf = (el: Element): Rect => {
   const r = el.getBoundingClientRect();
@@ -179,8 +188,11 @@ export function Board(props: BoardProps) {
   const submitCreate = useCallback(
     async (column: ColumnDef, values: CreateValues): Promise<string | null> => {
       try {
+        // The reporter as the settings file says now: another tab may have changed it.
+        const { settings: synced } = await readSyncedSettings(host);
         const { path } = await createTicket(host, {
           ...values,
+          reporter: synced.reporter,
           status: column.status,
           today: localDay(new Date()),
           backlog: location.path,
@@ -195,6 +207,30 @@ export function Board(props: BoardProps) {
       }
     },
     [host, location.path, settings.moveDoneToDoneFolder, reload, open],
+  );
+
+  /** The reporter form hangs under ⋯, filled from the settings file as it is now. */
+  const openReporter = useCallback(async () => {
+    const { settings: synced } = await readSyncedSettings(host);
+    const button = document.querySelector(MENU_BUTTON);
+    if (button) setOverlay({ kind: "reporter", initial: synced.reporter, anchor: rectOf(button) });
+  }, [host]);
+
+  const { onSettingsSaved } = props;
+  const saveReporter = useCallback(
+    async (typed: string): Promise<string | null> => {
+      const handle = typed.trim() === "" ? undefined : normalizeReporter(typed);
+      if (handle === null) return `A handle without spaces, like ${DEFAULT_REPORTER}.`;
+      try {
+        await saveSettingsFile(host, SYNCED_SETTINGS_PATH, { [SYNCED_KEYS.reporter]: handle });
+      } catch (error) {
+        return errorText(error);
+      }
+      setOverlay(null);
+      onSettingsSaved();
+      return null;
+    },
+    [host, onSettingsSaved],
   );
 
   const openEdit = useCallback((ticket: Ticket, anchor: Rect) => {
@@ -316,12 +352,17 @@ export function Board(props: BoardProps) {
           <span className="board__location" data-testid="backlog-location" title={location.path}>
             {location.relative === "" ? project.name : location.relative}
           </span>
-          <BoardMenu moveDone={settings.moveDoneToDoneFolder} onToggleMoveDone={props.onToggleMoveDone} onChangeFolder={props.onChangeFolder} />
+          <BoardMenu
+            moveDone={settings.moveDoneToDoneFolder}
+            onToggleMoveDone={props.onToggleMoveDone}
+            onChangeFolder={props.onChangeFolder}
+            onEditReporter={() => void openReporter()}
+          />
         </div>
       </header>
       {settingsProblem !== null ? (
         <div className="board__notice" role="status" data-testid="settings-problem">
-          {settingsProblem} — using the default backlog folder.
+          {settingsProblem} — using the defaults.
         </div>
       ) : null}
       <UnreadableStrip unreadable={backlog.unreadable} misfits={board.misfits} onOpen={open} />
@@ -399,6 +440,9 @@ export function Board(props: BoardProps) {
           onCancel={() => setOverlay(null)}
           restoreFocus={focusSelector(cardSelector(overlay.ticket.path))}
         />
+      ) : null}
+      {overlay?.kind === "reporter" ? (
+        <ReporterForm anchor={overlay.anchor} initial={overlay.initial} onSave={saveReporter} onClose={() => setOverlay(null)} restoreFocus={focusSelector(MENU_BUTTON)} />
       ) : null}
     </main>
   );

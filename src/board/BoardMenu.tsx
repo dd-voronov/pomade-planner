@@ -4,6 +4,7 @@ interface BoardMenuProps {
   moveDone: boolean;
   onToggleMoveDone: () => void;
   onChangeFolder: () => void;
+  onEditReporter: () => void;
 }
 
 function MoreGlyph() {
@@ -24,8 +25,8 @@ function CheckGlyph({ on }: { on: boolean }) {
   );
 }
 
-/** The Board tab's settings menu (⋯): the backlog's "move done to done/" switch and "Change backlog folder…". */
-export function BoardMenu({ moveDone, onToggleMoveDone, onChangeFolder }: BoardMenuProps) {
+/** The Board tab's settings menu (⋯): the backlog's "move done to done/" switch, "Change backlog folder…" and "Reporter for new tickets…". */
+export function BoardMenu({ moveDone, onToggleMoveDone, onChangeFolder, onEditReporter }: BoardMenuProps) {
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDivElement>(null);
 
@@ -89,6 +90,20 @@ export function BoardMenu({ moveDone, onToggleMoveDone, onChangeFolder }: BoardM
             >
               <span className="menu__glyph" />
               Change backlog folder…
+            </button>
+            <div className="menu__separator" role="separator" />
+            <button
+              type="button"
+              role="menuitem"
+              className="menu__item"
+              data-testid="menu-reporter"
+              onClick={() => {
+                setOpen(false);
+                onEditReporter();
+              }}
+            >
+              <span className="menu__glyph" />
+              Reporter for new tickets…
             </button>
           </div>
         </>

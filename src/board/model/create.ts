@@ -20,7 +20,6 @@ export const KIND_NAME: Record<Kind, string> = { problem: "Problem", epic: "Epic
 
 export const PRIORITIES = ["P0", "P1", "P2", "P3"] as const;
 export const DEFAULT_PRIORITY = "P2";
-export const DEFAULT_SOURCE = "daniil";
 
 /** The ID a ticket of `prefix` with number `n` has: `T-007`, `T-1000`. */
 export function formatId(prefix: string, n: number): string {
@@ -83,7 +82,9 @@ export interface NewTicket {
   priority: string;
   /** The parent's ID (`problem:` for an epic or signal, `epic:` for a task); `null` = none. */
   parent: string | null;
-  /** Empty = `DEFAULT_SOURCE`. */
+  /** `reporter:` — the Board's reporter setting; empty = no `reporter:` key. */
+  reporter: string;
+  /** `source:` — empty = no `source:` key. */
   source: string;
   /** `YYYY-MM-DD`. */
   today: string;
@@ -97,20 +98,30 @@ const SECTIONS: Record<Kind, readonly string[]> = {
   signal: [],
 };
 
+/** `key: value` when the value has text; nothing when it is empty. */
+const optional = (key: string, value: string): string[] => (value.trim() === "" ? [] : [`${key}: ${yamlString(value.trim())}`]);
+
 /**
- * A new ticket's text. Keys in the convention's order — a signal's after [[convention-areas-columns]] "Convention" (`source`
- * after `status`, no `type`); scalars written plain when they read back the same, else quoted.
+ * A new ticket's text. Keys in the convention's order (Pomade BACKLOG "One item = one file"; a
+ * signal has no `type`): `id`, `kind`, `title`, `status`, `type`, `priority`, the parent key,
+ * `created`, `updated`, `reporter`, `source`. Scalars written plain when they read back the same,
+ * else quoted.
  */
 export function newTicketContent(t: NewTicket): string {
-  const source = t.source.trim() === "" ? DEFAULT_SOURCE : t.source.trim();
   const parentKey = PARENT_KEY[t.kind];
-  const parent = parentKey !== null && t.parent !== null ? [`${parentKey}: ${yamlString(t.parent)}`] : [];
-  const head = [`id: ${t.id}`, `kind: ${t.kind}`, `title: ${yamlString(t.title)}`, `status: ${yamlString(t.status)}`];
-  const dates = [`created: ${t.today}`, `updated: ${t.today}`];
-  const fields =
-    t.kind === "signal"
-      ? [...head, `priority: ${yamlString(t.priority)}`, `source: ${yamlString(source)}`, ...parent, ...dates]
-      : [...head, "type: feature", `priority: ${yamlString(t.priority)}`, ...parent, ...dates, `source: ${yamlString(source)}`];
+  const fields = [
+    `id: ${t.id}`,
+    `kind: ${t.kind}`,
+    `title: ${yamlString(t.title)}`,
+    `status: ${yamlString(t.status)}`,
+    ...(t.kind === "signal" ? [] : ["type: feature"]),
+    `priority: ${yamlString(t.priority)}`,
+    ...(parentKey !== null && t.parent !== null ? [`${parentKey}: ${yamlString(t.parent)}`] : []),
+    `created: ${t.today}`,
+    `updated: ${t.today}`,
+    ...optional("reporter", t.reporter),
+    ...optional("source", t.source),
+  ];
   const body = [`# ${t.id} — ${t.title}`, ...SECTIONS[t.kind].map((s) => `\n## ${s}`)].join("\n");
   return `---\n${fields.join("\n")}\n---\n\n${body}\n`;
 }

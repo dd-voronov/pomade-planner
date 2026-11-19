@@ -54,7 +54,8 @@ Pomade's file tree, `git mv`). The type is changed in the file's `type:`.
 |---|---|---|
 | "No backlog found" | no backlog folder at the pattern (`docs/roadmap/`) or the chosen folder is gone | **Choose backlog folder** |
 | "… is outside <Project>. Choose a folder inside the project." | the picked folder isn't in the project | pick one inside it |
-| "… — using the default backlog folder." | `Apps/pomade-board/settings.json` has a bad `backlogPathPattern` | fix the file |
+| "… — using the defaults." above the board | `Apps/pomade-board/settings.json` isn't valid JSON, or has a bad `backlogPathPattern` or `reporter` | fix the file |
+| "A handle without spaces, like d.voronov." in **Reporter for new tickets** | the handle has a space | type it without |
 | Unreadable strip: "can't read — open to fix" | a ticket-named file whose frontmatter doesn't parse | click it, fix the YAML |
 | Unreadable strip: "status “wip” has no column — open to fix" | a status this area has no column for, or none | fix `status:` |
 | "Epics can't be in Backlog" while dragging | that column doesn't take this kind | drop elsewhere |

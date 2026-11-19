@@ -361,10 +361,49 @@
 }
 
 .card__id {
+  flex: none;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
   white-space: nowrap;
+}
+
+/* Who raised the ticket: quiet, at the right before the priority; `claude` with a spark. */
+.reporter {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  line-height: 16px;
+}
+
+.reporter__handle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reporter__glyph {
+  flex: none;
+  color: var(--syntax-type);
+}
+
+.card__meta .reporter {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+.card__meta .reporter + .priority {
+  margin-left: 0;
+}
+
+.pop-form__head .reporter {
+  flex: none;
+  max-width: 45%;
+  margin-left: auto;
 }
 
 .priority {

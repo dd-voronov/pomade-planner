@@ -33,7 +33,7 @@ describe("idFromName", () => {
 describe("classifyEntry", () => {
   it("reads a ticket's fields", () => {
     const c = classifyEntry(
-      entry("E-017-x.md", { id: "E-017", kind: "epic", title: "Icon picker", status: "review", priority: "P1", problem: "P-004", source: "daniil" }),
+      entry("E-017-x.md", { id: "E-017", kind: "epic", title: "Icon picker", status: "review", priority: "P1", problem: "P-004", reporter: "d.voronov", source: "session-2026-11-19" }),
       B,
     );
     expect(c).toEqual({
@@ -47,7 +47,8 @@ describe("classifyEntry", () => {
         status: "review",
         priority: "P1",
         parent: "P-004",
-        source: "daniil",
+        reporter: "d.voronov",
+        source: "session-2026-11-19",
         inDone: false,
         mtimeMs: 1000,
       },
@@ -69,7 +70,7 @@ describe("classifyEntry", () => {
   });
 
   it.each([
-    [{ source: "daniil" }, "daniil"],
+    [{ source: "intake" }, "intake"],
     [{ source: "  review  " }, "review"],
     [{ source: "" }, null],
     [{ source: 3 }, "3"],
@@ -78,6 +79,18 @@ describe("classifyEntry", () => {
   ] as const)("source from %j is %s", (extra, source) => {
     const c = classifyEntry(entry("S-001-x.md", { kind: "signal", ...extra }), B);
     expect(c.type === "ticket" && c.ticket.source).toBe(source);
+  });
+
+  it.each([
+    [{ reporter: "d.voronov" }, "d.voronov"],
+    [{ reporter: "claude" }, "claude"],
+    [{ reporter: "  a.person  " }, "a.person"],
+    [{ reporter: "" }, null],
+    [{ reporter: ["a"] }, null],
+    [{}, null],
+  ] as const)("reporter from %j is %s", (extra, reporter) => {
+    const c = classifyEntry(entry("T-001-x.md", { kind: "task", ...extra }), B);
+    expect(c.type === "ticket" && c.ticket.reporter).toBe(reporter);
   });
 
   it.each([

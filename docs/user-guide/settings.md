@@ -42,6 +42,7 @@ If the template can't be used later (deleted, unreadable frontmatter), the setti
 | Setting | Where it is changed | Stored | Default |
 |---|---|---|---|
 | Backlog folder pattern | by hand: `backlogPathPattern` in `Apps/pomade-board/settings.json` | synced settings | `docs/roadmap/` — relative to each project's root |
+| Reporter for new tickets | **⋯ → Reporter for new tickets…**, or by hand: `reporter` | synced settings | `d.voronov` — the handle written as `reporter:` on every ticket the Board creates; no spaces; emptied in the form, back to the default |
 | Backlog folder of one project | **Choose backlog folder** (no backlog found) or **⋯ → Change backlog folder…** | per-project app setting `backlogPath`, relative to the project root; overrides the pattern | none |
 | Move done epics and tasks to `done/` | **⋯** menu, a checkmark item | per-project app setting `moveDoneToDoneFolder` | on |
 
@@ -49,7 +50,8 @@ Example `Apps/pomade-board/settings.json`:
 
 ```json
 {
-  "backlogPathPattern": "docs/roadmap/"
+  "backlogPathPattern": "docs/roadmap/",
+  "reporter": "d.voronov"
 }
 ```
 
@@ -62,4 +64,4 @@ and the columns you expanded or collapsed.
 - A write changes only the keys it names and keeps every other key.
 - A file that isn't a JSON object is never overwritten: the write is refused and the app says why.
 - A key with a wrong value falls back to its default, and the app says so: "… — using the
-  defaults." (Planner), "… — using the default backlog folder." (Board).
+  defaults." (`reporter must be a handle without spaces, like "d.voronov" — using the defaults.`)

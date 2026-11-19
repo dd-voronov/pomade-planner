@@ -12,6 +12,8 @@ export interface TicketSpec {
   parent?: string;
   /** The file sits in `done/`. */
   inDone?: boolean;
+  /** `reporter:` — a handle, or `claude`. */
+  reporter?: string;
 }
 
 const slug = (title: string): string =>
@@ -43,6 +45,7 @@ export function ticketFile(spec: TicketSpec): string {
     ...(spec.parent ? [`${parentKey}: ${spec.parent}`] : []),
     "created: 2026-11-09",
     "updated: 2026-11-10",
+    ...(spec.reporter ? [`reporter: ${spec.reporter}`] : []),
     "source: session-2026-11-09",
     "---",
     "",
@@ -58,27 +61,27 @@ export function ticketFile(spec: TicketSpec): string {
 
 /** The tickets of the sample backlog. */
 export const SAMPLE_TICKETS: readonly TicketSpec[] = [
-  { id: "P-001", kind: "problem", title: "Slow start", status: "planned", priority: "P1" },
-  { id: "P-002", kind: "problem", title: "Flaky sync", status: "grooming", priority: "P0" },
+  { id: "P-001", kind: "problem", title: "Slow start", status: "planned", priority: "P1", reporter: "d.voronov" },
+  { id: "P-002", kind: "problem", title: "Flaky sync", status: "grooming", priority: "P0", reporter: "claude" },
   { id: "P-003", kind: "problem", title: "Too many clicks to find a ticket", status: "backlog", priority: "P2" },
-  { id: "P-004", kind: "problem", title: "Search is weak", status: "delivering", priority: "P1" },
-  { id: "P-005", kind: "problem", title: "Old request from the first round", status: "review", priority: "P2" },
+  { id: "P-004", kind: "problem", title: "Search is weak", status: "delivering", priority: "P1", reporter: "d.voronov" },
+  { id: "P-005", kind: "problem", title: "Old request from the first round", status: "review", priority: "P2", reporter: "d.voronov" },
   { id: "P-006", kind: "problem", title: "Resolved long ago", status: "done", priority: "P3" },
   { id: "P-007", kind: "problem", title: "Not a problem after all", status: "dropped" },
   { id: "P-008", kind: "problem", title: "Wait for the platform", status: "parked", priority: "P2" },
-  { id: "E-001", kind: "epic", title: "Fast start", status: "in-progress", priority: "P1", parent: "P-001" },
-  { id: "E-002", kind: "epic", title: "Sync rewrite", status: "planned", priority: "P0", parent: "P-002" },
-  { id: "E-017", kind: "epic", title: "Icon picker redesign", status: "review", priority: "P1", parent: "P-003" },
+  { id: "E-001", kind: "epic", title: "Fast start", status: "in-progress", priority: "P1", parent: "P-001", reporter: "d.voronov" },
+  { id: "E-002", kind: "epic", title: "Sync rewrite", status: "planned", priority: "P0", parent: "P-002", reporter: "claude" },
+  { id: "E-017", kind: "epic", title: "Icon picker redesign", status: "review", priority: "P1", parent: "P-003", reporter: "d.voronov" },
   { id: "E-004", kind: "epic", title: "Abandoned idea", status: "dropped", priority: "P3" },
   { id: "E-005", kind: "epic", title: "Waiting for the dashboard", status: "parked", priority: "P2" },
   { id: "E-000", kind: "epic", title: "Repository setup", status: "done", priority: "P1", inDone: true },
-  { id: "T-001", kind: "task", title: "Cache the index", status: "in-progress", priority: "P1", parent: "E-001" },
-  { id: "T-002", kind: "task", title: "Lazy-load the panels", status: "planned", priority: "P2", parent: "E-001" },
+  { id: "T-001", kind: "task", title: "Cache the index", status: "in-progress", priority: "P1", parent: "E-001", reporter: "claude" },
+  { id: "T-002", kind: "task", title: "Lazy-load the panels", status: "planned", priority: "P2", parent: "E-001", reporter: "d.voronov" },
   { id: "T-003", kind: "task", title: "Fix a typo in the README", status: "backlog", priority: "P3" },
-  { id: "T-004", kind: "task", title: "Conflict resolution UI", status: "planned", priority: "P1", parent: "E-002" },
+  { id: "T-004", kind: "task", title: "Conflict resolution UI", status: "planned", priority: "P1", parent: "E-002", reporter: "d.voronov" },
   { id: "T-000", kind: "task", title: "Set up the repository", status: "done", priority: "P2", parent: "E-000", inDone: true },
   { id: "T-005", kind: "task", title: "Status nobody knows", status: "wip", priority: "P2", parent: "E-001" },
-  { id: "S-001", kind: "signal", title: "Cmd+click opened random files", status: "new" },
+  { id: "S-001", kind: "signal", title: "Cmd+click opened random files", status: "new", reporter: "d.voronov" },
 ];
 
 /**
@@ -87,13 +90,13 @@ export const SAMPLE_TICKETS: readonly TicketSpec[] = [
  * signals.
  */
 export const DELTA_TICKETS: readonly TicketSpec[] = [
-  { id: "P-011", kind: "problem", title: "Hard to see what waits for review", status: "planned", priority: "P1" },
+  { id: "P-011", kind: "problem", title: "Hard to see what waits for review", status: "planned", priority: "P1", reporter: "d.voronov" },
   { id: "P-012", kind: "problem", title: "Board edits are slow", status: "grooming", priority: "P2" },
   { id: "P-013", kind: "problem", title: "Release notes are stale", status: "review", priority: "P2" },
   { id: "E-016", kind: "epic", title: "Old board", status: "done", priority: "P2", parent: "P-012", inDone: true },
   { id: "E-017", kind: "epic", title: "Icon picker redesign", status: "in-progress", priority: "P1", parent: "P-012" },
-  { id: "E-018", kind: "epic", title: "Faster sync", status: "review", priority: "P0", parent: "P-011" },
-  { id: "T-004", kind: "task", title: "Draw the icons", status: "planned", priority: "P2", parent: "E-017" },
+  { id: "E-018", kind: "epic", title: "Faster sync", status: "review", priority: "P0", parent: "P-011", reporter: "claude" },
+  { id: "T-004", kind: "task", title: "Draw the icons", status: "planned", priority: "P2", parent: "E-017", reporter: "d.voronov" },
   { id: "T-041", kind: "task", title: "Verify T-040", status: "done", priority: "P3", parent: "E-016", inDone: true },
 ];
 

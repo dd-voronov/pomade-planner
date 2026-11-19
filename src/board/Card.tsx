@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 
 import type { Rect } from "../core/place";
+import { Reporter } from "./Reporter";
 import type { Kind, Ticket } from "./model/ticket";
 
 const KIND_LETTER: Record<Kind, string> = { problem: "P", epic: "E", task: "T", signal: "S" };
@@ -14,7 +15,7 @@ interface CardFaceProps {
   onDismissError?: () => void;
 }
 
-/** What a card shows: kind badge, ID, priority, title; on Solutions a task's parent-epic chip; a signal's problem chip and source. */
+/** What a card shows: kind badge, ID, reporter, priority, title; on Solutions a task's parent-epic chip; a signal's problem chip and source. */
 function CardFace({ ticket, solutions, error, onDismissError }: CardFaceProps) {
   const priority = ticket.priority;
   return (
@@ -26,6 +27,7 @@ function CardFace({ ticket, solutions, error, onDismissError }: CardFaceProps) {
         <span className="card__id" data-testid="card-id">
           {ticket.id}
         </span>
+        {ticket.reporter !== null ? <Reporter handle={ticket.reporter} testId="card-reporter" /> : null}
         {priority !== null ? (
           <span className={`priority priority--${/^P[0-3]$/.test(priority) ? priority.toLowerCase() : "other"}`} data-testid="card-priority">
             {priority}

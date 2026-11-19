@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ParentList } from "./ParentList";
 import { Popover } from "../core/Popover";
 import { PrioritySelect } from "./PrioritySelect";
+import { Reporter } from "./Reporter";
 import { KIND_NAME } from "./model/create";
 import type { EditableField } from "./model/drop";
 import { parentCandidates } from "./model/parents";
@@ -22,7 +23,7 @@ interface CardPopoverProps {
   restoreFocus: () => void;
 }
 
-/** A card's right-click popover: its priority and its parent, each change written at once. */
+/** A card's right-click popover: its reporter (read-only), its priority and its parent, each change written at once. */
 export function CardPopover({ anchor, ticket, tickets, busy, error, onEdit, onClose, restoreFocus }: CardPopoverProps) {
   const parentKind = PARENT_KIND[ticket.kind];
   const candidates = useMemo(() => parentCandidates(tickets, ticket.kind), [tickets, ticket.kind]);
@@ -46,6 +47,7 @@ export function CardPopover({ anchor, ticket, tickets, busy, error, onEdit, onCl
           <span className="pop-form__subject" title={ticket.title}>
             {ticket.title}
           </span>
+          {ticket.reporter !== null ? <Reporter handle={ticket.reporter} testId="popover-reporter" /> : null}
         </header>
         <div className="pop-field">
           <span className="pop-field__label">Priority</span>

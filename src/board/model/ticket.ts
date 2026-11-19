@@ -29,7 +29,9 @@ export interface Ticket {
   priority: string | null;
   /** The parent the convention names: `problem:` for an epic or a signal, `epic:` for a task. */
   parent: string | null;
-  /** `source:` — who or what produced the ticket (a signal's evidence). */
+  /** `reporter:` — who raised the ticket: a person's handle, or `claude` (`AGENT_REPORTER`) when an agent filed it on its own. */
+  reporter: string | null;
+  /** `source:` — where the ticket came from: a testing round, a session, a review… (a signal's evidence). */
   source: string | null;
   /** The file sits in the backlog's `done/` sub-folder. */
   inDone: boolean;
@@ -50,6 +52,9 @@ export type Classified =
   | { type: "ticket"; ticket: Ticket }
   | { type: "unreadable"; file: UnreadableFile }
   | { type: "ignored" };
+
+/** The `reporter:` an agent writes when it files a ticket on its own (Pomade BACKLOG "One item = one file"). */
+export const AGENT_REPORTER = "claude";
 
 /** The frontmatter key naming a kind's parent (`null`: a problem has none) — BACKLOG "One item = one file", [[convention-areas-columns]] "Convention". */
 export const PARENT_KEY: Record<Kind, "problem" | "epic" | null> = { problem: null, epic: "problem", task: "epic", signal: "problem" };
@@ -115,6 +120,7 @@ export function classifyEntry(entry: FileEntry, backlog: string): Classified {
       status: text(fm.status),
       priority: text(fm.priority),
       parent: parentKey === null ? null : text(fm[parentKey]),
+      reporter: text(fm.reporter),
       source: text(fm.source),
       inDone,
       mtimeMs: entry.mtimeMs,

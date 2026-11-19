@@ -65,8 +65,9 @@ a status with no column ("status “wip” has no column — open to fix"). Clic
 |---|---|
 | kind badge | P (problem), E (epic), T (task), S (signal) |
 | ID, title, priority | priority P0–P3, coloured by level |
+| reporter | who raised it (`reporter:`), quiet, before the priority: `d.voronov`; ✦ `claude` when an agent filed it on its own; nothing when the file has none |
 | parent chip | a task's epic (`E-017`) on Solutions; a signal's problem (`P-012`) |
-| source | a signal's "from daniil" |
+| source | a signal's "from session-2026-11-09" |
 
 On Solutions, epic cards are wider and tinted; task cards are inset.
 
@@ -94,7 +95,8 @@ Drag a card to another column. The Board writes two frontmatter lines — `statu
 
 ## The card popover: priority and parent
 
-Right-click a card (or the context-menu key, or ⇧F10 on a focused card):
+Right-click a card (or the context-menu key, or ⇧F10 on a focused card). Its head shows the ID,
+the title and the reporter.
 
 - **Priority** — P0 · P1 · P2 · P3.
 - **Parent** — an epic's problem (`problem:`), a task's epic (`epic:`), a signal's problem
@@ -118,7 +120,7 @@ opens a form under it. Its head shows the ID it will take and the column: "T-014
 | **Title** | required |
 | **Problem** / **Epic** | optional parent; typing picks the first match, ↑ ↓ move |
 | **Priority** | P0–P3, default P2 |
-| **Source** | Signals only; default `daniil` |
+| **Source** | Signals only; optional — empty, no `source:` is written |
 
 Enter (from any field) or **Create task** creates; Esc or **Cancel** closes and focus returns to
 the **+**. The new file opens in an editor tab; its card appears with the next read.
@@ -128,6 +130,10 @@ the **+**. The new file opens in an editor tab; its card appears with the next r
   IDs are never reused and gaps never filled. Re-checked when the file is written.
 - **File:** `<ID>-<slug>.md` — the title lowercased, words joined by `-`, accents folded, at most 60
   characters. An epic or task created in Done goes into `done/` (while the move setting is on).
+- **Reporter:** every new ticket gets `reporter:` from the Board's setting, `d.voronov` out of the
+  box. Change it: **⋯ → Reporter for new tickets…**, type the handle (no spaces), **Save** or Enter.
+  Left empty, it goes back to `d.voronov`. The setting is workspace-wide
+  ([settings](settings.md#board)).
 - **Text:** see [Files and format › Tickets](files-and-format.md#tickets).
 
 ## Triaging signals

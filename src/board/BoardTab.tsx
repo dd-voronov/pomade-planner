@@ -84,7 +84,7 @@ function ProjectBoard({ host, project }: { host: HostClient; project: ProjectRef
         glyph={<BoardGlyph size={32} />}
         title="No backlog found"
         action={chooseButton}
-        error={actionError ?? (state.synced.problem === null ? null : `${state.synced.problem} — using the default backlog folder.`)}
+        error={actionError ?? (state.synced.problem === null ? null : `${state.synced.problem} — using the defaults.`)}
       >
         {text} Choose the folder that holds its tickets.
       </EmptyState>
@@ -105,6 +105,7 @@ function ProjectBoard({ host, project }: { host: HostClient; project: ProjectRef
         reload={reloadBacklog}
         onToggleMoveDone={() => void toggleMoveDone()}
         onChangeFolder={() => void chooseFolder()}
+        onSettingsSaved={() => void reload()}
       />
       {actionError !== null ? (
         <div className="toast" role="alert" data-testid="board-action-error">

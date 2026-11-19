@@ -2,8 +2,9 @@
 //
 // - Synced settings: `<workspace>/Apps/pomade-board/settings.json` (core/settings-file), git-synced
 //   with the workspace. The Board reads `backlogPathPattern` (default `docs/roadmap/`): the backlog folder,
-//   relative to a project's root. A missing file means every default; the app never creates it
-//   on read.
+//   relative to a project's root; and `reporter` (default `d.voronov`): the handle written as
+//   `reporter:` on the tickets it creates. A missing file means every default; the app never
+//   creates it on read. A key with a wrong value falls back to its default on its own.
 // - Per-project app settings (Host API `project.getSettings`): `backlogPath` — the folder the user
 //   chose, relative to the project root, overriding the pattern — and `moveDoneToDoneFolder`
 //   (default true).
@@ -16,12 +17,17 @@ import { parseSettingsText, settingsPathOf } from "../../core/settings-file";
 export const SYNCED_SETTINGS_PATH = settingsPathOf("pomade-board");
 
 export const DEFAULT_BACKLOG_PATTERN = "docs/roadmap/";
+export const DEFAULT_REPORTER = "d.voronov";
+
+export const SYNCED_KEYS = { backlogPathPattern: "backlogPathPattern", reporter: "reporter" } as const;
 
 export interface SyncedSettings {
   backlogPathPattern: string;
+  /** The handle written as `reporter:` on the tickets the Board creates. */
+  reporter: string;
 }
 
-export const DEFAULT_SYNCED_SETTINGS: SyncedSettings = { backlogPathPattern: DEFAULT_BACKLOG_PATTERN };
+export const DEFAULT_SYNCED_SETTINGS: SyncedSettings = { backlogPathPattern: DEFAULT_BACKLOG_PATTERN, reporter: DEFAULT_REPORTER };
 
 export interface ParsedSyncedSettings {
   settings: SyncedSettings;
@@ -36,16 +42,29 @@ export function normalizeRelative(path: string): string | null {
   return normalized.ok ? normalized.path : null;
 }
 
+/** A reporter handle as typed, trimmed (`d.voronov`, `claude`); `null` when it is empty or holds a space. */
+export function normalizeReporter(value: string): string | null {
+  const handle = value.trim();
+  return handle !== "" && !/\s/.test(handle) ? handle : null;
+}
+
 /** Synced settings from the file's text (`null` = the file does not exist). */
 export function parseSyncedSettings(text: string | null): ParsedSyncedSettings {
   const { object, problem } = parseSettingsText(text, SYNCED_SETTINGS_PATH);
   if (object === null) return { settings: DEFAULT_SYNCED_SETTINGS, problem };
-  const pattern = object.backlogPathPattern;
-  if (pattern === undefined) return { settings: DEFAULT_SYNCED_SETTINGS, problem: null };
-  if (typeof pattern !== "string" || pattern.trim() === "" || normalizeRelative(pattern.trim()) === null) {
-    return { settings: DEFAULT_SYNCED_SETTINGS, problem: `backlogPathPattern must be a folder inside the project, like "docs/roadmap/"` };
-  }
-  return { settings: { backlogPathPattern: pattern.trim() }, problem: null };
+  const settings: SyncedSettings = { ...DEFAULT_SYNCED_SETTINGS };
+  const problems: string[] = [];
+
+  const pattern = object[SYNCED_KEYS.backlogPathPattern];
+  if (typeof pattern === "string" && pattern.trim() !== "" && normalizeRelative(pattern.trim()) !== null) settings.backlogPathPattern = pattern.trim();
+  else if (pattern !== undefined) problems.push(`backlogPathPattern must be a folder inside the project, like "docs/roadmap/"`);
+
+  const reporter = object[SYNCED_KEYS.reporter];
+  const handle = typeof reporter === "string" ? normalizeReporter(reporter) : null;
+  if (handle !== null) settings.reporter = handle;
+  else if (reporter !== undefined) problems.push(`reporter must be a handle without spaces, like "d.voronov"`);
+
+  return { settings, problem: problems.length > 0 ? problems.join("; ") : null };
 }
 
 export interface ProjectBoardSettings {

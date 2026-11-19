@@ -311,21 +311,23 @@ test.describe("Signals", () => {
     await shot(page, "e002-fake-signals-board");
   });
 
-  test("a project with no signals shows an empty Signals board with “+ New signal”; it creates S-001 as new, from daniil", async ({ page }) => {
+  test("a project with no signals shows an empty Signals board with “+ New signal”; it creates S-001 as new, with the reporter and the source typed", async ({ page }) => {
     const app = await openBoard(page, "delta", "signals");
     await expect(app.getByTestId("area-empty")).toBeVisible();
     await expect(app.getByTestId("area-create")).toHaveText("+ New signal");
     await shot(page, "e002-fake-signals-empty");
     await app.getByTestId("area-create").click();
     await expect(app.getByTestId("create-preview")).toHaveText("S-001 · New");
-    await expect(app.getByTestId("create-source")).toHaveValue("daniil");
+    await expect(app.getByTestId("create-source")).toHaveValue("");
     await app.getByTestId("create-title").fill("Board missed a rename");
+    await app.getByTestId("create-source").fill("review");
     await shot(page, "e002-fake-create-form-signal");
     await app.getByTestId("create-submit").click();
     const path = `${DELTA}/S-001-board-missed-a-rename.md`;
-    await expect.poll(() => readOrNull(page, path)).toBe(createdTicket({ id: "S-001", kind: "signal", title: "Board missed a rename", status: "new" }));
+    await expect.poll(() => readOrNull(page, path)).toBe(createdTicket({ id: "S-001", kind: "signal", title: "Board missed a rename", status: "new", source: "review" }));
     await expect(column(app, "new").locator('[data-id="S-001"]')).toBeVisible();
-    await expect(card(app, "S-001").getByTestId("card-source")).toHaveText("daniil");
+    await expect(card(app, "S-001").getByTestId("card-source")).toHaveText("review");
+    await expect(card(app, "S-001").getByTestId("card-reporter")).toHaveText("d.voronov");
     await expect.poll(() => lastTab(page)).toEqual({ kind: "file", projectId: "delta", path });
   });
 
@@ -432,6 +434,104 @@ test.describe("Needs you", () => {
     await shot(page, "e002-fake-chooser-counts");
     await writeFile(page, `${ALPHA}/S-009-one-more.md`, "---\nid: S-009\nkind: signal\ntitle: One more\nstatus: new\n---\n");
     await expect(row("alpha").getByTestId("chooser-needs-you")).toHaveText("2 in review · 2 new signals", { timeout: 1_000 });
+  });
+});
+
+test.describe("reporter", () => {
+  const SETTINGS = "Apps/pomade-board/settings.json";
+
+  test("a card shows its reporter, claude with its mark; a ticket without one shows none; the popover shows it too", async ({ page }) => {
+    const app = await openBoard(page, "alpha", "solutions");
+    await expect(card(app, "E-001").getByTestId("card-reporter")).toHaveText("d.voronov");
+    await expect(card(app, "E-001").getByTestId("card-reporter")).not.toHaveAttribute("data-agent", "true");
+    await expect(card(app, "T-001").getByTestId("card-reporter")).toHaveText("claude");
+    await expect(card(app, "T-001").getByTestId("card-reporter")).toHaveAttribute("data-agent", "true");
+    await expect(card(app, "T-001").locator(".reporter__glyph")).toBeVisible();
+    await expect(card(app, "T-003").getByTestId("card-reporter")).toHaveCount(0);
+    await expect(card(app, "T-003").getByTestId("card-priority")).toHaveText("P3");
+    // Quiet, on the meta line: right-aligned before the priority, the same 16px line.
+    const meta = await boxOf(card(app, "E-001").locator(".card__meta"));
+    const reporter = await boxOf(card(app, "E-001").getByTestId("card-reporter"));
+    const priority = await boxOf(card(app, "E-001").getByTestId("card-priority"));
+    expect(reporter.y).toBe(meta.y);
+    expect(reporter.height).toBe(16);
+    expect(Math.round(priority.x - (reporter.x + reporter.width))).toBe(6);
+    await expect(card(app, "E-001").getByTestId("card-reporter")).toHaveCSS("font-size", "11px");
+    await shot(page, "t015-fake-cards");
+
+    await card(app, "T-001").click({ button: "right" });
+    await expect(app.getByTestId("popover-reporter")).toHaveText("claude");
+    await shot(page, "t015-fake-popover");
+    await page.keyboard.press("Escape");
+    await card(app, "T-003").click({ button: "right" });
+    await expect(app.getByTestId("card-popover")).toBeVisible();
+    await expect(app.getByTestId("popover-reporter")).toHaveCount(0);
+  });
+
+  test("⋯ → Reporter for new tickets… changes what the next created ticket writes; empty goes back to d.voronov", async ({ page }) => {
+    const app = await openBoard(page, "delta", "solutions");
+    await app.getByTestId("board-menu-button").click();
+    await app.getByTestId("menu-reporter").click();
+    const form = app.getByTestId("reporter-form");
+    await expect(form).toBeVisible();
+    await expect(form.getByTestId("reporter-input")).toHaveValue("d.voronov");
+    await expect(form.getByTestId("reporter-input")).toBeFocused();
+    await expectInside(page, app, "reporter-form");
+    await shot(page, "t015-fake-reporter-form");
+
+    // A handle with a space is refused, nothing written.
+    await form.getByTestId("reporter-input").fill("Daniil Voronov");
+    await page.keyboard.press("Enter");
+    await expect(form.getByTestId("reporter-error")).toHaveText("A handle without spaces, like d.voronov.");
+    expect(await readOrNull(page, SETTINGS)).toBeNull();
+
+    await form.getByTestId("reporter-input").fill("a.person");
+    await page.keyboard.press("Enter");
+    await expect(form).toHaveCount(0);
+    expect(await focusedTestId(app)).toBe("board-menu-button");
+    await expect.poll(() => readOrNull(page, SETTINGS)).toBe('{\n  "reporter": "a.person"\n}\n');
+
+    await column(app, "planned").getByTestId("column-add").click();
+    await app.getByTestId("kind-task").check();
+    await app.getByTestId("create-title").fill("Mine");
+    await app.getByTestId("create-submit").click();
+    await expect.poll(() => readOrNull(page, `${DELTA}/T-042-mine.md`)).toBe(createdTicket({ id: "T-042", kind: "task", title: "Mine", status: "planned", reporter: "a.person" }));
+    await expect(card(app, "T-042").getByTestId("card-reporter")).toHaveText("a.person");
+
+    // Emptied: the key goes, the default is back; other keys stay.
+    await writeFile(page, SETTINGS, '{\n  "backlogPathPattern": "docs/roadmap/",\n  "reporter": "a.person"\n}\n');
+    await app.getByTestId("board-menu-button").click();
+    await app.getByTestId("menu-reporter").click();
+    await expect(form.getByTestId("reporter-input")).toHaveValue("a.person");
+    await form.getByTestId("reporter-input").fill("");
+    await form.getByTestId("reporter-save").click();
+    await expect.poll(() => readOrNull(page, SETTINGS)).toBe('{\n  "backlogPathPattern": "docs/roadmap/"\n}\n');
+    await column(app, "planned").getByTestId("column-add").click();
+    await app.getByTestId("kind-task").check();
+    await app.getByTestId("create-title").fill("Default again");
+    await app.getByTestId("create-submit").click();
+    await expect.poll(() => readOrNull(page, `${DELTA}/T-043-default-again.md`)).toBe(createdTicket({ id: "T-043", kind: "task", title: "Default again", status: "planned" }));
+  });
+
+  test("a reporter set in the file by hand is what the next ticket gets; a wrong one falls back and says so", async ({ page }) => {
+    const app = await openBoard(page, "delta", "solutions");
+    // Changed elsewhere after the board loaded: the create reads the file as it is now.
+    await writeFile(page, SETTINGS, '{ "reporter": "claude" }\n');
+    await column(app, "planned").getByTestId("column-add").click();
+    await app.getByTestId("kind-task").check();
+    await app.getByTestId("create-title").fill("Filed by an agent");
+    await app.getByTestId("create-submit").click();
+    await expect.poll(() => readOrNull(page, `${DELTA}/T-042-filed-by-an-agent.md`)).toBe(
+      createdTicket({ id: "T-042", kind: "task", title: "Filed by an agent", status: "planned", reporter: "claude" }),
+    );
+
+    await writeFile(page, SETTINGS, '{ "reporter": "two words" }\n');
+    await page.evaluate(() => {
+      const f = window.mounted?.iframe;
+      if (f) f.src = f.src;
+    });
+    await expect(app.getByTestId("settings-problem")).toHaveText('reporter must be a handle without spaces, like "d.voronov" — using the defaults.');
+    await shot(page, "t015-fake-settings-problem");
   });
 });
 

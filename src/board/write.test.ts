@@ -14,7 +14,7 @@ async function hostWith(files: Record<string, string>) {
   return { fake, host: result.host };
 }
 
-const request = { kind: "task" as const, title: "Mine", status: "planned", priority: "P2", parent: null, source: "", today: "2026-11-17", backlog: B, moveDone: true };
+const request = { kind: "task" as const, title: "Mine", status: "planned", priority: "P2", parent: null, reporter: "d.voronov", source: "", today: "2026-11-17", backlog: B, moveDone: true };
 
 /** A host whose `files.create` finds `taken` paths already there — another writer won the race after the re-read. */
 function racing(host: HostClient, taken: string[]): { host: HostClient; tried: string[] } {
@@ -37,6 +37,14 @@ describe("createTicket", () => {
     const { fake, host } = await hostWith({ [`${B}/T-003-a.md`]: "---\nid: T-003\nkind: task\n---\n", [`${B}/done/T-041-b.md`]: "---\nid: T-041\nkind: task\n---\n" });
     expect(await createTicket(host, request)).toEqual({ path: `${B}/T-042-mine.md`, id: "T-042" });
     expect(fake.readFile(`${B}/T-042-mine.md`)).toContain("id: T-042\n");
+  });
+
+  it("writes the reporter it is given and no source", async () => {
+    const { fake, host } = await hostWith({});
+    await createTicket(host, { ...request, reporter: "a.person" });
+    const text = fake.readFile(`${B}/T-001-mine.md`);
+    expect(text).toContain("updated: 2026-11-17\nreporter: a.person\n---");
+    expect(text).not.toMatch(/^source:/m);
   });
 
   it("a path taken between the read and the create bumps the number until one is free", async () => {

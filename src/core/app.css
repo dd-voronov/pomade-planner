@@ -405,6 +405,11 @@ button {
   font-weight: normal;
 }
 
+.pop-field__hint code {
+  padding: 0 2px;
+  font-size: inherit;
+}
+
 .field-input {
   width: 100%;
   height: 30px;

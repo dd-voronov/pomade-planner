@@ -1,11 +1,11 @@
 # Editing — drag, the card popover, triage, create
 
 **Module:** `board` · **UI:** the Board tab: dragging cards, the card popover, the triage picker,
-the **+** create form · **Code:** `src/board/Board.tsx`, `src/board/dnd.ts`, `src/board/Card.tsx`,
+the **+** create form, the reporter setting · **Code:** `src/board/Board.tsx`, `src/board/dnd.ts`, `src/board/Card.tsx`,
 `src/board/Column.tsx`, `src/board/CardPopover.tsx`, `src/board/TriagePicker.tsx`,
 `src/board/CreateForm.tsx`, `src/board/ParentList.tsx`, `src/board/PrioritySelect.tsx`,
 `src/board/write.ts`, `src/board/model/drop.ts`, `src/board/model/create.ts`,
-`src/board/model/parents.ts`, `src/core/Popover.tsx` · **e2e:** `board-fake.spec.ts`,
+`src/board/model/parents.ts`, `src/board/BoardMenu.tsx`, `src/board/ReporterForm.tsx`, `src/core/settings-file.ts`, `src/core/Popover.tsx` · **e2e:** `board-fake.spec.ts`,
 `board-manage-fake.spec.ts`, `pomade-board.spec.ts`, `pomade-board-manage.spec.ts` · **Unit:**
 `src/board/model/drop.test.ts`, `src/board/model/create.test.ts`, `src/board/model/parents.test.ts`,
 `src/board/write.test.ts` · **Contract:** `../Pomade/docs/HOST-API.md` §4 `files.setField` /
@@ -75,7 +75,7 @@ picker ↑ ↓ highlight and Enter or a click picks.
 **+** on each open column's header (and the empty area's "+ New …" button) opens the create form
 (`CreateForm`), hanging under the **+** and showing the ID it will take: kind (epic / task where the
 column takes both; fixed elsewhere), title (required), parent (optional), priority (P0–P3, default
-P2), and on Signals `source` (default `daniil`; emptied, it is `daniil`). **Cancel** and **Create
+P2), and on Signals `source` (optional; empty, no `source:` is written). **Cancel** and **Create
 <kind>** ("Creating…" while it writes). Enter submits from any field; Tab stays inside the form;
 Escape closes it and returns focus to the **+**.
 
@@ -89,13 +89,24 @@ Escape closes it and returns focus to the **+**.
   boundary; a title with nothing to slug gives `<ID>.md`. Created with the Host API's file create —
   the whole text at once.
 - **Text** (`newTicketContent`): the convention's keys in order — `id`, `kind`, `title`, `status`
-  (the column), `type: feature`, `priority`, the parent key when one is picked, `created` /
-  `updated` (today), `source`; a signal: `id`, `kind`, `title`, `status`, `priority`, `source`,
-  `problem` when picked, `created`, `updated`, no `type`. A value YAML would read as anything but the same
+  (the column), `type: feature` (not on a signal), `priority`, the parent key when one is picked,
+  `created` / `updated` (today), `reporter`, then `source` when the form names one. A value YAML would read as anything but the same
   string (`true`, `123`, `a: b`, a date) is double-quoted (`yamlString`). The body is `# <ID> —
   <title>` and the convention's empty sections: problem Problem · Outcome; epic Goal · Scope ·
   Acceptance; task Goal · Acceptance; a signal's description goes under its heading.
+- **Reporter**: the Board's `reporter` setting as the settings file holds it at the create
+  (`readSyncedSettings`, so a change made in another tab or by hand counts), default `d.voronov`.
 - The new file opens in an editor tab; its card appears with the next read.
+
+## Reporter setting
+
+⋯ → **Reporter for new tickets…** opens `ReporterForm` under the ⋯, filled from the settings file
+as it is now: one field, the handle (`normalizeReporter`: trimmed, no spaces — "A handle without
+spaces, like d.voronov." otherwise, nothing written). **Save** or Enter writes `reporter` into
+`Apps/pomade-board/settings.json` (`saveSettingsFile`, every other key kept; the file is created
+when missing, a broken one is never overwritten and the form says why); an emptied field removes
+the key, so the default applies. Escape, **Cancel** or a click outside closes it and focus returns
+to the ⋯. It is workspace-wide, like `backlogPathPattern` ([[settings-and-state]]).
 
 ## Placement
 

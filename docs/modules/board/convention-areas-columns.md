@@ -1,12 +1,12 @@
 # Convention, areas and columns — what a board shows
 
 **Module:** `board` · **UI:** the Board tab: the area switcher, the columns, the cards, the
-Unreadable strip · **Code:** `src/board/Board.tsx`, `src/board/Column.tsx`, `src/board/Card.tsx`,
+Unreadable strip · **Code:** `src/board/Board.tsx`, `src/board/Column.tsx`, `src/board/Card.tsx`, `src/board/Reporter.tsx`,
 `src/board/UnreadableStrip.tsx`, `src/board/model/ticket.ts`, `src/board/model/areas.ts`,
 `src/board/model/order.ts`, `src/board/model/view-state.ts`, `src/board/board.css` · **e2e:**
 `board-fake.spec.ts`, `board-manage-fake.spec.ts`, `pomade-board.spec.ts` · **Unit:**
 `src/board/model/ticket.test.ts`, `src/board/model/areas.test.ts`, `src/board/model/order.test.ts`,
-`src/board/model/view-state.test.ts` · **Contract:** `../Pomade/docs/BACKLOG.md` "One item = one
+`src/board/model/view-state.test.ts` · **Contract:** `../Pomade/docs/process/backlog.md` "One item = one
 file", "Statuses"
 
 ## What it does
@@ -18,8 +18,9 @@ sits where its `status:` says, and one the Board can't place is shown, never dro
 
 ## Convention
 
-The Problem → Epic → Task backlog convention of `../Pomade/docs/BACKLOG.md` ("One item = one file",
-statuses per kind), plus the minimal `signal` kind:
+The Problem → Epic → Task backlog convention of `../Pomade/docs/process/backlog.md` ("One item =
+one file", "Statuses"), plus the minimal `signal` kind, with the same keys in the same order and no
+`type`:
 
 ```yaml
 ---
@@ -27,19 +28,25 @@ id: S-001
 kind: signal
 title: Cmd+click in a terminal opened random files
 status: new                # new | triaged | dismissed
-source: daniil             # who or what produced the evidence
+priority: P2
 problem: P-012             # set once triaged
 created: 2026-11-09
 updated: 2026-11-09
+reporter: d.voronov        # who raised it: a person's handle, or claude when an agent filed it on its own
+source: session-2026-11-09 # where the evidence came from: a testing round, a session, a review…
 ---
 <description: the evidence as observed>
 ```
+
+`reporter` is who raised a ticket and `source` where it came from — never a person; either is
+omitted when unknown.
 
 **Tickets** (`readBacklog`, `classifyEntry`): a Markdown file directly in the backlog folder or its
 `done/` whose frontmatter carries a known `kind:` (`problem`, `epic`, `task`, `signal`). Its ID is
 `id:`, else the one in its file name (`<P|E|T|S>-NNN-<slug>.md`); its title `title:`, else the file
 name; its parent the kind's key (`PARENT_KEY`: `problem:` for an epic or a signal, `epic:` for a
-task; a problem has none).
+task; a problem has none); its reporter `reporter:` and its source `source:`, each `null` when
+missing or empty.
 
 ## Areas and columns
 
@@ -80,9 +87,13 @@ epic" (Planned).
 
 ## Cards
 
-- ID, title, kind badge, priority. On Solutions, epic cards are wider and tinted (task cards are
-  inset); task cards carry a chip with their parent epic (`E-017`). Signal cards carry their linked
-  problem as a chip (`P-012`) and their source ("from daniil").
+- ID, title, kind badge, reporter, priority. On Solutions, epic cards are wider and tinted (task
+  cards are inset); task cards carry a chip with their parent epic (`E-017`). Signal cards carry
+  their linked problem as a chip (`P-012`) and their source ("from session-2026-11-09").
+- **Reporter** (`Reporter.tsx`): on the meta line, right-aligned before the priority, in the meta's
+  quiet type (`--fs-xs`, `--text-faint`), cut with an ellipsis before it pushes the ID. `claude`
+  (`AGENT_REPORTER`) carries a small spark in `--syntax-type` before it; a ticket without
+  `reporter:` shows nothing there. The card popover shows it the same way at the right of its head.
 - Click or Enter opens the file in an editor tab of the board's project ([[host-api-usage]] "Editor
   tabs in their project").
 - **Order inside a column** (`compareTickets`): priority (P0 first; none or unknown after P3), then
