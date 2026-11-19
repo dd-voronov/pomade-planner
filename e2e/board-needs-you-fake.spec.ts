@@ -223,6 +223,35 @@ test("coming back to Workspace from a project starts on the list; inside a proje
   await expect(rows(app)).toHaveCount(0);
 });
 
+test("a project removed leaves the list and “All projects” at once; removed while opened, the panel falls back to the list", async ({ page }) => {
+  const app = await openPanel(page);
+  await expect.poll(() => listed(app)).toEqual(["alpha", "gamma", "delta", "scale"]);
+  await page.evaluate(() => window.fakeHost.removeProject("gamma"));
+  await expect.poll(() => listed(app)).toEqual(["alpha", "delta", "scale"]);
+
+  await app.getByTestId("needs-you-all").click();
+  await expect.poll(() => app.getByTestId("needs-you-project").evaluateAll((els) => els.map((e) => e.getAttribute("data-project")))).toEqual(["alpha", "delta", "scale"]);
+  await page.evaluate(() => window.fakeHost.removeProject("scale"));
+  await expect.poll(() => app.getByTestId("needs-you-project").evaluateAll((els) => els.map((e) => e.getAttribute("data-project")))).toEqual(["alpha", "delta"]);
+  await app.getByTestId("needs-you-back").click();
+
+  await listRow(app, "delta").click();
+  await expect(view(app)).toHaveAttribute("data-level-project", "delta");
+  await page.evaluate(() => window.fakeHost.removeProject("delta"));
+  await expect(view(app)).toHaveAttribute("data-level", "list");
+  expect(await listed(app)).toEqual(["alpha"]);
+  await expect(app.getByTestId("needs-you-back")).toHaveCount(0);
+});
+
+test("the active project removed: the panel falls back to the Workspace list", async ({ page }) => {
+  const app = await openPanel(page, "gamma");
+  await expect(view(app)).toHaveAttribute("data-project", "gamma");
+  await page.evaluate(() => window.fakeHost.removeProject("gamma"));
+  await expect(view(app)).toHaveAttribute("data-level", "list");
+  await expect.poll(() => listed(app)).toEqual(["alpha", "delta", "scale"]);
+  await shot(page, "t013-fake-needs-you-removed-active");
+});
+
 test("the keyboard walks it: Enter opens a row, Enter on the back row returns", async ({ page }) => {
   const app = await openPanel(page);
   await app.getByTestId("needs-you-all").focus();

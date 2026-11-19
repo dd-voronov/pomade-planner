@@ -399,3 +399,61 @@ test.describe("renames follow", () => {
     await expect(row(a, "Old scores")).toBeVisible();
   });
 });
+
+test.describe("a project removed", () => {
+  test("leaves the project picker and the All filter at once; its tasks stay in its folder under its last-seen name", async ({ page }) => {
+    const a = await openPanel(page);
+    await expect.poll(async () => (await settings(page)).projectFolders?.quiz?.folder).toBe("QuizLab");
+    await a.getByTestId("mix-add").click();
+    await a.getByTestId("picker-filter").pressSequentially("quiz");
+    await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab", "QuizLab"]);
+    await a.getByTestId("picker-filter").press("Escape");
+    await expect(a.getByTestId("project-picker")).toHaveCount(0);
+
+    await page.evaluate(() => window.fakeHost.removeProject("quiz"));
+    await a.getByTestId("mix-add").click();
+    await a.getByTestId("picker-filter").pressSequentially("quiz");
+    await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab"]);
+    await expect(a.getByTestId("picker-option")).toContainText("Archive");
+    await a.getByTestId("picker-filter").press("Escape");
+
+    await a.getByTestId("view-all").click();
+    await expect(row(a, "Add dark mode").getByTestId("hint-source")).toHaveText("QuizLab");
+    await a.getByTestId("filter-projects").click();
+    expect(await a.getByTestId("filter-option").evaluateAll((els) => els.map((el) => el.getAttribute("data-key")))).toEqual(["none", "pomade", "kit", "quiz-old", "school", "errands", "folder:old stuff"]);
+    await page.keyboard.press("Escape");
+    expect(await exists(page, "Tasks/QuizLab/2026-11-14-add-dark-mode.md")).toBe(true);
+    expect((await settings(page)).projectFolders?.quiz).toEqual({ folder: "QuizLab", name: "QuizLab", groupPath: ["Building tools", "Tools"] });
+  });
+
+  test("the active project removed: the panel falls back to the Workspace, its tasks under its last-seen name", async ({ page }) => {
+    const a = await openPanel(page, "quiz");
+    await expect.poll(async () => (await settings(page)).projectFolders?.quiz?.folder).toBe("QuizLab");
+    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab/");
+    await page.evaluate(() => window.fakeHost.removeProject("quiz"));
+    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/");
+    await expect.poll(() => sections(a)).toEqual(["none", "folder:old stuff", "pomade", "quiz"]);
+    expect(await sectionNames(a)).toEqual(["No project", "Old stuff", "Pomade", "QuizLab"]);
+    await expect(row(a, "Fix the score screen")).toBeVisible();
+    await shot(page, "t013-fake-planner-removed-active");
+  });
+
+  test("quick add's picker drops it while the overlay is open", async ({ page }) => {
+    await page.goto(harness({ surface: "overlay", route: "quick-add", project: "workspace" }));
+    const a = app(page);
+    await expect(a.getByTestId("qa-project-name")).toHaveText("No project");
+    const optionTexts = () => a.locator('[data-testid="picker-option"]').allTextContents();
+    await a.getByTestId("qa-project").press("ArrowDown");
+    expect(await optionTexts()).toEqual(["No project", "Building tools1", "Building tools › Tools2", "Archive1", "Life1", "Ungrouped1"]);
+    await page.keyboard.press("Escape");
+    await expect(a.getByTestId("project-picker")).toHaveCount(0);
+
+    await page.evaluate(() => window.fakeHost.removeProject("kit"));
+    await a.getByTestId("qa-project").press("ArrowDown");
+    await expect.poll(optionTexts).toEqual(["No project", "Building tools1", "Building tools › Tools1", "Archive1", "Life1", "Ungrouped1"]);
+    await page.keyboard.type("tools ›");
+    await page.keyboard.press("Enter");
+    await expect(a.getByTestId("picker-group")).toHaveText("Building tools › Tools");
+    await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab"]);
+  });
+});

@@ -352,6 +352,24 @@ test.describe("Workspace", () => {
     await rows.nth(1).click();
     await expect.poll(() => page.evaluate(() => window.fakeHost.openedTabs.at(-1))).toEqual({ kind: "app", projectId: "gamma", route: "board" });
   });
+
+  test("a project removed leaves the chooser at once", async ({ page }) => {
+    const app = await openBoard(page, "workspace");
+    const rows = app.getByTestId("chooser-project");
+    const ids = () => rows.evaluateAll((els) => els.map((e) => e.getAttribute("data-project")));
+    await expect.poll(ids).toEqual(["alpha", "gamma", "delta", "scale"]);
+    await page.evaluate(() => window.fakeHost.removeProject("gamma"));
+    await expect.poll(ids).toEqual(["alpha", "delta", "scale"]);
+  });
+
+  test("the tab's project removed: the tab falls back to the chooser", async ({ page }) => {
+    const app = await openBoard(page, "gamma");
+    await expect(app.getByTestId("board")).toHaveAttribute("data-project", "gamma");
+    await page.evaluate(() => window.fakeHost.removeProject("gamma"));
+    await expect(app.getByTestId("project-chooser")).toBeVisible();
+    await expect.poll(() => app.getByTestId("chooser-project").evaluateAll((els) => els.map((e) => e.getAttribute("data-project")))).toEqual(["alpha", "delta", "scale"]);
+    await shot(page, "t013-fake-board-removed-active");
+  });
 });
 
 test.describe("drag", () => {
