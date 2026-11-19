@@ -262,7 +262,11 @@ which the Today module, the views and the `today` command share.
   never back-filled. The Host API's file create is still the guard (a taken path is the note
   already there).
 - **Template:** the md file set in settings ("Daily note template", a workspace-relative path;
-  checked to be a readable `.md` file when saved). The note is the template with `type:
+  checked to be a readable `.md` file when saved). The path is typed, or picked with **Choose…** —
+  Pomade's file dialog (`files.pickFile`) in the tasks folder, `.md` files only: a pick fills the
+  field and saves, Cancel changes nothing; on a Pomade without the picker (`unknown-method`)
+  Choose… gives way to "This Pomade can't open a file picker — type the path." **Clear** returns
+  to no template. The note is the template with `type:
   daily-note` and `date:` first in its frontmatter, then the template's other keys with their
   bytes and order (its own `type`/`date` give way), then its body as it is; a template without
   frontmatter gets the app's block over its text. Until one is set, and whenever it is missing or
@@ -732,6 +736,7 @@ the Planner's own state (`app-state/pomade-planner/`).
 | Notice with click action, icon badge | `pomade:E-032` |
 | `pomade-planner today` on `PATH` | `pomade:E-028` |
 | Rule-8 banner when the app writes an open dirty file | `pomade:E-035` |
+| File picker for the daily-note template (`files.pickFile`) | `pomade:T-245` |
 | SDK, fake host | `pomade-kit:E-001` |
 | Field-only frontmatter write | `pomade-kit:E-002` |
 | Recurrence engine | `pomade-kit:E-003` |

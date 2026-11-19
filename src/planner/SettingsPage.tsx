@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type MouseEvent } from "react";
 import type { HostClient } from "pomade-kit/sdk";
 import { parseTime } from "pomade-kit/schedule";
 
-import { errorText } from "../core/host";
+import { errorText, isUnknownMethod } from "../core/host";
 import { dailyNoteText } from "./model/daily";
 import { formatBoundary, normalizeTemplatePath, PLANNER_KEYS, SYNCED_SETTINGS_PATH, type ParsedPlannerSettings } from "./model/settings";
 import { chooseTasksRoot } from "./Planner";
@@ -50,6 +50,8 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
   const { tasksRoot, dayBoundary, dailyNoteTemplate } = settings.settings;
   const [template, setTemplate] = useState(dailyNoteTemplate ?? "");
   const [templateError, setTemplateError] = useState<string | null>(null);
+  /** The Pomade has no file picker (`files.pickFile` is an unknown method): Choose… gives way to typing. */
+  const [noPicker, setNoPicker] = useState(false);
   const templateProblem = useTemplateProblem(host, dailyNoteTemplate);
   useEffect(() => setTemplate(dailyNoteTemplate ?? ""), [dailyNoteTemplate]);
   const [boundary, setBoundary] = useState(formatBoundary(dayBoundary));
@@ -95,10 +97,10 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
     );
   };
 
-  const saveTemplate = (e?: FormEvent) => {
-    e?.preventDefault();
+  /** Save `typed` as the template: empty = none; else a readable `.md` path in the workspace. */
+  const commitTemplate = (typed: string) => {
     setSaved(null);
-    const text = template.trim();
+    const text = typed.trim();
     if (text === "") {
       setTemplateError(null);
       setTemplate("");
@@ -137,6 +139,35 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
       }
     });
   };
+
+  const submitTemplate = (e?: FormEvent) => {
+    e?.preventDefault();
+    commitTemplate(template);
+  };
+
+  const chooseTemplate = () => {
+    setSaved(null);
+    setTemplateError(null);
+    void host.files.pickFile({ under: tasksRoot ?? "", extensions: ["md"] }).then(
+      ({ path }) => {
+        if (path === null) return;
+        setTemplate(path);
+        commitTemplate(path);
+      },
+      (err: unknown) => {
+        if (isUnknownMethod(err)) setNoPicker(true);
+        else setTemplateError(`Couldn't open the file picker: ${errorText(err)}`);
+      },
+    );
+  };
+
+  const clearTemplate = () => {
+    setTemplate("");
+    commitTemplate("");
+  };
+
+  /** A button beside the field acts without the field's blur saving first: what it does replaces what is typed. */
+  const keepFocus = (e: MouseEvent) => e.preventDefault();
 
   return (
     <main className="planner planner--tab" data-testid="planner-settings-page">
@@ -207,7 +238,7 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
                 A Markdown file anywhere in the workspace. Each day&apos;s note in Daily/ starts as a copy of it, with its type and date set. Empty: a date heading and an empty checklist.
               </p>
             </div>
-            <form className="settings__control" onSubmit={saveTemplate} noValidate>
+            <form className="settings__control" onSubmit={submitTemplate} noValidate>
               <input
                 id="daily-template"
                 className="field-input settings__file"
@@ -218,11 +249,25 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
                 spellCheck={false}
                 aria-invalid={templateError !== null}
                 onChange={(e) => setTemplate(e.target.value)}
-                onBlur={() => saveTemplate()}
+                onBlur={() => submitTemplate()}
               />
+              {noPicker ? null : (
+                <button type="button" className="btn btn--ghost" data-testid="settings-template-choose" onMouseDown={keepFocus} onClick={chooseTemplate}>
+                  Choose…
+                </button>
+              )}
+              {dailyNoteTemplate !== null ? (
+                <button type="button" className="btn btn--ghost" data-testid="settings-template-clear" onMouseDown={keepFocus} onClick={clearTemplate}>
+                  Clear
+                </button>
+              ) : null}
               {templateError !== null ? (
                 <p className="settings__error" role="alert" data-testid="settings-template-error">
                   {templateError}
+                </p>
+              ) : noPicker ? (
+                <p className="settings__help settings__note" role="status" data-testid="settings-template-no-picker">
+                  This Pomade can&apos;t open a file picker — type the path.
                 </p>
               ) : templateProblem !== null && dailyNoteTemplate !== null ? (
                 <p className="settings__warning" role="status" data-testid="settings-template-problem">

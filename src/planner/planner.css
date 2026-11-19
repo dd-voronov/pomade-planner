@@ -1136,10 +1136,14 @@
 }
 
 .settings__file {
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
+}
+
+.settings__note {
+  flex-basis: 100%;
 }
 
 .settings__warning {
