@@ -11,7 +11,8 @@ import { useProjectList } from "./useProjects";
 /**
  * The quick-add overlay (DESIGN §3.7): the frame Pomade opens over the active tab on the
  * Pomade-wide shortcut, whether or not the Planner was ever opened, and on the Planner panel's
- * **+** and Add button (`overlay.open`, the view's pre-fills in the route). Adding closes it
+ * **+** and Add button (`overlay.open` beside the panel, the view's pre-fills in the route). The
+ * form sizes the frame to itself (`useOverlayFit`). Adding closes it
  * (⇧⌘↵ also opens the new file); Escape (forwarded to Pomade) closes it. Focus then returns where
  * it was.
  */

@@ -1,6 +1,7 @@
+import { OVERLAY_DEFAULT_HEIGHT } from "pomade-kit/protocol";
 import { describe, expect, it } from "vitest";
 
-import { boardView, itemRoute, parseItemRoute, parseQuickAddRoute, plannerView, quickAddRoute, ROUTES } from "./views";
+import { boardView, itemRoute, parseItemRoute, parseQuickAddRoute, plannerView, QUICK_ADD_HEIGHT, quickAddOverlay, quickAddRoute, ROUTES } from "./views";
 
 describe("plannerView", () => {
   it.each([
@@ -55,6 +56,13 @@ describe("boardView", () => {
 });
 
 describe("quick-add routes", () => {
+  it("open the panel's overlay beside the panel, at the height of the form the type starts it on", () => {
+    expect(quickAddOverlay({ doOn: "today", kind: "task" })).toEqual({ route: "quick-add?do-on=today", height: 220, anchor: "panel" });
+    expect(quickAddOverlay({ doOn: "", kind: "recurring" })).toEqual({ route: "quick-add?type=recurring", height: 235, anchor: "panel" });
+    // A task's form is as tall as the frame Pomade's shortcut opens: ⌘⇧A never resizes it.
+    expect(QUICK_ADD_HEIGHT.task).toBe(OVERLAY_DEFAULT_HEIGHT);
+  });
+
   it("carry do-on and the type only when they aren't the shortcut's own", () => {
     expect(quickAddRoute({ doOn: "", kind: "task" })).toBe("quick-add");
     expect(quickAddRoute({ doOn: "today", kind: "task" })).toBe("quick-add?do-on=today");

@@ -257,8 +257,8 @@ test.describe("quick add", () => {
     await page.keyboard.type("3");
     await expect(a.getByTestId("qa-repeat-description")).toHaveText("monthly on the 5th, shows 3 days early · first Sat, Dec 5");
     await shot(page, "e005-fake-quick-add-recurring-overlay");
-    // Everything fits the 420×220 overlay: nothing scrolls or spills.
-    expect(await a.locator("html").evaluate(() => [document.documentElement.scrollHeight, document.documentElement.clientHeight, document.documentElement.scrollWidth, document.documentElement.clientWidth])).toEqual([220, 220, 420, 420]);
+    // The frame is the recurring form's 420×235: nothing scrolls or spills.
+    expect(await a.locator("html").evaluate(() => [document.documentElement.scrollHeight, document.documentElement.clientHeight, document.documentElement.scrollWidth, document.documentElement.clientWidth])).toEqual([235, 235, 420, 420]);
     expect(await a.getByTestId("quick-add-form").evaluate((f) => f.scrollHeight <= f.clientHeight)).toBe(true);
     await page.keyboard.press("Enter");
     await expect(page.locator("#stage iframe")).toHaveCount(0);
@@ -311,7 +311,7 @@ test.describe("quick add", () => {
     await expect(row(a, "Take out the bins").getByTestId("hint-next")).toHaveText("next Dec 3");
   });
 
-  test("from a 160px panel the + still opens the full 420×220 form: the repeat rows fit, nothing spills", async ({ page }) => {
+  test("from a 160px panel the + still opens the full 420-wide form: the repeat rows fit, nothing spills", async ({ page }) => {
     const a = await openPanel(page, { panelWidth: 160 });
     const o = await openQuickAdd(page, a);
     await o.getByTestId("qa-type-recurring").check();

@@ -265,10 +265,10 @@ test.describe("quick add", () => {
     expect(await page.evaluate(() => window.fakeHost.openedTabs)).toEqual([{ kind: "app", projectId: "alpha", route: "planner" }]);
   });
 
-  test("the panel's + opens quick add over the active tab: do-on today from Today, empty from All; Enter adds the task; focus back on +", async ({ page }) => {
+  test("the panel's + opens quick add beside the panel: do-on today from Today, empty from All; Enter adds the task; focus back on +", async ({ page }) => {
     const a = await openPanel(page);
     const o = await openQuickAdd(page, a);
-    expect(await page.evaluate(() => window.fakeHost.overlays.map((x) => x.route))).toEqual(["quick-add?do-on=today"]);
+    expect(await page.evaluate(() => window.fakeHost.overlays)).toEqual([{ route: "quick-add?do-on=today", height: 220, anchor: "panel" }]);
     await expect(o.getByTestId("qa-do-on")).toHaveValue("today");
     await expect(o.getByTestId("qa-do-on-resolved")).toHaveText("Tue, Nov 17");
     await page.keyboard.type("Call the bank");

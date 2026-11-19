@@ -8,6 +8,7 @@
 import { expect, test, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
 import { APP_PORT, HARNESS_PORT } from "../playwright.config";
+import { QUICK_ADD_HEIGHT } from "../src/core/views";
 import { openAddForm, overlay, quickAdded, row, settled, titles } from "./fixtures/planner";
 import { shot } from "./fixtures/screens";
 
@@ -39,7 +40,7 @@ function harness(open: Open): string {
 const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const overlaysOpened = (page: Page) => page.evaluate(() => window.fakeHost.overlays.length);
-const overlayRoutes = (page: Page) => page.evaluate(() => window.fakeHost.overlays.map((o) => o.route));
+const overlaysAsked = (page: Page) => page.evaluate(() => window.fakeHost.overlays);
 const openedTabs = (page: Page) => page.evaluate(() => window.fakeHost.openedTabs);
 
 async function openPlanner(page: Page, open: Open): Promise<FrameLocator> {
@@ -264,10 +265,10 @@ test.describe("the add form in place, in the tab", () => {
 });
 
 test.describe("the panel adds in the overlay", () => {
-  test("the panel's + and its Add button open the overlay with the view's pre-fills in the route — never a form in the panel; Escape gives the focus back to the button that opened it", async ({ page }) => {
+  test("the panel's + and its Add button open the overlay beside the panel at its form's height, the view's pre-fills in the route — never a form in the panel; Escape gives the focus back to the button that opened it", async ({ page }) => {
     const a = await openPlanner(page, { surface: "panel", fixture: "planner", tasks: "Chores", now: "2026-12-02T10:00" });
     const o = overlay(page);
-    const routes: string[] = [];
+    const asked: { route: string; height: number; anchor: string }[] = [];
     for (const [view, label, route, kind, doOn] of [
       ["today", "Add task", "quick-add?do-on=today", "task", ["today"]],
       ["project", "Add task", "quick-add", "task", [""]],
@@ -280,9 +281,12 @@ test.describe("the panel adds in the overlay", () => {
       expect(await button.evaluate((b) => b.closest('[data-testid="add-foot"]')?.previousElementSibling?.getAttribute("data-testid"))).toBe(`list-${view}`);
       for (const opener of [button, a.getByTestId("planner-add")]) {
         await opener.click();
-        routes.push(route);
-        await expect.poll(() => overlayRoutes(page)).toEqual(routes);
+        asked.push({ route, height: QUICK_ADD_HEIGHT[kind], anchor: "panel" });
+        await expect.poll(() => overlaysAsked(page)).toEqual(asked);
         await expect(o.getByTestId("qa-title")).toBeFocused();
+        // It opened at its form's height: the form never resizes it.
+        expect(await o.getByTestId("quick-add-form").evaluate((f) => [window.innerHeight, f.getBoundingClientRect().height])).toEqual([QUICK_ADD_HEIGHT[kind], QUICK_ADD_HEIGHT[kind]]);
+        expect(await page.evaluate(() => window.fakeHost.overlayResizes)).toEqual([]);
         await expect(o.getByTestId(`qa-type-${kind}`)).toBeChecked();
         expect(await o.getByTestId("qa-do-on").evaluateAll((fields) => fields.map((f) => (f as HTMLInputElement).value))).toEqual(doOn);
         await expect(a.getByTestId("add-form")).toHaveCount(0);
@@ -522,44 +526,88 @@ test.describe("keyboard", () => {
 });
 
 test.describe("the overlay", () => {
-  test("Details stands under the fields; a task, a note and a thought fit the 420×220 frame without scrolling, a recurring item's fields scroll inside it", async ({ page }) => {
+  /** The overlay frame's height and the form's, in the stage's frame (the ⌘⇧A overlay). */
+  const heights = (a: FrameLocator) => a.getByTestId("quick-add-form").evaluate((f) => ({ frame: window.innerHeight, form: f.getBoundingClientRect().height }));
+  const resizes = (page: Page) => page.evaluate(() => window.fakeHost.overlayResizes);
+  const fits = (el: Locator) => el.evaluate((node) => node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth);
+
+  test("each type sizes the frame to its form: ⌘⇧A's 220 px is a task's, the others resize it; nothing scrolls inside", async ({ page }) => {
     await page.goto(harness({ surface: "overlay" }));
     const a = app(page);
     await expect(a.getByTestId("qa-title")).toBeFocused();
     const form = a.getByTestId("quick-add-form");
-    const body = a.locator(".qa__body");
-    const fits = (el: Locator) => el.evaluate((node) => node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth);
-    for (const kind of ["task", "note", "thought", "daily-note"] as const) {
+    expect(await heights(a)).toEqual({ frame: 220, form: 220 });
+    expect(await resizes(page)).toEqual([]);
+    for (const kind of ["recurring", "note", "thought", "daily-note", "task"] as const) {
       await a.getByTestId(`qa-type-${kind}`).check();
-      await expect(a.getByTestId("qa-details")).toHaveCount(kind === "daily-note" ? 0 : 1);
+      await expect.poll(() => heights(a)).toEqual({ frame: QUICK_ADD_HEIGHT[kind], form: QUICK_ADD_HEIGHT[kind] });
       expect(await fits(form)).toBe(true);
-      expect(await fits(body)).toBe(true);
+      expect(await fits(a.locator(".qa__body"))).toBe(true);
+      expect(await a.locator("html").evaluate((h) => h.scrollHeight <= h.clientHeight)).toBe(true);
+      await expect(form).not.toHaveAttribute("data-fill");
       await shot(page, `e008-fake-overlay-${kind}`);
     }
-    await a.getByTestId("qa-type-recurring").check();
-    expect(await fits(form)).toBe(true);
-    await a.getByTestId("qa-details").focus();
-    expect(await insideFrame(a.getByTestId("qa-details"))).toBe(true);
-    await shot(page, "e008-fake-overlay-recurring");
+    expect(await resizes(page)).toEqual([235, 205, 189, 171, 220]);
   });
 
-  test("Details in the overlay grows into what the frame leaves, then scrolls inside; ⌘↵ adds with the body and closes", async ({ page }) => {
+  test("Details grows the frame a line at a time and never scrolls; clearing it shrinks the frame; at Pomade's cap Details scrolls inside, the keys in view; ⌘↵ adds with the body", async ({ page }) => {
     await page.goto(harness({ surface: "overlay" }));
     const a = app(page);
     await a.getByTestId("qa-title").fill("Buy a lamp");
     await a.getByTestId("qa-type-note").check();
+    await expect.poll(() => heights(a)).toEqual({ frame: 205, form: 205 });
     const details = a.getByTestId("qa-details");
-    await details.fill("one\ntwo\nthree\nfour\nfive\nsix");
     const form = a.getByTestId("quick-add-form");
-    expect(await form.evaluate((f) => f.scrollHeight <= f.clientHeight)).toBe(true);
-    expect(await details.evaluate((el) => el.getBoundingClientRect().height >= 28 && el.scrollHeight > el.clientHeight)).toBe(true);
-    expect(await insideFrame(details)).toBe(true);
-    expect(await a.locator(".qa__foot").evaluate((el) => el.getBoundingClientRect().bottom <= window.innerHeight)).toBe(true);
+    // Any scroll of Details while the frame catches up would be a jump of its text.
+    await details.evaluate((el) => el.addEventListener("scroll", () => el.setAttribute("data-scrolled", "")));
+    await details.click();
+    await page.keyboard.type("one");
+    for (const [n, word] of [[2, "two"], [3, "three"], [4, "four"]] as const) {
+      await page.keyboard.press("Enter");
+      await page.keyboard.type(word);
+      await expect.poll(() => heights(a)).toEqual({ frame: 205 + 16 * (n - 1), form: 205 + 16 * (n - 1) });
+      expect(await fits(details)).toBe(true);
+    }
+    await expect(details).not.toHaveAttribute("data-scrolled");
+    await expect(form).not.toHaveAttribute("data-fill");
+    expect(await insideFrame(a.getByTestId("qa-keys"))).toBe(true);
     await shot(page, "e008-fake-overlay-details");
-    await details.press("Enter");
-    await expect(details).toHaveValue("one\ntwo\nthree\nfour\nfive\nsix\n");
+    await details.fill("");
+    await expect.poll(() => heights(a)).toEqual({ frame: 205, form: 205 });
+    expect(await resizes(page)).toEqual([205, 221, 237, 253, 205]);
+
+    // Past the cap (60% of the 720 px window: 432): the form fills the frame, Details gives way and scrolls inside.
+    await details.fill(Array.from({ length: 30 }, (_, i) => `line ${i + 1}`).join("\n"));
+    await expect(form).toHaveAttribute("data-fill");
+    expect(await heights(a)).toEqual({ frame: 432, form: 432 });
+    expect(await details.evaluate((el) => el.getBoundingClientRect().height >= 28 && el.scrollHeight > el.clientHeight)).toBe(true);
+    expect(await fits(a.locator(".qa__body"))).toBe(true);
+    await details.press("End");
+    expect(await insideFrame(details)).toBe(true);
+    expect(await insideFrame(a.getByTestId("qa-keys"))).toBe(true);
+    await shot(page, "e008-fake-overlay-details-capped");
+    await details.fill("one\ntwo");
+    await expect(form).not.toHaveAttribute("data-fill");
+    await expect.poll(() => heights(a)).toEqual({ frame: 221, form: 221 });
     await details.press("Meta+Enter");
     await expect(page.locator("#stage iframe")).toHaveCount(0);
-    expect(await fileText(page, "Tasks/2026-11-17-buy-a-lamp.md")).toBe("---\ntype: note\ntitle: Buy a lamp\nstatus: open\ncreated: 2026-11-17\n---\none\ntwo\nthree\nfour\nfive\nsix\n");
+    expect(await fileText(page, "Tasks/2026-11-17-buy-a-lamp.md")).toBe("---\ntype: note\ntitle: Buy a lamp\nstatus: open\ncreated: 2026-11-17\n---\none\ntwo\n");
+  });
+
+  test("the project picker takes the form's place in the frame as it is: no resize while it is open", async ({ page }) => {
+    await page.goto(harness({ surface: "overlay", fixture: "planner" }));
+    const a = app(page);
+    await a.getByTestId("qa-type-recurring").check();
+    await expect.poll(() => heights(a)).toEqual({ frame: 235, form: 235 });
+    await a.getByTestId("qa-project").click();
+    await expect(a.locator(".project-picker")).toBeVisible();
+    await page.keyboard.type("o");
+    expect(await heights(a)).toEqual({ frame: 235, form: 235 });
+    expect(await a.locator(".project-picker").evaluate((el) => el.getBoundingClientRect().bottom <= window.innerHeight)).toBe(true);
+    await shot(page, "e008-fake-overlay-picker");
+    await page.keyboard.press("Escape");
+    await expect(a.getByTestId("qa-title")).toBeVisible();
+    await expect.poll(() => heights(a)).toEqual({ frame: 235, form: 235 });
+    expect(await resizes(page)).toEqual([235]);
   });
 });

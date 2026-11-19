@@ -153,6 +153,7 @@ function Details({ value, onChange }: { value: string; onChange: (v: string) => 
     <textarea
       ref={el}
       className="field-input qa__details"
+      data-fit-scroll
       data-testid="qa-details"
       rows={1}
       value={value}
@@ -278,7 +279,7 @@ export function ItemFields({ draft, onChange, check, groups, chosen, picking, on
           onCancel={closePicker}
         />
       ) : null}
-      <div className="qa__body" hidden={picking !== null}>
+      <div className="qa__body" data-fit-scroll hidden={picking !== null}>
         <div className="qa__title-line">
           {edit?.beforeTitle}
           <input

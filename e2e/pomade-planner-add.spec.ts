@@ -3,8 +3,10 @@
 // inside the tab's frame, never Pomade's overlay; a task added with three lines of markdown in
 // Details is a file with the usual frontmatter and exactly those lines as its body; ⌥Tab walks the
 // five types with the caret in the title, and Tab goes round the form's fields without Pomade's
-// focus ever leaving the frame — in place and in the overlay of ⌘⇧A; the panel's + and Add button
-// open the overlay with the view's pre-fills, and Esc gives the focus back to the one that opened it.
+// focus ever leaving the frame — in place and in the overlay of ⌘⇧A; the overlay is as tall as its
+// form and grows with Details (T-007); the panel's + and Add button open it beside the panel with the
+// view's pre-fills, and Esc gives the focus back to the one that opened it — also when the Planner
+// tab had the focus.
 
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -12,6 +14,7 @@ import { join, resolve } from "node:path";
 
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
+import { QUICK_ADD_HEIGHT } from "../src/core/views";
 import { frameShown } from "./fixtures/frames";
 import { quickAdded, row, settled } from "./fixtures/planner";
 import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
@@ -39,6 +42,8 @@ test.describe("adding in place and in the overlay in a real Pomade", () => {
   const overlay = (): FrameLocator => page.frameLocator(`[data-testid="${OVERLAY_FRAME}"]`);
   /** The test id of the element Pomade's own document has its focus on: the frame the keys go to. */
   const pomadeFocus = () => page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
+  /** The overlay frame's height and its form's: equal when the frame is sized to the form. */
+  const heights = () => overlay().locator("form").evaluate((f) => ({ frame: window.innerHeight, form: f.getBoundingClientRect().height }));
   /** The test id of the element `frame`'s document has its focus on. */
   const focusIn = (frame: FrameLocator) => frame.locator("html").evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.testid ?? null);
 
@@ -202,18 +207,57 @@ test.describe("adding in place and in the overlay in a real Pomade", () => {
     await walkTypes(o);
     await walkFields(o, OVERLAY_FRAME);
     await expect(o.getByTestId("qa-do-on")).toHaveValue("");
+    expect(await heights()).toEqual({ frame: QUICK_ADD_HEIGHT.task, form: QUICK_ADD_HEIGHT.task });
     await o.getByTestId("qa-details").focus();
     await page.keyboard.type("one");
     await page.keyboard.press("Enter");
     await page.keyboard.type("two");
     await expect(page.getByTestId("app-overlay")).toBeVisible();
+    // Details' second line grows the frame by a line; nothing scrolls inside it.
+    await expect.poll(heights).toEqual({ frame: QUICK_ADD_HEIGHT.task + 16, form: QUICK_ADD_HEIGHT.task + 16 });
     expect(await o.locator("form").evaluate((f) => f.scrollHeight <= f.clientHeight && f.scrollWidth <= f.clientWidth)).toBe(true);
     expect(await o.locator(".qa__body").evaluate((b) => b.scrollHeight <= b.clientHeight)).toBe(true);
+    expect(await o.getByTestId("qa-details").evaluate((d) => d.scrollHeight <= d.clientHeight && d.scrollTop === 0)).toBe(true);
+    // The card is the frame under its handle.
+    expect((await page.getByTestId("app-overlay-card").boundingBox())?.height).toBe(QUICK_ADD_HEIGHT.task + 16 + 14 + 2);
+    await o.getByTestId("qa-details").fill("");
+    await expect.poll(heights).toEqual({ frame: QUICK_ADD_HEIGHT.task, form: QUICK_ADD_HEIGHT.task });
+    await page.keyboard.type("one");
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("two");
+    await expect.poll(heights).toEqual({ frame: QUICK_ADD_HEIGHT.task + 16, form: QUICK_ADD_HEIGHT.task + 16 });
     await shot(page, "e008-pomade-overlay-details");
     await page.keyboard.press("Meta+Enter");
     await expect(page.getByTestId("app-overlay")).toHaveCount(0);
     await expect.poll(() => read("2026-11-17-wal-k.md")).toBe(quickAdded({ title: "Wal!k", created: "2026-11-17", body: "one\ntwo\n" }));
     expect(await pomadeFocus()).toBe(TAB_FRAME);
+  });
+
+  test("with the Planner tab focused, the panel's + opens the overlay beside the panel at its form's height; Recurring grows it; Esc gives the focus back to +", async () => {
+    await view(tab(), "today");
+    expect(await pomadeFocus()).toBe(TAB_FRAME);
+    const p = await openPanel();
+    await view(p, "today");
+    await view(tab(), "today");
+    expect(await pomadeFocus()).toBe(TAB_FRAME);
+    await p.getByTestId("planner-add").click();
+    await expect(page.getByTestId("app-overlay")).toBeVisible();
+    const o = overlay();
+    await expect(o.getByTestId("qa-title")).toBeFocused();
+    expect(await heights()).toEqual({ frame: QUICK_ADD_HEIGHT.task, form: QUICK_ADD_HEIGHT.task });
+    // Beside the panel: the pane area's top corner next to the side column.
+    const column = await page.getByTestId("side-column").boundingBox();
+    const card = await page.getByTestId("app-overlay-card").boundingBox();
+    expect(card?.x).toBe((column?.x ?? 0) + (column?.width ?? 0) + 16);
+    await shot(page, "t007-pomade-panel-overlay-beside");
+    await o.getByTestId("qa-type-recurring").check();
+    await expect.poll(heights).toEqual({ frame: QUICK_ADD_HEIGHT.recurring, form: QUICK_ADD_HEIGHT.recurring });
+    expect(await o.locator(".qa__body").evaluate((b) => b.scrollHeight <= b.clientHeight)).toBe(true);
+    await shot(page, "t007-pomade-panel-overlay-recurring");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("app-overlay")).toHaveCount(0);
+    await expect.poll(pomadeFocus).toBe(PANEL_FRAME);
+    await expect(p.getByTestId("planner-add")).toBeFocused();
   });
 
   test("the panel's + and Add button open the overlay with the view's pre-fills, never a form in the panel; Esc gives the focus back to the button that opened it", async () => {
@@ -230,6 +274,7 @@ test.describe("adding in place and in the overlay in a real Pomade", () => {
       await expect(page.getByTestId("app-overlay")).toBeVisible();
       await expect(o.getByTestId("qa-title")).toBeFocused();
       await expect(o.getByTestId("qa-type-recurring")).toBeChecked();
+      expect(await heights()).toEqual({ frame: QUICK_ADD_HEIGHT.recurring, form: QUICK_ADD_HEIGHT.recurring });
       await expect(p.getByTestId("add-form")).toHaveCount(0);
       await shot(page, `e008-pomade-panel-${opener}-overlay`);
       await page.keyboard.press("Escape");

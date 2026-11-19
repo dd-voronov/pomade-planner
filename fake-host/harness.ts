@@ -12,14 +12,15 @@
 // (`manual`: the frame is mounted only when a spec calls `window.mountNow()`, after it changed
 // the fake workspace — what the app finds when it opens). The frame is
 // sized like its Pomade surface: a tab fills the stage, a panel is 240px wide (`panelWidth` to
-// change it), an overlay is 420×220 over a scrim. An overlay the app opens itself
-// (`overlay.open`, the Planner's +) is mounted as Pomade mounts it: a fresh 420×220 frame at its
-// route in `#overlay`, over the stage under a scrim; Escape, `overlay.close` or a click on the
-// scrim removes it and gives focus back to the frame that opened it. `window.fakeHost`,
-// `window.mounted` and `window.overlayFrame` are there for specs and the console.
+// change it), an overlay is 420 wide and 220 high over a scrim until the app sizes it: the
+// height `overlay.open` or `overlay.resize` asks for, clamped as Pomade clamps it (`frameHeight`).
+// An overlay the app opens itself (`overlay.open`, the Planner's +) is mounted as Pomade mounts it:
+// a fresh frame at its route in `#overlay`, over the stage under a scrim; Escape, `overlay.close`
+// or a click on the scrim removes it and gives focus back to the frame that opened it.
+// `window.fakeHost`, `window.mounted` and `window.overlayFrame` are there for specs and the console.
 
 import { createFakeHost, mountApp, type FakeHost, type FrameOptions, type MountedApp } from "pomade-kit/fake-host";
-import type { JsonValue, Surface } from "pomade-kit/protocol";
+import { OVERLAY_DEFAULT_HEIGHT, type JsonValue, type Surface } from "pomade-kit/protocol";
 
 import boardManifest from "../apps/board/public/manifest.json" with { type: "json" };
 import plannerManifest from "../apps/planner/public/manifest.json" with { type: "json" };
@@ -153,8 +154,20 @@ const overlayLayer = document.getElementById("overlay");
 if (!overlayLayer) throw new Error("fake host: index.html lacks #overlay");
 const layer: HTMLElement = overlayLayer;
 const appUrl: string = app;
+/** The overlay frame's height for `requested`, as Pomade clamps it: whole pixels from 120 to 60% of
+ *  the pane area (the window here), never so tall that the card (a 14px handle, a 1px border) loses
+ *  its 16px margins. */
+function frameHeight(requested: number | undefined): number {
+  const pane = window.innerHeight;
+  const cap = Math.max(120, Math.min(Math.floor(pane * 0.6), pane - 2 * 16 - 14 - 2));
+  return Math.min(cap, Math.max(120, Math.round(requested ?? OVERLAY_DEFAULT_HEIGHT)));
+}
+
+/** The overlay frame on screen: the one the app opened, or the stage's on `surface=overlay`. */
+const overlayIframe = (): HTMLIFrameElement | undefined => window.overlayFrame?.iframe ?? (surface === "overlay" ? window.mounted?.iframe : undefined);
+
 /** Pomade's overlay for `overlay.open`: one at a time, a fresh frame per open; closing gives focus back to the stage's frame. */
-function openOverlay(at: string): void {
+function openOverlay(at: string, height: number | undefined): void {
   window.overlayFrame?.close();
   const opener = window.mounted?.iframe;
   const close = () => {
@@ -164,6 +177,7 @@ function openOverlay(at: string): void {
   };
   layer.hidden = false;
   window.overlayFrame = mountApp(window.fakeHost, { src: appUrl, surface: "overlay", route: at, parent: layer, onClose: close });
+  window.overlayFrame.iframe.style.height = `${frameHeight(height)}px`;
   window.overlayFrame.iframe.focus();
 }
 layer.addEventListener("click", (e) => {
@@ -176,6 +190,13 @@ layer.addEventListener("click", (e) => {
 const recorded = window.fakeHost.overlays;
 recorded.push = (...opened) => {
   const n = Array.prototype.push.apply(recorded, opened);
-  for (const o of opened) openOverlay(o.route);
+  for (const o of opened) openOverlay(o.route, o.height);
+  return n;
+};
+const resized = window.fakeHost.overlayResizes;
+resized.push = (...heights) => {
+  const n = Array.prototype.push.apply(resized, heights);
+  const frame = overlayIframe();
+  for (const h of heights) if (frame) frame.style.height = `${frameHeight(h)}px`;
   return n;
 };

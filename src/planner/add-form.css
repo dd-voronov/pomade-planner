@@ -1,4 +1,4 @@
-/* The add form's two placements — Pomade's overlay frame, which it fills, and the foot of a list
+/* The add form's two placements — Pomade's overlay frame, sized to the form, and the foot of a list
    in the Planner tab — its Details field, the lists' Add button, and an added row's mark. The fields
    themselves are styled in planner.css. */
 
@@ -36,24 +36,39 @@
   resize: none;
 }
 
-/* ── In the overlay (418×218): the fields take what the head and the foot leave ── */
+/* ── In the overlay: as tall as its fields; Pomade sizes the frame to it (overlay-fit.ts) ── */
 
 .qa--overlay {
   gap: 6px;
-  height: 100%;
   padding: 10px 16px 8px;
 }
 
-.qa--overlay .qa__main {
+/* A whole-pixel head, two pixels clear of the title: a task's form is 220 px — the frame Pomade's
+   ⌘⇧A opens at, so it opens at its size. */
+.qa--overlay .qa__head {
+  flex: none;
+  height: 21px;
+}
+
+/* Capped by Pomade, or the project picker in the fields' place: the form fills the frame, and what
+   it holds back scrolls — Details gives way first, down to its one line, then the fields. The margin
+   keeps a focus ring whole at the edge. */
+.qa--overlay[data-fill] {
+  height: 100%;
+}
+
+.qa--overlay[data-fill] .qa__main {
   flex: 1;
 }
 
-/* The fields scroll when a type's own don't fit; the margin keeps a focus ring whole at the edge. */
 .qa--overlay .qa__body {
-  flex: 1;
   gap: 6px;
   margin: -3px;
   padding: 3px;
+}
+
+.qa--overlay[data-fill] .qa__body {
+  flex: 1;
   overflow-y: auto;
 }
 
@@ -61,7 +76,6 @@
   flex-shrink: 0;
 }
 
-/* Details' cap here is what the frame leaves: it gives way first, down to its one line. */
 .qa--overlay .qa__body > .qa__details {
   flex-shrink: 1;
   max-height: none;

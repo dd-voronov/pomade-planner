@@ -4,7 +4,7 @@ import { FILES_DELETE_MAX_PATHS, type JsonValue } from "pomade-kit/protocol";
 
 import { EmptyState } from "../core/EmptyState";
 import { errorText, useActiveProject } from "../core/host";
-import { itemRoute, quickAddRoute, ROUTES, type QuickAddPrefill } from "../core/views";
+import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
 import { dailyNotePath } from "./model/daily";
 import { allHints, dayHeading, displayTitle, recurringHints, shortDate, todayHints, type Hint } from "./model/labels";
@@ -710,11 +710,11 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
 
   /** What an add starts with here (DESIGN §3.7); the project is the context's on every path. */
   const prefill: QuickAddPrefill = { doOn: view.view === "today" ? "today" : "", kind: view.view === "recurring" ? "recurring" : "task" };
-  /** Adding from **+** or the Add button: in place in the tab; from the panel, too narrow for the form, in the overlay over the active tab. */
+  /** Adding from **+** or the Add button: in place in the tab; from the panel, too narrow for the form, in the overlay beside it, at the form's height. */
   const openAdd = (from: HTMLElement) => {
     setError(null);
     if (surface === "tab") add.open(from);
-    else void host.overlay.open({ route: quickAddRoute(prefill) }).catch((e: unknown) => setError(`Couldn't open quick add: ${errorText(e)}`));
+    else void host.overlay.open(quickAddOverlay(prefill)).catch((e: unknown) => setError(`Couldn't open quick add: ${errorText(e)}`));
   };
   /** The item the add form just made, once its file is read: where it shows. */
   const addedPath = add.state.kind === "added" ? add.state.added.path : null;
