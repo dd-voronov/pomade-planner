@@ -11,7 +11,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
 import { quickAdded, row, setClock, settled, ticked, titles } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, queuePickerAnswers, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -89,9 +89,7 @@ test.describe("the Planner in a real Pomade", () => {
     await expect(p.getByTestId("view-title")).toHaveText("Where should your tasks live?");
     await shot(page, "e003-pomade-onboarding");
     const chosen = await realpath(abs(TODOS));
-    await app?.evaluate((_, folder) => {
-      (globalThis as { __pomadePickFolder?: unknown }).__pomadePickFolder = { answers: [folder], requests: [] };
-    }, chosen);
+    await queuePickerAnswers(app, [chosen]);
     await p.getByTestId("choose-tasks-root").click();
     await expect(p.getByTestId("today-empty")).toBeVisible();
     expect(JSON.parse(await readFile(abs("Apps/pomade-planner/settings.json"), "utf8"))).toEqual({ tasksRoot: TODOS });

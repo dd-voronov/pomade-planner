@@ -6,13 +6,13 @@
 // written. The checkout is only read: it must already hold a build (`out/main/index.js`) and its
 // Electron (`node_modules/electron`). Every launch is closed by the spec that made it.
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
-import { _electron as electron, expect, type ElectronApplication, type Page } from "@playwright/test";
+import { _electron as electron, expect, type ElectronApplication, type Locator, type Page } from "@playwright/test";
 
 import { pomadeDir } from "../../scripts/pomade-dir.mjs";
 import { frameShown } from "./frames";
@@ -164,4 +164,52 @@ export async function launchPomade(
 export async function panelShown(page: Page, icon: string): Promise<void> {
   await expect(page.getByTestId(icon)).toHaveAttribute("aria-pressed", "true");
   await frameShown(page);
+}
+
+/** The checkout's HOST-API: the contract its build implements, which says what that build already does. */
+const HOST_API = readFileSync(join(POMADE_DIR, "docs/HOST-API.md"), "utf8");
+
+/**
+ * Whether this Pomade build draws an app's one-colour SVG icon in its own colours, as it draws
+ * Files and Git (`pomade:T-244`; HOST-API §1 "Icon images"). A build before it shows the icon as
+ * an image.
+ */
+export const TINTED_APP_ICONS = HOST_API.includes("Pomade draws such an icon in its own colours");
+
+/** Whether a reinstall that renames a strip icon retitles the tab opened from it (`pomade:T-244`; HOST-API §1). */
+export const REINSTALL_RETITLES_TABS = HOST_API.includes("a reinstall that renames the icon retitles the open tab");
+
+/**
+ * The icon of app `appId` inside `container` (a strip icon, a new-tab menu row) shows the image at
+ * `url`: drawn as a mask of that image filled with the text colour around it, so it follows
+ * hover, selection and theme — or, before `pomade:T-244`, as the image itself.
+ */
+export async function expectAppIcon(container: Locator, appId: string, url: string): Promise<void> {
+  const icon = container.getByTestId(`app-icon-${appId}`);
+  if (!TINTED_APP_ICONS) {
+    await expect(icon).toHaveAttribute("src", url);
+    return;
+  }
+  await expect
+    .poll(() =>
+      icon.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return { mask: style.maskImage, fill: style.backgroundColor === style.color };
+      }),
+    )
+    .toEqual({ mask: `url("${url}")`, fill: true });
+}
+
+/**
+ * Queue the user's answers (absolute paths, `null` = cancel) for Pomade's folder and file pickers,
+ * through its testing hook (Pomade's CONTRACTS "Testing hooks"): `__pomadePick`, or
+ * `__pomadePickFolder` on a build before `pomade:T-245`.
+ */
+export async function queuePickerAnswers(app: ElectronApplication | undefined, answers: (string | null)[]): Promise<void> {
+  if (app === undefined) throw new Error("Pomade is not running");
+  await app.evaluate((_electron, queued) => {
+    const hooks = globalThis as { __pomadePick?: unknown; __pomadePickFolder?: unknown };
+    hooks.__pomadePick = { answers: [...queued], requests: [] };
+    hooks.__pomadePickFolder = { answers: [...queued], requests: [] };
+  }, answers);
 }

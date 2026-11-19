@@ -11,7 +11,7 @@ import { expect, test, type ElectronApplication, type FrameLocator, type Page } 
 
 import { BROKEN_TICKET, SAMPLE_TICKETS, sampleBacklog, scaleBacklog, ticketFile, ticketPath, under } from "../test/fixtures/backlog";
 import { card, column, drag, idsIn, today, withStatus } from "./fixtures/board";
-import { createPomadeFixture, launchPomade, type PomadeFixture } from "./fixtures/pomade";
+import { createPomadeFixture, launchPomade, queuePickerAnswers, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/board");
@@ -244,9 +244,7 @@ test.describe("the Board in a real Pomade", () => {
     const b = await openBoard("beta");
     await expect(b.getByTestId("choose-backlog-state")).toContainText("Beta has no docs/roadmap/ folder.");
     await shot(page, "pomade-board-choose-backlog");
-    await app?.evaluate((_electron, answers) => {
-      (globalThis as { __pomadePickFolder?: unknown }).__pomadePickFolder = { answers, requests: [] };
-    }, [abs("Projects/beta/tickets")]);
+    await queuePickerAnswers(app, [abs("Projects/beta/tickets")]);
     await b.getByTestId("choose-backlog").click();
     await b.getByTestId("area-solutions").click();
     await expect(card(b, "E-010")).toBeVisible();

@@ -7,10 +7,10 @@ import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
+import { expect, test, type ElectronApplication, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
 import { shot } from "./fixtures/screens";
-import { BOARD_BUILD, BOTH_BUILDS, POMADE_BIN, createPomadeFixture, launchPomade, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { BOARD_BUILD, BOTH_BUILDS, POMADE_BIN, REINSTALL_RETITLES_TABS, TINTED_APP_ICONS, createPomadeFixture, expectAppIcon, launchPomade, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 
 const INSTALL_SCRIPT = resolve(import.meta.dirname, "../scripts/install-app.mjs");
 
@@ -26,10 +26,22 @@ function frame(page: Page, testId: string): FrameLocator {
 async function expectStripIcons(page: Page, boardTitle = "Board"): Promise<void> {
   await expect(page.getByTestId(ICON.planner)).toBeVisible();
   await expect(page.getByTestId(ICON.planner)).toHaveAttribute("aria-label", "Planner");
-  await expect(page.getByTestId(ICON.planner).locator("img")).toHaveAttribute("src", "pomade-app://pomade-planner/planner.svg");
+  await expectAppIcon(page.getByTestId(ICON.planner), "pomade-planner", "pomade-app://pomade-planner/planner.svg");
   await expect(page.getByTestId(ICON.board)).toBeVisible();
   await expect(page.getByTestId(ICON.board)).toHaveAttribute("aria-label", boardTitle);
-  await expect(page.getByTestId(ICON.board).locator("img")).toHaveAttribute("src", "pomade-app://pomade-board/board.svg");
+  await expectAppIcon(page.getByTestId(ICON.board), "pomade-board", "pomade-app://pomade-board/board.svg");
+}
+
+/**
+ * The colour an icon is drawn in once its button's colour transition has ended: a built-in glyph's
+ * stroke colour, a tinted app icon's fill.
+ */
+function inkOf(icon: Locator): Promise<string> {
+  return icon.evaluate(async (el) => {
+    const transitions = (el.closest("button") ?? el).getAnimations({ subtree: true });
+    await Promise.all(transitions.map((t) => t.finished.catch(() => undefined)));
+    return el instanceof SVGElement ? getComputedStyle(el).color : getComputedStyle(el).backgroundColor;
+  });
 }
 
 /** Board icon → a "Board" tab showing the Board, and the Needs-you panel; Planner icon → the Planner panel. */
@@ -81,6 +93,33 @@ test.describe("dev-linked into a real Pomade", () => {
     await expectStripIcons(page);
     await shot(page, "pomade-devlink-strip");
     await expectSurfaces(page, "pomade-devlink");
+  });
+
+  test("the strip icons are drawn in Pomade's colours: idle like Git, hovered like a hovered Git, selected like a selected Files", async () => {
+    test.skip(!TINTED_APP_ICONS, "a Pomade build before pomade:T-244 shows an app icon as its image"); // eslint-disable-line playwright/no-skipped-test -- not built before pomade:T-244
+    const files = page.getByTestId("strip-files");
+    const git = page.getByTestId("strip-git");
+    const planner = page.getByTestId(ICON.planner).getByTestId("app-icon-pomade-planner");
+    const board = page.getByTestId(ICON.board).getByTestId("app-icon-pomade-board");
+    await files.click();
+    await expect(files).toHaveAttribute("aria-pressed", "true");
+    await page.mouse.move(0, 0);
+    const filesSelected = await inkOf(files.locator("svg"));
+    const idle = await inkOf(git.locator("svg"));
+    expect(filesSelected).not.toBe(idle);
+    await expect.poll(() => inkOf(planner)).toBe(idle);
+    await expect.poll(() => inkOf(board)).toBe(idle);
+
+    await git.hover();
+    const hovered = await inkOf(git.locator("svg"));
+    await page.getByTestId(ICON.board).hover();
+    await expect.poll(() => inkOf(board)).toBe(hovered);
+
+    await page.getByTestId(ICON.planner).click();
+    await expect(page.getByTestId(ICON.planner)).toHaveAttribute("aria-pressed", "true");
+    await page.mouse.move(0, 0);
+    await expect.poll(() => inkOf(planner)).toBe(filesSelected);
+    await shot(page, "pomade-devlink-strip-selected");
   });
 
   test("in a dark system appearance the apps stay light, like Pomade", async () => {
@@ -150,5 +189,12 @@ test.describe("installed into a real Pomade", () => {
     await page.getByTestId(ICON.planner).click();
     await expect(frame(page, PANEL.planner).getByTestId("view-planner-panel")).toBeVisible();
     await shot(page, "pomade-installed-after-update");
+  });
+
+  test("the Board tab opened from the renamed strip icon takes the icon's new title", async () => {
+    test.skip(!REINSTALL_RETITLES_TABS, "a Pomade build before pomade:T-244 keeps an open tab's title"); // eslint-disable-line playwright/no-skipped-test -- not built before pomade:T-244
+    const tabs = page.getByTestId("tabstrip").getByRole("tab");
+    await expect(tabs.filter({ hasText: "Board (updated)" })).toHaveCount(1);
+    await expect(tabs.filter({ hasText: /^Board$/ })).toHaveCount(0);
   });
 });

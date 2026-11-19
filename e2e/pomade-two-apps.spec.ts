@@ -11,7 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type Page } from "@playwright/test";
 
 import { settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type FixtureProject, type PomadeFixture } from "./fixtures/pomade";
+import { POMADE_BIN, createPomadeFixture, expectAppIcon, launchPomade, panelShown, pomadeEnv, type FixtureProject, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const INSTALL_SCRIPT = resolve(import.meta.dirname, "../scripts/install-app.mjs");
@@ -138,8 +138,8 @@ test.describe("both apps installed", () => {
     await page.locator('[data-testid="tab-add"]:visible').click();
     await expect(page.getByTestId(PLANNER.menu)).toContainText("Planner");
     await expect(page.getByTestId(BOARD.menu)).toContainText("Board");
-    await expect(page.getByTestId(PLANNER.menu).locator("img")).toHaveAttribute("src", "pomade-app://pomade-planner/planner.svg");
-    await expect(page.getByTestId(BOARD.menu).locator("img")).toHaveAttribute("src", "pomade-app://pomade-board/board.svg");
+    await expectAppIcon(page.getByTestId(PLANNER.menu), PLANNER.id, "pomade-app://pomade-planner/planner.svg");
+    await expectAppIcon(page.getByTestId(BOARD.menu), BOARD.id, "pomade-app://pomade-board/board.svg");
     await shot(page, "t004-pomade-new-tab-menu");
 
     await page.getByTestId(BOARD.menu).click();
