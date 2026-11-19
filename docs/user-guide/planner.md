@@ -1,0 +1,387 @@
+# Planner
+
+[← User guide](user-guide.md)
+
+The Planner keeps every item as one Markdown file in your tasks folder. It shows them in four views
+for the active Pomade project (or Workspace), in the side panel and in a tab. Every change on disk —
+from Pomade's editor, Obsidian, Finder, git or an agent — shows within about a second.
+
+- [Item types](#item-types)
+- [Where it shows: panel and tab](#where-it-shows-panel-and-tab)
+- [The views](#the-views)
+- [Adding items](#adding-items)
+- [Opening an item: the compact view](#opening-an-item-the-compact-view)
+- [Recurring tasks](#recurring-tasks)
+- [Daily notes](#daily-notes)
+- [Pins](#pins)
+- [Projects and mix-ins](#projects-and-mix-ins)
+- [Select mode: delete and archive](#select-mode-delete-and-archive)
+- [Attention: badge and morning summary](#attention-badge-and-morning-summary)
+- [The `pomade-planner today` command](#the-pomade-planner-today-command)
+
+## Item types
+
+| Type | What | Has | Done means |
+|---|---|---|---|
+| **Task** | something to do | checkbox, Do on, Deadline, Importance | ticked: `status: done`, `done-on` |
+| **Recurring** | a task that comes back | round checkbox, a repeat rule, a `## Log` | never done: done and skip move it to its next date |
+| **Note** | a quick drop, not a task | a page glyph, no dates | **Archive** moves it into `_archive/` |
+| **Thought** | something to think about later | a cloud glyph, no dates | **Resolve**: `status: resolved`, `done-on` |
+| **Daily note** | the note of one day | a calendar glyph, checklist progress ("5/8") | — |
+
+Notes, thoughts and daily notes never appear in Today, Project or Recurring — they live in All
+(today's daily note also as a card on the Workspace Today). Dates set on them by hand are ignored.
+Changing an item's `type:` in its file keeps the file and its text; the views show it as the new
+type with the next read.
+
+**Dates.** *Do on* is the day you plan to do it; *Deadline* is the day it is due. Both optional.
+**Importance** is a plain number, higher = more important; a row shows it as `!3`.
+
+**The day** runs from the day boundary (default 03:00, see [settings](settings.md#planner)) to the
+next. At 01:30 the Planner still shows the previous day. Ticked items stay crossed out until the
+boundary; unfinished planned items roll over.
+
+## Where it shows: panel and tab
+
+| | Panel (Planner icon) | Tab (**Open in tab**, or the new-tab menu) |
+|---|---|---|
+| Views | Today · Project · Recurring · All | the same, with more room |
+| Header | the views, **+** ("New task (⌘⇧A)"), **Open in tab**, **⋯** | the views, **+**, **Select** (All only), **Settings** (⚙) |
+| **⋯** menu | **Select items…** / **Stop selecting** (All only), **Settings…** (opens the tab on its settings page) | — |
+| **+** and **Add task** | open quick add as a floating form beside the panel | open the form in place, at the list's foot |
+| Click a row | opens the Planner tab with the item's compact view | opens the compact view beside the list |
+| Row excerpts | — | the first one or two lines of each item's text |
+
+When the panel is narrow the view switcher gives way step by step — counts first, then labels to
+glyphs, then one joined strip — and never drops a view. Every icon button has a tooltip: rest the
+pointer on it, or focus it with the keyboard.
+
+**Context.** The views follow the active Pomade project; clicking **Workspace** in Pomade's sidebar
+shows the Workspace. The line under the header names the day ("Tue, Nov 17") and the folder the
+context's items live in (`To-dos/QuizLab/`). The selected view is remembered per project.
+
+## The views
+
+| View | At Workspace | Inside a project |
+|---|---|---|
+| **Today** | the whole day: today's daily note as a card, workspace-level items, then every project's Today items under project headings | the project's Today items + mixed-in sources |
+| **Project** | every project's open tasks, under project headings | the project's open tasks (and ones ticked today) + mixed-in sources |
+| **Recurring** | every recurring item, under project headings | the project's recurring items + mixed-in sources |
+| **All** | every item of every type and project, with filters | the same — All always spans everything |
+
+Each view's tab shows its open count (Recurring: ended items left out; All: open items only, daily
+notes and archived items aside).
+
+**Order** inside every list: deadline, then Do on, then importance (highest first), then created; an
+unset value sorts after every set one; then title.
+
+**Headings.** "No project" first, then each project by name, each with its open count. Two projects
+with the same name carry their group: "QuizLab (Archive)".
+
+### Today
+
+Today holds, for open tasks and recurring items:
+
+| Row label | When |
+|---|---|
+| **Overdue** · due *date* | the deadline is before today |
+| **Due today** | the deadline is today |
+| *(no chip)* | Do on is today |
+| planned N days ago | Do on is earlier — unfinished planned tasks roll over |
+| **Due in N days** | a recurring item inside its lead time |
+| **Due today** | a recurring item due today |
+| **Overdue** · due *date* | a recurring item that missed one run |
+| **Missed N×** · since *date* | a recurring item that missed several runs — one row, not N |
+
+A row also shows its deadline when that isn't its reason, its importance, and a recurring item's
+rule in words. Ticking a task crosses it out; it leaves Today at the next day boundary. Untick to
+undo.
+
+### Project
+
+Open tasks and recurring items; a recurring item only while it is in Today. Tasks ticked today stay,
+crossed out, until the boundary.
+
+### Recurring
+
+Every recurring item of the context, by next date (ended ones and rules without a date last), each
+with where it stands (its Today label, "next Nov 20", or "Ended"), the rule in words, and the newest
+log entry ("done Nov 2").
+
+### All
+
+Open tasks, recurring items, notes and thoughts. Above the list:
+
+- **Show done** — adds done tasks and resolved thoughts.
+- **Show archived** — adds archived items (dashed).
+- **Projects** filter — a searchable checklist: No project, every project in sidebar order, folders
+  no project owns ("folder only"). Nothing ticked = all projects.
+- **Types** filter — Tasks, Recurring, Notes, Thoughts, Daily notes. Nothing ticked = every type
+  except daily notes. Daily notes show only when **Daily notes** is ticked, newest first.
+
+Filters, Show done and Show archived are remembered per context.
+
+### Row actions
+
+On hover or keyboard focus a row shows its actions at its right end:
+
+| Item | Actions |
+|---|---|
+| any row | **Pin** / **Unpin** |
+| recurring | **Skip** ("Skip this time") |
+| note | **Archive** — moves it into `_archive/` (same sub-folder) |
+| thought | **Resolve**, once resolved **Reopen** |
+| archived item | **Restore** — moves it back |
+
+Files whose frontmatter can't be read show as greyed rows "can't read — open to fix" at the end of
+the list; a click opens the file in Pomade's editor.
+
+## Adding items
+
+### Quick add (⌘⇧A)
+
+⌘⇧A works from any Pomade tab, even if the Planner was never opened. A small form floats over the
+current tab; the panel's **+** and Add button open the same form beside the panel. Esc closes it and
+focus returns where it was. Where you last dragged the form is where it opens next.
+
+### Add in place (Planner tab)
+
+In the Planner tab, **+** and the **Add task** button at the foot of the list (**Add recurring task**
+in Recurring) open the form at the list's foot. After an add the new row is scrolled to, focused and
+briefly marked. If the view doesn't list it (a note added from Today, a task with no date), the foot
+says where it is — "Added — “Lamp for the desk” is in All." — with **Show**.
+
+### The form
+
+| Field | Notes |
+|---|---|
+| **Title** | focused; required |
+| **Project** | starts as the active project ("No project" at Workspace). ↓, Space, a click or typing opens the two-step picker. The form's head shows the folder the item goes into |
+| **Type** | Task · Recurring · Note · Thought · Daily. ⌥Tab / ⌥⇧Tab walk it from any field |
+| **Do on**, **Deadline** | date phrases: `today`, `tomorrow`, `fri`, `+3d`, `+2w`, `+1mo`, `nov 20`, `2026-11-20`. The resolved date shows on the label's line ("Fri, Nov 20"), or why it isn't one |
+| **Importance** | a number |
+| **Details** | the file's text under its frontmatter, markdown as typed; Enter is a new line. Not for Daily |
+
+Pre-fills: from a Today view Do on = `today`; from Recurring the type is Recurring; elsewhere a task
+with no date. Note and Thought have no dates. **Daily** opens today's daily note in an editor tab
+(making it first from the template when it isn't there).
+
+**Keys:** Enter adds (from any field but Details); ⌘↵ adds from Details too; ⇧⌘↵ adds and opens —
+in the tab its compact view, from the floating form its file in an editor tab. Tab and ⇧Tab cycle
+the form's fields and never leave it. Full list: [Keyboard and mouse](shortcuts.md#add-form).
+
+**Project picker.** Step one: "No project", then each group path ("Building tools › Tools") in
+sidebar order, Ungrouped last; typing lists matching projects at once. Step two: the group's
+projects. Every typed word must match (case and accents ignored). So `Fix login bug`, Tab, `qui`,
+Enter, Enter files it into QuizLab.
+
+## Opening an item: the compact view
+
+In the Planner tab, click a row's title (or press Enter on it): the item opens in a pane beside the
+list. One item at a time; another row's click takes the pane over. In a tab narrower than 720 px the
+pane replaces the list, with a back arrow. From the panel a click opens the Planner tab with the
+pane. **⌘-click** a row opens the file in Pomade's editor instead. Unreadable files always open in
+the editor.
+
+The pane shows:
+
+- **Head** — the type (with "done", "resolved" or "archived"), the row's own actions (Skip,
+  Resolve/Reopen, Archive, Restore), its pin, **Open in tab** (the file in Pomade's editor) and ×.
+- **Fields** — the checkbox and title, a task's Do on, Deadline and Importance, a recurring item's repeat editor, and
+  **Details** (the file's text). Type and project are changed in the file.
+- **Log** — a recurring item's `## Log`, read-only, under Details.
+- **Foot** — the rule in words and the next date, fields in the file that aren't valid values, the
+  file's path, and "Saving…" / "Saved".
+
+**No save button.** A field is written when committed — Enter, leaving the field, a select's choice.
+Details is written 600 ms after typing stops and when you leave it; everything pending is written
+when the pane closes. Each write changes only that frontmatter key (or only the text). Emptying a
+date or importance removes its key; `fri` reads back as `2026-11-20`.
+
+If the file changed on disk while you were typing, nothing is written over it and the pane says:
+"The file changed on disk — nothing was written over it. This is the file as it is now."
+
+The pane follows its file through Archive, Restore and renames; it closes when the file is gone or
+the context changes. Esc (focus in the pane) or × closes it and returns focus to the row.
+
+## Recurring tasks
+
+### The repeat editor
+
+```
+Repeat [every ▾] [1] [month ▾] on [5]
+Early [3] days   Start [today]   End [never]
+```
+
+| Rule | Set as | Example |
+|---|---|---|
+| every N days | every · N · days | every 10 days (counted from Start) |
+| every N weeks on weekdays | every · N · weeks · on `mon, thu` | every other Monday |
+| every 1, 2, 3, 4, 6 or 12 months on days | every · N · months · on `5` / `1, 15` / `last` / `first mon` | the 5th of every month; quarterly (counted from Start's month, else this month) |
+| N days/weeks/months after done | after done · N · unit | 3 months after it was last done |
+
+- **on** left empty takes Start's (else today's) weekday or day of the month.
+- **Every N days or weeks** with N above 1 counts from **Start** — a fixed calendar cycle that
+  never drifts with when you tick it. Left empty, Start is today, written into the rule.
+- **Early N days** (lead time): the item appears in Today N days before its date, labelled "Due in
+  N days". 0 or empty: only on the day.
+- **Start**, **End**: date phrases; no occurrence before Start or after End.
+
+The form's foot shows the rule in words and the first date ("monthly on the 5th, shows 3 days early
+· first Sat, Dec 5"), or what is wrong — which blocks the add.
+
+Rules the editor can't hold (a single date, `only: weekdays`, months not evenly apart) show in
+words in the compact view: "Change this rule in the file — Open in tab." See
+[Files and format › repeat](files-and-format.md#the-repeat-rule).
+
+### Done, skip, missed, ended
+
+- **Done** — tick the round checkbox. The Planner adds `- <date> done` to the item's `## Log` and
+  moves Do on to the next date. The row says "Done…", then "Done · next Jan 5, 2027" for a moment.
+  An "after done" rule counts from the day you tick it.
+- **Skip** — the row's **Skip** action: the same with `- <date> skipped`.
+- **Missed** runs don't stack: one row, "Missed 2×". Done or Skip after a miss jumps to the next
+  future date and logs once.
+- Between runs an item is only in Recurring, until its lead time starts.
+- **Ended** — End has passed, or there is no next date: out of Today, "Ended" in Recurring, its
+  checkbox and Skip off ("Ended — change end or do-on in the file to bring it back").
+- A rule that can't be read shows its error on the row; done and skip stay off until it is fixed
+  ("Fix the repeat rule first — open the file").
+
+## Daily notes
+
+- **Made for you** the first time the Planner runs on a new day — at Pomade's start, or when the day
+  boundary passes while Pomade is open — before you ever open the Planner. Only if that day's file
+  doesn't exist; once per day (a note you delete stays deleted that day); never for days Pomade
+  didn't run.
+- **Where:** `<tasks folder>/Daily/YYYY-MM-DD.md`. Daily notes are always workspace-level.
+- **Template:** set **Daily note template** in [settings](settings.md#planner). The note is the
+  template's text with `type: daily-note` and `date:` first in its frontmatter. Without a template
+  (or when it can't be read) the note is a date heading and an empty checklist:
+
+  ```markdown
+  ---
+  type: daily-note
+  date: 2026-11-10
+  ---
+  # Tuesday, November 10, 2026
+
+  - [ ]
+  ```
+
+- **On the Workspace Today** it is pinned as a card above the list: title, date, checklist progress
+  ("5/8") as text and a bar. Click opens it like a row. Its pin button unpins it for today only
+  ("Unpin for today — it is pinned again tomorrow").
+- **Progress** counts markdown checklist lines (`- [ ]`, `- [x]`), nested and in quotes too; lines
+  in code blocks don't count.
+- Yesterday's note never rolls over; its unticked lines stay where they are.
+- **Open today's note** any time: quick add → **Daily** → Enter.
+
+## Pins
+
+Every row has a pin action (hover or focus). A pinned row stands above the list with a pin by its
+title. Pins are per view and per context; several are allowed, kept in pin order. On the grouped
+Workspace Today pinned rows stand above the headings, labelled with their project.
+
+## Projects and mix-ins
+
+**A project's items live in a sub-folder of the tasks folder named after the project**
+(`To-dos/QuizLab/`). The folder is made when you first add an item to that project. Two projects
+with one name: the later one's folder gets its group, `QuizLab (Archive)`.
+
+- **Renaming or regrouping a project** in Pomade renames its folder — also when the rename happened
+  while Pomade was closed. A case-only rename keeps the folder.
+- **A folder already taken** by something else: nothing moves; the Planner says so — "“QuizLab”
+  can't take To-dos/QuizLab/ — a folder with that name is already there. …" — until one of the two
+  is renamed.
+- **A project removed** from the workspace leaves the pickers and All's filter at once. Its folder
+  stays; its items show under its last name. If it was the active project, the Planner shows
+  Workspace.
+- **Sub-folders no project owns** show under their own name ("folder only" in All's filter).
+- `Daily/`, `_archive/` and hidden folders are never a project's.
+
+**Mix-ins** (inside a project, in Today, Project and Recurring): **+ No-project items** adds the
+workspace-level items; **+ Project** adds another project through the picker. Each mixed-in source
+is a chip; click it (×) to remove. Mixed-in rows carry their source's label. Mix-ins are remembered
+per project.
+
+## Select mode: delete and archive
+
+On All only: the tab's **Select** button, or the panel's **⋯ → Select items…**. Rows trade their
+checkbox, pin and actions for a selection box. A bar holds select-all, the count, **Archive** (only
+when every selected row is a note not yet archived), **Delete N…** and **Done**.
+
+- Click selects; Shift-click selects the range from the last row toggled.
+- Select-all and ⌘A take only what the filters show; a row the filters hide drops out of the
+  selection.
+- **Delete N…** asks first: "Delete 3 files?" (one file: by its title), "They go to the macOS Trash
+  — Finder can put them back.", every file's title and path, **Cancel** (focused) and **Move to
+  Trash**. A file Pomade refuses stays selected with its reason.
+- **Archive** moves the notes into `_archive/` without asking; **Restore** undoes it.
+- Select mode ends when everything is done, or when the view or context changes.
+
+Keys: [Keyboard and mouse › Select mode](shortcuts.md#select-mode-all).
+
+## Attention: badge and morning summary
+
+Dates only — no times, no alarms, nothing while Pomade is closed.
+
+**What is due** (whole workspace, whatever project is active):
+
+| Kind | Task | Recurring item |
+|---|---|---|
+| overdue | deadline before today | a missed run |
+| due today | deadline today | due today |
+| soon | — | inside its lead time |
+
+A task only planned for today (Do on, no deadline) is not "due". Ticked items are out.
+
+**Badge** on the Planner icon: overdue + due today; red when anything is overdue; gone at zero. It
+follows file changes within about a second and the day boundary.
+
+**Morning summary**: one Pomade notification at Pomade's first start of a planner day, when anything
+is due (soon included).
+
+- Title: counts, then soon items by name — "2 due today, 1 overdue, Tax report due in 3 days".
+- Body: overdue, then due-today items — "Overdue: Pay the tax · Due today: Buy printer ink, Upload
+  invoices"; a recurring item that missed several runs reads "Bins (missed 3×)". Up to 3 names, then
+  "+N more".
+- Click: the Planner tab opens on the Workspace Today.
+- At most one per day. Nothing is posted later that day, and nothing when the boundary passes while
+  Pomade stays open — the next start posts. A start before the boundary (01:30) still counts as
+  yesterday.
+
+## The `pomade-planner today` command
+
+```
+pomade-planner today [--project <name>] [--json] [--date YYYY-MM-DD]
+```
+
+Prints Today as the Workspace Today shows it — the same items, order and project headings — and the
+day's daily note path. It reads the files directly, so it works with Pomade closed.
+
+| Option | Effect |
+|---|---|
+| *(none)* | the whole workspace |
+| `--project <name>` | one project's Today, no mix-ins. Name in any case, its heading label (`QuizLab (Archive)`), `<name> (<group>)`, or its folder name |
+| `--json` | one JSON object: `day`, `daily-note`, `items` (each with `title`, `type`, `project`, `status`, `do-on`, `deadline`, `importance`, `created`, `done-on`, `reason`, `planned-days-ago`, `missed`, `path`), `unreadable` |
+| `--date YYYY-MM-DD` | Today as of that planner day |
+| `-h`, `--help` | usage |
+
+`reason` is one of `overdue`, `due-today`, `planned`, `rolled-over`, `recurring-due`, `lead-time`.
+
+Text output:
+
+```
+Today — Tue, Nov 17, 2026
+  Daily note: To-dos/Daily/2026-11-17.md
+
+No project
+  [ ] Buy printer ink — due today
+
+QuizLab
+  [ ] Upload invoices — missed 2×, since Oct 5, monthly on the 5th
+```
+
+Exit codes: 0 ok; 1 no workspace recorded, no tasks folder set, or the folder is missing; 2 a wrong
+argument (an unknown or ambiguous project lists the names to use).

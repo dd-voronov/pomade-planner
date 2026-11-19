@@ -9,6 +9,8 @@ Part of the Pomade family — the platform and its rules live in the sibling rep
 `docs/BACKLOG.md`. The apps require Pomade `main` — the platform with `pomade:T-237`–`T-248`
 (DESIGN §6).
 
+User guide — how to use both apps: [`docs/user-guide/user-guide.md`](docs/user-guide/user-guide.md).
+
 ## Shape
 
 Two web UIs (TypeScript, React, Vite) on `pomade-kit`'s SDK (`github:dd-voronov/pomade-kit#v0.13.1`),
