@@ -10,7 +10,7 @@ Part of the Pomade family — the platform and its rules live in the sibling rep
 
 ## Shape
 
-Two web UIs (TypeScript, React, Vite) on `pomade-kit`'s SDK (`github:dd-voronov/pomade-kit#v0.13.0`),
+Two web UIs (TypeScript, React, Vite) on `pomade-kit`'s SDK (`github:dd-voronov/pomade-kit#v0.13.1`),
 sharing `src/core/`; the Board's drag and drop is `@dnd-kit/core` (pointer and keyboard sensors).
 Pomade loads an app in an iframe; the surface it is opened on (`host.welcome.surface`, `.icon`,
 `.route`, then `host.onRouteChange`) picks the view (`src/core/views.ts`: `plannerView`,
