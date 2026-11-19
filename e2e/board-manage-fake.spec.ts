@@ -18,7 +18,7 @@ function harness(project: string, surface: "tab" | "panel" = "tab"): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const frame = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const frame = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const pathOf = (folder: string, id: string): string => {
   const spec = (folder === DELTA ? DELTA_TICKETS : SAMPLE_TICKETS).find((t) => t.id === id);
   if (!spec) throw new Error(id);

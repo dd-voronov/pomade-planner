@@ -33,7 +33,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const original = (name: string): string => RECURRING_TASKS[name] ?? "";
 
@@ -306,7 +306,7 @@ test.describe("quick add", () => {
     await expect(o.getByTestId("qa-repeat-description")).toHaveText("every Mon and Thu · first Thu, Dec 3");
     await shot(page, "e005-fake-quick-add-recurring-from-panel");
     await o.getByTestId("qa-repeat-on").press("Enter");
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     await expect(row(a, "Take out the bins").getByTestId("hint-repeat")).toHaveText("every Mon and Thu");
     await expect(row(a, "Take out the bins").getByTestId("hint-next")).toHaveText("next Dec 3");
   });
@@ -317,7 +317,7 @@ test.describe("quick add", () => {
     await o.getByTestId("qa-type-recurring").check();
     const fits = await o.locator("form").evaluate((el) => el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1);
     expect(fits).toBe(true);
-    const card = await page.locator("#overlay iframe").boundingBox();
+    const card = await page.locator('iframe[data-surface="overlay"]').boundingBox();
     expect(card?.width).toBe(420);
     for (const testId of ["qa-repeat-mode", "qa-repeat-unit", "qa-repeat-on", "qa-repeat-end", "qa-project"]) {
       const field = await o.getByTestId(testId).boundingBox();

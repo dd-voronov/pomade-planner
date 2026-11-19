@@ -36,7 +36,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const writeFile = (page: Page, path: string, content: string) => page.evaluate(([p, c]) => window.fakeHost.writeFile(p, c), [path, content] as const);
 const openedTabs = (page: Page) => page.evaluate(() => window.fakeHost.openedTabs);

@@ -140,20 +140,16 @@ export function allTasks(tasks: readonly Task[], options: AllOptions): Task[] {
   return [...open, ...daily, ...done, ...archived];
 }
 
-const HOUR_MS = 3_600_000;
-
 /**
  * The first instant after `now` whose planner day is another one — when Today must be evaluated
  * again. Normally the boundary on the next calendar date. Around a clock change it is found by
  * the planner day itself: a boundary a spring-forward change skips starts the day when the clock
- * jumps past it, and a boundary a fall-back change repeats starts it again on the second pass.
+ * jumps past it; a boundary a fall-back change repeats starts it on the first pass only.
  */
 export function nextDayStart(now: Date, boundary: Time): Date {
   const day = plannerDay(now, boundary);
-  const candidate = toInstant(addDays(day, 1), boundary).getTime();
   let lo = now.getTime();
-  // A boundary repeated by a fall-back change can lie behind `now`; a day later is always another day.
-  let hi = candidate > lo ? candidate : lo + 26 * HOUR_MS;
+  let hi = toInstant(addDays(day, 1), boundary).getTime();
   if (plannerDay(new Date(hi - 1), boundary) === day) return new Date(hi);
   while (hi - lo > 1) {
     const mid = Math.floor((lo + hi) / 2);

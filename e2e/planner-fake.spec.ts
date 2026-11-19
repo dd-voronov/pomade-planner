@@ -34,7 +34,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const fileExists = (page: Page, path: string) =>
   page.evaluate((p) => {
@@ -74,7 +74,7 @@ test.describe("onboarding", () => {
     await page.evaluate(() => window.fakeHost.answerPick("Tasks"));
     await a.getByTestId("choose-tasks-root").click();
     await expect(a.getByTestId("view-today")).toBeVisible();
-    expect(await page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ root: "", initial: "" });
+    expect(await page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ kind: "folder", root: "", initial: "" });
     expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ backlogPathPattern: "plans/", tasksRoot: "Tasks" });
     for (const name of Object.keys(PLANNER_TASKS)) expect(await fileText(page, `Tasks/${name}`)).toBe(PLANNER_TASKS[name]);
   });
@@ -275,7 +275,7 @@ test.describe("quick add", () => {
     await o.getByTestId("qa-deadline").fill("+3d");
     await shot(page, "e003-fake-quick-add-from-panel");
     await page.keyboard.press("Enter");
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     await expect(a.getByTestId("planner-add")).toBeFocused();
     await expect(row(a, "Call the bank").getByTestId("hint-deadline")).toHaveText("due Fri");
     expect(await fileText(page, "Tasks/2026-11-17-call-the-bank.md")).toBe(quickAdded({ title: "Call the bank", doOn: "2026-11-17", deadline: "2026-11-20", created: "2026-11-17" }));
@@ -285,7 +285,7 @@ test.describe("quick add", () => {
     expect(await page.evaluate(() => window.fakeHost.overlays.map((x) => x.route))).toEqual(["quick-add?do-on=today", "quick-add"]);
     await expect(all.getByTestId("qa-do-on")).toHaveValue("");
     await page.keyboard.press("Escape");
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     await expect(a.getByTestId("planner-add")).toBeFocused();
     expect(await page.evaluate(() => window.fakeHost.openedTabs)).toEqual([]);
   });
@@ -311,7 +311,7 @@ test.describe("settings and the tasks root", () => {
     await a.getByTestId("settings-change-root").click();
     await expect(a.getByTestId("settings-tasks-root")).toHaveText("Projects/beta/");
     expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ backlogPathPattern: "plans/", tasksRoot: "Projects/beta", dayBoundary: "2:00" });
-    expect(await page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ root: "", initial: "Tasks" });
+    expect(await page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ kind: "folder", root: "", initial: "Tasks" });
     expect(await fileText(page, "Tasks/2026-11-01-pay-the-tax.md")).toBe(PLANNER_TASKS["2026-11-01-pay-the-tax.md"]);
 
     // Back on the views: at 02:30 with a 2:00 boundary it is already Wednesday.

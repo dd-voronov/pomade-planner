@@ -277,12 +277,12 @@
 }
 
 .card--epic {
-  border-color: rgba(79, 184, 216, 0.35);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
   background: var(--accent-soft);
 }
 
 .card--epic:hover {
-  border-color: rgba(79, 184, 216, 0.6);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .card--task {

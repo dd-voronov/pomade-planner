@@ -25,7 +25,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const exists = (page: Page, path: string) =>
   page.evaluate((p) => {
     try {

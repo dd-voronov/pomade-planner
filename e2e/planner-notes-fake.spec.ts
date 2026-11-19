@@ -40,7 +40,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const exists = (page: Page, path: string) =>
   page.evaluate((p) => {
@@ -359,7 +359,7 @@ test.describe("quick add's five types", () => {
     await o.getByTestId("qa-type-thought").check();
     await shot(page, "e006-fake-quick-add-thought-from-panel");
     await o.getByTestId("qa-title").press("Enter");
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     await expect(a.getByTestId("planner-add")).toBeFocused();
     await expect.poll(() => exists(page, "Tasks/2026-11-17-is-it-time-for-a-new-bike.md")).toBe(true);
   });

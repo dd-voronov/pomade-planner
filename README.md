@@ -10,7 +10,7 @@ Part of the Pomade family — the platform and its rules live in the sibling rep
 
 ## Shape
 
-Two web UIs (TypeScript, React, Vite) on `pomade-kit`'s SDK (`github:dd-voronov/pomade-kit#v0.10.1`),
+Two web UIs (TypeScript, React, Vite) on `pomade-kit`'s SDK (`github:dd-voronov/pomade-kit#v0.13.0`),
 sharing `src/core/`; the Board's drag and drop is `@dnd-kit/core` (pointer and keyboard sensors).
 Pomade loads an app in an iframe; the surface it is opened on (`host.welcome.surface`, `.icon`,
 `.route`, then `host.onRouteChange`) picks the view (`src/core/views.ts`: `plannerView`,
@@ -56,7 +56,7 @@ state and per-project settings under its own id (DESIGN §5).
 | `src/planner/model/` | the Planner's pure logic, each with its vitest matrix: settings, items, the Today module (`today.ts`), attention (`attention.ts`: what is due, the badge, the summary's text and when it posts), recurring items (`recurring.ts`: the rule, the log, lead time / missed / ended, done and skip), daily notes (`daily.ts`: when one is made, the template merge, the built-in note), body reads (`body.ts`: checkbox progress, excerpts), pins (`pins.ts`), archive paths (`archive.ts`), All's select mode and delete results (`selection.ts`), quick add's repeat editor (`repeat-draft.ts`), project folders, the map and rename plans (`projects.ts`), what each view shows per context (`scope.ts`), the picker (`picker.ts`), row labels, the add form's draft and what it comes to (`item-draft.ts`), a file as that draft and what an edited one writes back — the fields, and Details over the body with its log (`item-edit.ts`), its fields' values and the file text with Details as the body (`create.ts`), ticking, view state, the command's arguments and output |
 | `cli/` | the `pomade-planner` command (`main.ts`): reads the files and hands them to the Today and projects modules; built into the Planner's folder |
 | `scripts/` | `build.mjs` (the build), `dev.mjs` (the dev servers), `install-app.mjs`, `pomade-dir.mjs` (where the Pomade checkout is) |
-| `fake-host/` | the fake-host harness page (`dev:fake`, browser e2e): it hosts one app at a time with that app's manifest, and mounts an overlay the app opens (`overlay.open`) as Pomade does, in `#overlay` |
+| `fake-host/` | the fake-host harness page (`dev:fake`, browser e2e): it hosts one app at a time with that app's manifest, the kit's `mountApp` mounts an overlay the app opens (`overlay.open`) as Pomade does, an `iframe[data-surface="overlay"]` over a scrim; `?theme=dark` starts it on Pomade's dark theme |
 | `test/` | repo-level unit tests (the two manifests) and the synthetic fixtures: `fixtures/workspace.ts` (the fake host's workspaces — the Board's, and the Planner's with groups, projects and project folders; the notes, thoughts, daily notes and template of `NOTES_FILES`), `fixtures/backlog.ts` (sample and 300-ticket backlogs) |
 | `e2e/` | Playwright specs: fake host, standalone, real Pomade |
 
@@ -165,6 +165,8 @@ installed command run from `POMADE_HOME/bin` with Pomade closed, a restart),
 
 ## Theme
 
-`src/core/tokens.css` carries Pomade's token names and values. Pomade is light-only and the Host API
-passes apps no theme, so the app is light-only (`color-scheme: light`) whatever the system
-appearance.
+Both apps load Pomade's design tokens (`pomade-kit/tokens.css`, generated from Pomade's own) and
+follow Pomade's theme with `followTheme` (`data-theme` on each frame's root, kept current by
+`theme.changed`); a Pomade that names no theme, and a page with no host, are light. The Mac's
+appearance is never read. Every colour is a token (`test/colors.test.ts`); Pomade ships its light
+theme only, so a dark theme looks the same until Pomade defines its dark tokens.

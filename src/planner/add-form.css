@@ -151,7 +151,7 @@
     width: var(--label);
   }
 
-  .qa-repeat__group > .qa-repeat__select {
+  .qa-repeat__group > .qa-repeat__picker {
     flex: 1;
     min-width: 0;
   }

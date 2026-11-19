@@ -129,9 +129,8 @@ button {
   color: var(--accent-contrast);
 }
 
-.btn--danger:hover {
-  border-color: #b93a4b;
-  background: #b93a4b;
+.btn--danger:hover:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 .btn--danger:disabled,
