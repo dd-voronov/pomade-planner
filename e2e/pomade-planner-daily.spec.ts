@@ -17,7 +17,7 @@ import { expect, test, type ElectronApplication, type FrameLocator, type Page } 
 import { DAILY_TEMPLATE } from "../test/fixtures/workspace";
 import { frameShown } from "./fixtures/frames";
 import { row, setClock, settled, titles } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -132,7 +132,7 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
       await writeFile(todo(name), content);
     }
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     // Tuesday, Nov 10, 07:30 — Pomade last ran on Saturday the 7th.
     await seedState("2026-11-10T07:30", { "planner.dailyNoteDay": "2026-11-07" });
     await launch();

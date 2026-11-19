@@ -17,7 +17,7 @@ import { expect, test, type ElectronApplication, type FrameLocator, type Page } 
 import { QUICK_ADD_HEIGHT } from "../src/core/views";
 import { frameShown } from "./fixtures/frames";
 import { quickAdded, row, settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -105,7 +105,7 @@ test.describe("adding in place and in the overlay in a real Pomade", () => {
     await mkdir(join(fixture.workspaceRoot, TODOS), { recursive: true });
     await writeFile(todo("2026-11-10-pay-the-tax.md"), "---\ntype: task\ntitle: Pay the tax\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-10\n---\n");
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     const state = join(fixture.userDataDir, "app-state/pomade-planner");
     await mkdir(state, { recursive: true });
     await writeFile(join(state, "state.json"), JSON.stringify({ "test.clock": { offsetMs: new Date("2026-11-17T10:00").getTime() - Date.now() } }));

@@ -10,7 +10,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
 import { shot } from "./fixtures/screens";
-import { BOARD_BUILD, BOTH_BUILDS, POMADE_BIN, createPomadeFixture, expectAppIcon, launchPomade, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, BOARD_BUILD, BOTH_BUILDS, POMADE_BIN, createPomadeFixture, expectAppIcon, launchPomade, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 
 const INSTALL_SCRIPT = resolve(import.meta.dirname, "../scripts/install-app.mjs");
 
@@ -158,8 +158,8 @@ test.describe("installed into a real Pomade", () => {
 
   test("install-app installs both builds; Pomade shows their icons and surfaces", async () => {
     const out = install();
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
-    expect(out).toContain("Board 0.1.0 (pomade-board)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
+    expect(out).toContain(`Board ${APP_VERSION} (pomade-board)`);
     ({ app, page } = await launchPomade(fixture));
     await expectStripIcons(page);
     await expectSurfaces(page, null);

@@ -11,7 +11,7 @@ import { dirname, join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type Page } from "@playwright/test";
 
 import { settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, expectAppIcon, launchPomade, panelShown, pomadeEnv, type FixtureProject, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, expectAppIcon, launchPomade, panelShown, pomadeEnv, type FixtureProject, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const INSTALL_SCRIPT = resolve(import.meta.dirname, "../scripts/install-app.mjs");
@@ -127,9 +127,9 @@ test.describe("both apps installed", () => {
 
   test("install-app installs both build folders; `pomade apps list` names Planner and Board with their versions", async () => {
     const out = install(fixture);
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
-    expect(out).toContain("Board 0.1.0 (pomade-board)");
-    expect(installedApps(fixture)).toEqual(["pomade-board  0.1.0  Board", "pomade-planner  0.1.0  Planner"]);
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
+    expect(out).toContain(`Board ${APP_VERSION} (pomade-board)`);
+    expect(installedApps(fixture)).toEqual([`pomade-board  ${APP_VERSION}  Board`, `pomade-planner  ${APP_VERSION}  Planner`]);
   });
 
   test("the new-tab menu lists both apps, each with its name and icon, and each opens its own tab", async () => {
@@ -206,7 +206,7 @@ test.describe("both apps installed", () => {
 
   test("`pomade apps remove pomade-board` leaves the Planner working: the Board's icon and menu row go, its tab says unavailable", async () => {
     expect(remove(fixture, BOARD.id)).toContain("Removed pomade-board");
-    expect(installedApps(fixture)).toEqual(["pomade-planner  0.1.0  Planner"]);
+    expect(installedApps(fixture)).toEqual([`pomade-planner  ${APP_VERSION}  Planner`]);
     await expect(page.getByTestId(BOARD.icon)).toHaveCount(0);
     await expect(page.getByTestId(PLANNER.icon)).toBeVisible();
     await expect.poll(() => menuApps(page)).toEqual([PLANNER.menu]);
@@ -232,9 +232,9 @@ test.describe("each app installed alone", () => {
 
   test("install-app board installs the Board only, and it works with no Planner", async () => {
     const out = install(fixture, "board");
-    expect(out).toContain("Board 0.1.0 (pomade-board)");
+    expect(out).toContain(`Board ${APP_VERSION} (pomade-board)`);
     expect(out).not.toContain("(pomade-planner)");
-    expect(installedApps(fixture)).toEqual(["pomade-board  0.1.0  Board"]);
+    expect(installedApps(fixture)).toEqual([`pomade-board  ${APP_VERSION}  Board`]);
     let page: Page;
     ({ app, page } = await launchPomade(fixture));
     await expect(page.getByTestId(BOARD.icon)).toBeVisible();
@@ -246,9 +246,9 @@ test.describe("each app installed alone", () => {
 
   test("install-app planner installs the Planner only, with its command, and it works with no Board", async () => {
     const out = install(fixture, "planner");
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     expect(out).not.toContain("(pomade-board)");
-    expect(installedApps(fixture)).toEqual(["pomade-planner  0.1.0  Planner"]);
+    expect(installedApps(fixture)).toEqual([`pomade-planner  ${APP_VERSION}  Planner`]);
     let page: Page;
     ({ app, page } = await launchPomade(fixture));
     await expect(page.getByTestId(PLANNER.icon)).toBeVisible();
@@ -267,7 +267,7 @@ test.describe("each app installed alone", () => {
     ({ app, page } = await launchPomade(fixture));
     await expect(page.getByTestId(PLANNER.icon)).toBeVisible();
     expect(remove(fixture, PLANNER.id)).toContain("Removed pomade-planner");
-    expect(installedApps(fixture)).toEqual(["pomade-board  0.1.0  Board"]);
+    expect(installedApps(fixture)).toEqual([`pomade-board  ${APP_VERSION}  Board`]);
     await expect(page.getByTestId(PLANNER.icon)).toHaveCount(0);
     await expect.poll(() => menuApps(page)).toEqual([BOARD.menu]);
     await expectBoardWorks(page, fixture);

@@ -11,7 +11,7 @@ import { expect, test, type ElectronApplication, type FrameLocator, type Page } 
 import { DAILY_TEMPLATE } from "../test/fixtures/workspace";
 import { frameShown } from "./fixtures/frames";
 import { settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -66,7 +66,7 @@ test.describe("the daily-note template chosen in a real Pomade", () => {
     await mkdir(abs(`${TODOS}/Templates`), { recursive: true });
     await writeFile(abs(`${TODOS}/Templates/Morning.md`), DAILY_TEMPLATE);
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     ({ app, page } = await launchPomade(fixture));
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1400, 900));
     await page.getByTestId("project-__workspace__").click();

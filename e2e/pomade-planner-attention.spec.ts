@@ -14,7 +14,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
 import { row, settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -108,7 +108,7 @@ test.describe("the Planner's badge and morning summary in a real Pomade", () => 
     await mkdir(todo(""), { recursive: true });
     for (const [name, content] of Object.entries(FILES)) await writeFile(todo(name), content);
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     // Tuesday, Nov 10, 07:30 — Pomade last ran on Monday the 9th; the Workspace Planner was left on All.
     await seedState("2026-11-10T07:30", { "planner.dailyNoteDay": "2026-11-09", "planner.summaryDay": "2026-11-09", "planner.view.__workspace__": WORKSPACE_ALL });
     await launch();

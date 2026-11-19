@@ -11,7 +11,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
 import { logged, row, setClock, titles } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -81,7 +81,7 @@ test.describe("recurring tasks in a real Pomade", () => {
     await mkdir(abs(TODOS), { recursive: true });
     for (const [name, content] of Object.entries(FILES)) await writeFile(todo(name), content);
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     ({ app, page } = await launchPomade(fixture));
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1400, 900));
     await page.getByTestId("project-__workspace__").click();

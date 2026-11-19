@@ -6,7 +6,7 @@
 
 **From a Pomade release.** The stable Pomade carries both apps. At start it installs them when
 absent and updates them when its build is newer, then posts one notice ("An app installed with
-Pomade", "Installed: Planner 0.1.0"). An app you removed is not put back by the same Pomade build;
+Pomade", "Installed: Planner 0.2.0"). An app you removed is not put back by the same Pomade build;
 a later release with a newer app build installs it again.
 
 **A dev build** (from this repository, into the dev Pomade):

@@ -14,7 +14,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
 import { quickAdded, row, settled } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -90,7 +90,7 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
     await writeFile(todo(DIRTY), task("Old shopping list"));
     await writeFile(todo(PLAIN), task("Old packing list"));
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     const state = join(fixture.userDataDir, "app-state/pomade-planner");
     await mkdir(state, { recursive: true });
     await writeFile(join(state, "state.json"), JSON.stringify({ "test.clock": { offsetMs: new Date("2026-11-17T10:00").getTime() - Date.now() } }));

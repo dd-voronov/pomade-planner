@@ -6,7 +6,7 @@
 // written. The checkout is only read: it must already hold a build (`out/main/index.js`) and its
 // Electron (`node_modules/electron`). Every launch is closed by the spec that made it.
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -28,6 +28,8 @@ export const BOARD_BUILD = join(REPO, "dist/board");
 export const BOTH_BUILDS = `${PLANNER_BUILD};${BOARD_BUILD}`;
 /** The `pomade` command of that checkout (HOST-API §2). */
 export const POMADE_BIN = join(POMADE_DIR, "bin/pomade");
+/** The version both apps carry (package.json; the manifest test keeps the manifests on it). */
+export const APP_VERSION = (JSON.parse(readFileSync(join(REPO, "package.json"), "utf8")) as { version: string }).version;
 
 const MAIN = join(POMADE_DIR, "out/main/index.js");
 

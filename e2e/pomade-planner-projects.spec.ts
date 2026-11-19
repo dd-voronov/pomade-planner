@@ -13,7 +13,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
 import { quickAdded, row, setClock, titles } from "./fixtures/planner";
-import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
 const DIST = resolve(import.meta.dirname, "../dist/planner");
@@ -82,7 +82,7 @@ test.describe("Planner projects in a real Pomade", () => {
     await writeFile(todo("Pomade/2026-11-16-ship-the-planner.md"), task("Ship the planner", "do-on: 2026-11-17\n"));
     await writeFile(todo("Pomade/2026-11-16-write-release-notes.md"), task("Write release notes", "do-on: 2026-11-24\n"));
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
-    expect(out).toContain("Planner 0.1.0 (pomade-planner)");
+    expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     await launch();
   });
 
