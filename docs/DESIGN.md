@@ -175,7 +175,8 @@ Upload all invoices to the accountant's portal.
 - 2026-10-05 skipped
 ```
 
-`repeat` uses `pomade-kit`'s schedule format: fixed dates ("on the 5th of every month") or
+`repeat` uses `pomade-kit`'s schedule format: fixed dates ("on the 5th of every month", "every
+other Monday", "every 10 days from Jan 3" — every N days or weeks counted from `start`) or
 "N days/weeks/months after completion", plus `lead-days`, `start`, `end`. The exact YAML is
 owned by `pomade-kit:E-003`; the Planner reads it with the kit's day resolution (no times), and a
 rule the kit refuses shows the kit's own message on the row. A recurring item's `## Log` holds
@@ -479,8 +480,10 @@ The Planner renders in the **side panel** (compact) and, via **Open in tab**, as
   overlay the file in an editor tab. The form's foot names them.
 - **Recurring:** the date fields give way to a compact repeat editor — "Repeat [every] [1]
   [month] on [5]" or "Repeat [after done] [3] [months]", then "Early [3] days", Start and End as
-  date phrases. It writes only what the kit's format holds: every day, every week on some
-  weekdays, every 1, 2, 3, 4, 6 or 12 months on some days of the month (more than one month
+  date phrases. It writes only what the kit's format holds: every N days, every N weeks on some
+  weekdays (N above 1 counts from Start, a calendar cycle that never drifts with the completion
+  date: `daily: { every: 10 }`, `weekly: { every: 2, days: [mon] }`; Start left empty counts from
+  today, written as `start`), every 1, 2, 3, 4, 6 or 12 months on some days of the month (more than one month
   apart: a `months:` list from the start month, else this month), or N days, weeks or months
   after completion; "on" left empty takes the start's (else today's) weekday or day. The foot shows
   the kit's description and the first date ("monthly on the 5th, shows 3 days early · first Sat,

@@ -8,7 +8,7 @@ import { expect, test, type FrameLocator, type Page } from "@playwright/test";
 
 import { APP_PORT, HARNESS_PORT } from "../playwright.config";
 import { RECURRING_TASKS } from "../test/fixtures/workspace";
-import { logged, openQuickAdd, row, settled, titles } from "./fixtures/planner";
+import { logged, openQuickAdd, row, setClock, settled, titles } from "./fixtures/planner";
 import { shot } from "./fixtures/screens";
 
 const APP = `http://localhost:${APP_PORT}/`;
@@ -309,6 +309,60 @@ test.describe("quick add", () => {
     await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     await expect(row(a, "Take out the bins").getByTestId("hint-repeat")).toHaveText("every Mon and Thu");
     await expect(row(a, "Take out the bins").getByTestId("hint-next")).toHaveText("next Dec 3");
+  });
+
+  test("every 2 weeks on Mon and every 10 days from a start date: written in the kit's format, in Today on their runs only", async ({ page }) => {
+    const a = await openPanel(page);
+    let o = await openQuickAdd(page, a);
+    await o.getByTestId("qa-title").fill("Pay the cleaner");
+    await o.getByTestId("qa-type-recurring").check();
+    await o.getByTestId("qa-repeat-count").fill("2");
+    await o.getByTestId("qa-repeat-unit").selectOption("week");
+    await expect(o.getByTestId("qa-repeat-unit").locator("option:checked")).toHaveText("weeks");
+    await o.getByTestId("qa-repeat-on").fill("mon");
+    await o.getByTestId("qa-repeat-start").fill("2026-11-30");
+    await expect(o.getByTestId("qa-repeat-description")).toHaveText("every other Mon, from Nov 30, 2026 · first Mon, Dec 14");
+    await shot(page, "t011-fake-quick-add-every-2-weeks");
+    await o.getByTestId("qa-repeat-start").press("Enter");
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
+    expect(await fileText(page, "Chores/2026-12-02-pay-the-cleaner.md")).toBe(
+      "---\ntype: recurring\ntitle: Pay the cleaner\nstatus: open\ndo-on: 2026-12-14\nrepeat:\n  weekly: { every: 2, days: [mon] }\n  start: 2026-11-30\ncreated: 2026-12-02\n---\n",
+    );
+
+    o = await openQuickAdd(page, a);
+    await o.getByTestId("qa-title").fill("Water the ficus");
+    await o.getByTestId("qa-type-recurring").check();
+    await o.getByTestId("qa-repeat-count").fill("10");
+    await o.getByTestId("qa-repeat-unit").selectOption("day");
+    await expect(o.getByTestId("qa-repeat-on")).toHaveCount(0);
+    await o.getByTestId("qa-repeat-start").fill("2026-12-01");
+    await expect(o.getByTestId("qa-repeat-description")).toHaveText("every 10 days, from Dec 1, 2026 · first Fri, Dec 11");
+    await shot(page, "t011-fake-quick-add-every-10-days");
+    await o.getByTestId("qa-repeat-start").press("Enter");
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
+    expect(await fileText(page, "Chores/2026-12-02-water-the-ficus.md")).toBe(
+      "---\ntype: recurring\ntitle: Water the ficus\nstatus: open\ndo-on: 2026-12-11\nrepeat:\n  daily: { every: 10 }\n  start: 2026-12-01\ncreated: 2026-12-02\n---\n",
+    );
+
+    // Today on Dec 2 holds neither; each shows on its own runs.
+    for (const title of ["Pay the cleaner", "Water the ficus"]) await expect(row(a, title)).toHaveCount(0);
+    await setClock(a, "2026-12-11T10:00");
+    await expect(row(a, "Water the ficus").locator('[data-testid^="hint-"]')).toHaveText(["Due today", "every 10 days, from Dec 1, 2026"]);
+    await expect(row(a, "Pay the cleaner")).toHaveCount(0);
+    await row(a, "Water the ficus").getByTestId("task-check").click();
+    await expect.poll(() => fileText(page, "Chores/2026-12-02-water-the-ficus.md")).toContain("do-on: 2026-12-21\n");
+    await setClock(a, "2026-12-14T10:00");
+    await expect(row(a, "Pay the cleaner").locator('[data-testid^="hint-"]')).toHaveText(["Due today", "every other Mon, from Nov 30, 2026"]);
+    await expect(row(a, "Water the ficus")).toHaveCount(0);
+    await shot(page, "t011-fake-today-every-2-weeks");
+    await row(a, "Pay the cleaner").hover();
+    await row(a, "Pay the cleaner").getByTestId("task-skip").click();
+    await expect.poll(() => fileText(page, "Chores/2026-12-02-pay-the-cleaner.md")).toContain("do-on: 2026-12-28\n");
+    await setClock(a, "2026-12-21T10:00");
+    await expect(row(a, "Water the ficus").getByTestId("hint-reason")).toHaveText("Due today");
+    await expect(row(a, "Pay the cleaner")).toHaveCount(0);
+    await setClock(a, "2026-12-28T10:00");
+    await expect(row(a, "Pay the cleaner").getByTestId("hint-reason")).toHaveText("Due today");
   });
 
   test("from a 160px panel the + still opens the full 420-wide form: the repeat rows fit, nothing spills", async ({ page }) => {

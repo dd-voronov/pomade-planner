@@ -2,7 +2,8 @@
 // lead time in days, start and end as date phrases — turned into a `pomade-kit` schedule, checked
 // by the kit (its own readable errors), described in its plain words, with the first `do-on`.
 //
-// The editor writes only what the kit's format holds: every day, every week on some weekdays,
+// The editor writes only what the kit's format holds: every N days, every N weeks on some
+// weekdays (N above 1 counts from `start` — the start date, else today, written into the rule),
 // every 1, 2, 3, 4, 6 or 12 months on some days of the month (more than one month apart = a
 // `months:` list starting at the start month, else this month), or N days, weeks or months after
 // completion. "On" left empty takes the start date's (else today's) weekday or day of the month.
@@ -90,12 +91,11 @@ function scheduleOfDraft(draft: RepeatDraft, now: Date, boundary: Time): DraftSc
   if (draft.mode === "after") {
     value = { "after-completion": { [`${draft.unit}s`]: count } };
   } else if (draft.unit === "day") {
-    if (count !== 1) return { kind: "error", field: "count", message: "Fixed dates come every day — for every few days, choose “after done”" };
-    value = { daily: {} };
+    value = { daily: count === 1 ? {} : { every: count } };
   } else if (draft.unit === "week") {
-    if (count !== 1) return { kind: "error", field: "count", message: "Fixed weekdays come every week — for every few weeks, choose “after done”" };
-    const days = splitList(draft.on, /[\s,]+/);
-    value = { weekly: { days: days.length > 0 ? days : [defaultOn("week", anchor)] } };
+    const listed = splitList(draft.on, /[\s,]+/);
+    const days = listed.length > 0 ? listed : [defaultOn("week", anchor)];
+    value = { weekly: count === 1 ? { days } : { every: count, days } };
   } else {
     if (!MONTH_STEPS.includes(count)) return { kind: "error", field: "count", message: "Every 1, 2, 3, 4, 6 or 12 months" };
     const days = splitList(draft.on, /,/).map((d) => (/^\d+$/.test(d) ? Number(d) : d));
@@ -105,7 +105,9 @@ function scheduleOfDraft(draft: RepeatDraft, now: Date, boundary: Time): DraftSc
   }
   const lead = draft.lead.trim();
   if (lead !== "") value["lead-days"] = /^\d+$/.test(lead) ? Number(lead) : lead;
-  if (start.kind === "date") value.start = start.date;
+  // Every N days or weeks counts from `start`: none typed, it counts from today.
+  const counted = draft.mode === "every" && draft.unit !== "month" && count > 1;
+  if (start.kind === "date" || counted) value.start = anchor;
   if (end.kind === "date") value.end = end.date;
 
   const parsed = parseSchedule(value, { resolution: "day" });
@@ -134,9 +136,9 @@ function draftShape(s: Schedule): Pick<RepeatDraft, "mode" | "count" | "unit" | 
   const { rule } = s;
   switch (rule.kind) {
     case "daily":
-      return { mode: "every", count: "1", unit: "day", on: "" };
+      return { mode: "every", count: String(rule.every), unit: "day", on: "" };
     case "weekly":
-      return { mode: "every", count: "1", unit: "week", on: rule.days.join(", ") };
+      return { mode: "every", count: String(rule.every), unit: "week", on: rule.days.join(", ") };
     case "monthly": {
       const on = rule.days.map((d) => (typeof d === "object" ? `${NTH_WORDS[String(d.nth)] ?? ""} ${d.weekday}` : String(d))).join(", ");
       if (rule.months === null) return { mode: "every", count: "1", unit: "month", on };

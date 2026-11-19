@@ -445,15 +445,21 @@ test.describe("a recurring item's view", () => {
     await expect(pane.getByTestId("item-repeat")).toHaveText("monthly on the 10th, shows 3 days early · next Thu, Dec 10");
     await expect(row(a, "Upload invoices").getByTestId("hint-repeat")).toHaveText("monthly on the 10th, shows 3 days early");
 
-    // A select's choice is written as it is made; a rule the kit refuses is not written and says why.
+    // A select's choice is written as it is made; every N weeks counts from today, written as start.
     await pane.getByTestId("qa-repeat-unit").selectOption("week");
     await expect.poll(() => fileText(page, INVOICES)).toContain("repeat:\n  weekly: { days: [wed] }\n  lead-days: 3\n");
-    const weekly = await fileText(page, INVOICES);
     await pane.getByTestId("qa-repeat-count").fill("2");
     await pane.getByTestId("qa-repeat-count").press("Enter");
-    await expect(pane.getByTestId("item-repeat-error")).toHaveText("Fixed weekdays come every week — for every few weeks, choose “after done”");
+    await expect.poll(() => fileText(page, INVOICES)).toContain("repeat:\n  weekly: { every: 2, days: [wed] }\n  start: 2026-12-02\n  lead-days: 3\n");
+    await expect(pane.getByTestId("item-repeat")).toHaveText("every other Wed, from Dec 2, 2026, shows 3 days early · next Wed, Dec 2");
+    await expect(pane.getByTestId("qa-repeat-start")).toHaveValue("2026-12-02");
+    // A rule the kit refuses is not written and says why.
+    const everyOther = await fileText(page, INVOICES);
+    await pane.getByTestId("qa-repeat-on").fill("fry");
+    await pane.getByTestId("qa-repeat-on").press("Enter");
+    await expect(pane.getByTestId("item-repeat-error")).toHaveText('"fry" is not a weekday — use mon, tue, wed, thu, fri, sat or sun');
     await shot(page, "e009-fake-tab-repeat-error");
-    expect(await fileText(page, INVOICES)).toBe(weekly);
+    expect(await fileText(page, INVOICES)).toBe(everyOther);
   });
 
   test("done and Skip in the view log the day and move do-on; the log shows the new entry", async ({ page }) => {
