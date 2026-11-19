@@ -5,6 +5,6 @@
   "hostApi": 0,
   "icon": "board.svg",
   "capabilities": ["project.read", "project.write", "files.read", "files.write", "tabs.open"],
-  "events": { "subscribe": ["project.created", "project.renamed", "project.updated"] },
+  "events": { "subscribe": ["project.created", "project.renamed", "project.removed", "project.updated"] },
   "strip": [{ "id": "board", "title": "Board", "action": "both", "route": "board", "panelRoute": "needs-you" }]
 }

@@ -133,7 +133,7 @@ export interface Candidate {
 
 export type CandidatesState = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; candidates: Candidate[] };
 
-/** Every project with where its backlog would be, in sidebar order; re-read when a project is added, renamed, moved or regrouped, or its settings change. */
+/** Every project with where its backlog would be, in sidebar order; re-read when a project is added, renamed, moved, regrouped or removed, or its settings change. */
 export function useCandidates(host: HostClient): CandidatesState {
   const [state, setState] = useState<CandidatesState>({ status: "loading" });
   const [version, setVersion] = useState(0);
@@ -161,7 +161,7 @@ export function useCandidates(host: HostClient): CandidatesState {
   }, [host, version]);
 
   useEffect(() => {
-    const subs = (["project.created", "project.renamed", "project.updated"] as const).map((name) =>
+    const subs = (["project.created", "project.renamed", "project.removed", "project.updated"] as const).map((name) =>
       host.events.subscribe(name, bump).catch(() => null),
     );
     return () => {

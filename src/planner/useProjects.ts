@@ -17,7 +17,7 @@ import { moveProjectFolder, saveProjectFolders, WriteError } from "./write";
 
 export type ProjectList = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; groups: GroupInfo[]; projects: ProjectInfo[] };
 
-/** Pomade's groups and projects in sidebar order, re-read when a project is added, renamed, moved or regrouped. */
+/** Pomade's groups and projects in sidebar order, re-read when a project is added, renamed, moved, regrouped or removed. */
 export function useProjectList(host: HostClient): ProjectList {
   const [state, setState] = useState<ProjectList>({ status: "loading" });
   const [version, setVersion] = useState(0);
@@ -35,7 +35,7 @@ export function useProjectList(host: HostClient): ProjectList {
   }, [host, version]);
 
   useEffect(() => {
-    const subs = (["project.created", "project.renamed", "project.updated"] as const).map((name) => host.events.subscribe(name, bump).catch(() => null));
+    const subs = (["project.created", "project.renamed", "project.removed", "project.updated"] as const).map((name) => host.events.subscribe(name, bump).catch(() => null));
     // The active project renamed or moved arrives as project.changed too; a switch costs one re-read.
     const off = host.project.onChange(bump);
     return () => {
