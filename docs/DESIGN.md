@@ -422,10 +422,19 @@ The Planner renders in the **side panel** (compact) and, via **Open in tab**, as
   **in place**: a card at the foot of the list (in the Add button's place; under the empty view's
   text), scrolled into view and kept there as it grows, title focused, one form at a time. Esc
   closes it and returns focus to what opened it. Everywhere else the form is a **small floating
-  form over the current tab** (the Host API overlay): the shortcut opens it, and so do the **+**
-  and the Add button of the **side panel**, which is too narrow to hold the form (`overlay.open`).
-  Esc closes the overlay and focus returns where it was — to the button that opened it. Without a
-  tasks root the overlay says so and offers "Open the Planner".
+  form over the current tab** (the Host API overlay): the shortcut opens it in the middle of the
+  pane area, and the **+** and the Add button of the **side panel**, which is too narrow to hold the
+  form, open it **beside the panel** (`overlay.open`, `anchor: "panel"`); where the user dragged it
+  last wins over both (Pomade's). Esc closes the overlay and focus returns where it was — to the
+  button that opened it, also when the Planner tab had the focus before. Without a tasks root the
+  overlay says so and offers "Open the Planner".
+- **The overlay is as tall as its form,** 420 wide. It opens at the form's height for the type it
+  starts on — a task's is 220 px, the frame the shortcut opens at, so neither path resizes it on
+  opening — and the form keeps the frame that tall from then on (`overlay.resize`): another type,
+  a line of Details, a line of error grow or shrink it, and nothing scrolls inside it. Pomade caps
+  the frame at 60% of the pane area; a form taller than that fills the frame, and Details gives way
+  and scrolls inside. While the project picker stands in the fields' place the frame keeps its
+  height.
 - **Pre-fills, the same on both paths:** project = the context's (the active project; none at
   Workspace); `do-on` = today from a Today view; type = Recurring from the Recurring view, Task
   elsewhere. The overlay is a fresh frame each time, so the panel puts them in its route:
@@ -446,9 +455,8 @@ The Planner renders in the **side panel** (compact) and, via **Open in tab**, as
   switch under the project.
 - **Details:** a field under the others for every type but Daily — one line tall when empty,
   growing with its text up to a cap, then scrolling inside; Enter is a new line. In place the cap
-  is 40% of the surface's height, never under five lines; in the overlay it is what the 420×220
-  frame leaves (a task, note or thought fits with Details at its one line; a recurring item's
-  fields scroll inside the frame). What is typed is the file's body, byte for byte — markdown as
+  is 40% of the surface's height, never under five lines; in the overlay it is the frame's cap
+  (it grows the frame first). What is typed is the file's body, byte for byte — markdown as
   typed — closed with a line break when it has none, so a recurring item's `## Log` follows it;
   only white space is no body, and the file is then frontmatter alone. Everything else goes to the
   frontmatter.

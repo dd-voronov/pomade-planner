@@ -10,6 +10,7 @@ import { pickerGroups, type PickerProject } from "./model/picker";
 import { folderForNew, type FolderMap } from "./model/projects";
 import { plannerDay } from "./model/today";
 import { ItemFields, KIND_META } from "./ItemFields";
+import { useOverlayFit } from "./overlay-fit";
 import type { ProjectList } from "./useProjects";
 import { createDailyNote, createTask, saveProjectFolders, WriteError } from "./write";
 
@@ -31,7 +32,7 @@ interface AddFormProps {
   folders: FolderMap;
   /** The daily-note template (settings); `null`: the built-in one. */
   template: string | null;
-  /** Where the form stands: Pomade's overlay frame, which it fills, or in a list, as tall as its fields. */
+  /** Where the form stands: Pomade's overlay frame, sized to the form (`useOverlayFit`), or in a list; as tall as its fields in both. */
   placement: "overlay" | "inline";
   /** The project the form starts on — the active one; `null` at Workspace. Followed until the field is changed. */
   initialProject: { id: string; name: string } | null;
@@ -65,6 +66,8 @@ export function AddForm({ host, clock, root, boundary, projects, folders, templa
   const [error, setError] = useState<{ field: "title" | "fields" | "write"; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [inDetails, setInDetails] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
+  const capped = useOverlayFit(placement === "overlay" ? host : null, form, picking !== null);
 
   // Phrases resolve against the planner day as they are typed (every keystroke renders).
   const now = clock.now();
@@ -199,7 +202,7 @@ export function AddForm({ host, clock, root, boundary, projects, folders, templa
       </span>
     );
   return (
-    <form className={`qa qa--${placement}`} data-testid={testId} data-kind={kind} onSubmit={onSubmit} onKeyDown={onKeyDown} onFocus={onFocus} noValidate aria-busy={busy} aria-label={KIND_META[kind].heading}>
+    <form ref={form} className={`qa qa--${placement}`} data-testid={testId} data-fill={(placement === "overlay" && (capped || picking !== null)) || undefined} data-kind={kind} onSubmit={onSubmit} onKeyDown={onKeyDown} onFocus={onFocus} noValidate aria-busy={busy} aria-label={KIND_META[kind].heading}>
       <div className="qa__head">
         <span className="qa__title">{picking !== null ? "Project" : KIND_META[kind].heading}</span>
         <span className="qa__root" title={where || "the workspace root"} data-testid="qa-where">

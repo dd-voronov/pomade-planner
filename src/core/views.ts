@@ -3,7 +3,7 @@
 // `tabs.openApp`). An app has views only for its own routes: the Planner none of the Board's, the
 // Board none of the Planner's.
 
-import type { Surface } from "pomade-kit/protocol";
+import type { OpenOverlayParams, Surface } from "pomade-kit/protocol";
 
 import { ITEM_KINDS, type ItemKind } from "../planner/model/item-draft";
 
@@ -38,6 +38,16 @@ export function quickAddRoute(prefill: QuickAddPrefill): string {
   if (prefill.kind !== "task") query.set("type", prefill.kind);
   return query.size === 0 ? ROUTES.quickAdd : `${ROUTES.quickAdd}?${query.toString()}`;
 }
+
+/**
+ * The height of quick add's form for each type it can start on, in px: the overlay opens at it and
+ * the form keeps the frame that tall from there (overlay-fit.ts). A task's is 220, the frame
+ * Pomade's ⌘⇧A opens at; the fake-host e2e pins each to the form as drawn.
+ */
+export const QUICK_ADD_HEIGHT: Record<ItemKind, number> = { task: 220, recurring: 235, note: 205, thought: 189, "daily-note": 171 };
+
+/** `overlay.open` for quick add with `prefill` from the Planner panel: at its form's height, beside the panel. */
+export const quickAddOverlay = (prefill: QuickAddPrefill): OpenOverlayParams => ({ route: quickAddRoute(prefill), height: QUICK_ADD_HEIGHT[prefill.kind], anchor: "panel" });
 
 /** The pre-fills of a quick-add route; `null` when `route` is not one. Unknown parameters, and a type that isn't one, are ignored. */
 export function parseQuickAddRoute(route: string): QuickAddPrefill | null {

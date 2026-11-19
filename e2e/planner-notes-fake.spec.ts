@@ -337,7 +337,7 @@ test.describe("quick add's five types", () => {
     await expect.poll(() => opened(page)).toMatchObject({ kind: "file", path: "Tasks/Daily/2026-11-17.md" });
   });
 
-  test("the overlay: every type fits its fixed 420×220 card; Tab, then arrows walk the five types", async ({ page }) => {
+  test("the overlay: the frame takes every type's form, nothing scrolls; Tab, then arrows walk the five types", async ({ page }) => {
     await page.goto(harness(OVERLAY));
     const a = app(page);
     await expect(a.getByTestId("qa-title")).toBeFocused();
@@ -347,8 +347,7 @@ test.describe("quick add's five types", () => {
     for (const type of ["recurring", "note", "thought", "daily-note"]) {
       await page.keyboard.press("ArrowRight");
       await expect(a.getByTestId(`qa-type-${type}`)).toBeChecked();
-      const fits = await a.locator("form").evaluate((el) => el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1);
-      expect(fits).toBe(true);
+      await expect.poll(() => a.locator("form").evaluate((el) => el.getBoundingClientRect().height === window.innerHeight && el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth)).toBe(true);
     }
     await shot(page, "e006-fake-quick-add-type-switch");
   });
