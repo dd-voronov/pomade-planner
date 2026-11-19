@@ -117,7 +117,7 @@ export function sampleBacklog(): Record<string, string> {
 const STATUSES = {
   problem: ["backlog", "grooming", "planned", "delivering", "review", "done", "dropped", "parked"],
   epic: ["planned", "in-progress", "review", "done", "dropped", "parked"],
-  task: ["backlog", "planned", "in-progress", "done", "dropped"],
+  task: ["backlog", "planned", "in-progress", "review", "done", "dropped"],
 } as const;
 
 /** A large backlog: `count` tickets spread over every kind and status, done epics and tasks in `done/`. */

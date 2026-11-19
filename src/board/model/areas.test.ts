@@ -86,7 +86,7 @@ describe("canTake — which kind may sit in which column (Pomade BACKLOG Statuse
       backlog: ["task"],
       planned: ["epic", "task"],
       "in-progress": ["epic", "task"],
-      review: ["epic"],
+      review: ["epic", "task"],
       done: ["epic", "task"],
       dropped: ["epic", "task"],
       parked: ["epic"],
@@ -104,7 +104,6 @@ describe("canTake — which kind may sit in which column (Pomade BACKLOG Statuse
 
 describe("refusalText", () => {
   it.each([
-    [SOLUTIONS, "review", "task", "Tasks can't be in Review"],
     [SOLUTIONS, "backlog", "epic", "Epics can't be in Backlog"],
     [SOLUTIONS, "parked", "task", "Tasks can't be in Parked"],
     [PROBLEMS, "delivering", "task", "Tasks can't be in Delivering"],
@@ -156,7 +155,13 @@ describe("buildArea", () => {
 
   it("shows a ticket in its status column even where its kind can't be dropped (the file is the truth)", () => {
     const board = buildArea(SOLUTIONS, tickets);
-    expect(board.columns.find((c) => c.def.status === "review")?.cards.map((x) => x.id)).toContain("T-1");
+    expect(board.columns.find((c) => c.def.status === "parked")?.cards.map((x) => x.id)).toContain("T-4");
+  });
+
+  it("puts a task in review in Solutions › Review", () => {
+    const board = buildArea(SOLUTIONS, [t("T-7", { status: "review" })]);
+    expect(board.columns.find((c) => c.def.status === "review")?.cards.map((x) => x.id)).toEqual(["T-7"]);
+    expect(board.misfits).toEqual([]);
   });
 
   it("lists tickets with no status or a status without a column as misfits", () => {
@@ -246,7 +251,7 @@ describe("create targets", () => {
     [SOLUTIONS, "backlog", ["task"]],
     [SOLUTIONS, "planned", ["epic", "task"]],
     [SOLUTIONS, "in-progress", ["epic", "task"]],
-    [SOLUTIONS, "review", ["epic"]],
+    [SOLUTIONS, "review", ["epic", "task"]],
     [SOLUTIONS, "parked", ["epic"]],
     [SOLUTIONS, "dropped", ["epic", "task"]],
     [PROBLEMS, "grooming", ["problem"]],

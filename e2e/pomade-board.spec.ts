@@ -215,15 +215,15 @@ test.describe("the Board in a real Pomade", () => {
   test("a refused drop writes nothing; a write the disk refuses shows an inline error and the card reloads", async () => {
     const b = board(page);
     await b.getByTestId("area-solutions").click();
-    const taskPath = roadmap(ticketPath(spec("T-001")));
-    const task = await readFile(taskPath, "utf8");
-    await drag(page, card(b, "T-001"), column(b, "review"), async () => {
-      await expect(column(b, "review")).toHaveAttribute("data-refused", "true");
-      await expect(b.getByTestId("drop-refusal")).toHaveText("Tasks can't be in Review");
+    const epicPath = roadmap(ticketPath(spec("E-001")));
+    const epic = await readFile(epicPath, "utf8");
+    await drag(page, card(b, "E-001"), column(b, "backlog"), async () => {
+      await expect(column(b, "backlog")).toHaveAttribute("data-refused", "true");
+      await expect(b.getByTestId("drop-refusal")).toHaveText("Epics can't be in Backlog");
       await shot(page, "pomade-board-refused-drop");
     });
-    await expect(column(b, "in-progress").locator('[data-id="T-001"]')).toBeVisible();
-    expect(await readFile(taskPath, "utf8")).toBe(task);
+    await expect(column(b, "in-progress").locator('[data-id="E-001"]')).toBeVisible();
+    expect(await readFile(epicPath, "utf8")).toBe(epic);
 
     await b.getByTestId("area-problems").click();
     const problemPath = roadmap(ticketPath(spec("P-003")));

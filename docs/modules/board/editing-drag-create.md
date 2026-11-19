@@ -23,7 +23,7 @@ field-only write, never over a file that changed since the board read it. The Bo
 `planDrop`: two field-only writes, `status` and `updated: <today>` (the local day, `localDay`).
 
 - While a card is dragged (`@dnd-kit/core`, pointer and keyboard sensors), the columns its kind can't
-  take are dimmed and the dragged card names why ("Tasks can't be in Review", `refusalText`); a drop
+  take are dimmed and the dragged card names why ("Epics can't be in Backlog", `refusalText`); a drop
   there is refused. A drop where the card already is does nothing.
 - Keyboard (`dnd.ts`): Space lifts a card, ← → move it a column, Space or Enter drops, Esc cancels;
   Enter on a resting card opens it.

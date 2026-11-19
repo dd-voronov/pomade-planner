@@ -42,7 +42,7 @@ const ET: readonly Kind[] = ["epic", "task"];
  * The default mapping, after Pomade's BACKLOG "Statuses" and [[convention-areas-columns]] "Convention": a signal is new, then
  * triaged (linked to a problem) or dismissed; a problem runs backlog → grooming → planned →
  * delivering → review → done, or dropped / parked; an epic planned → in-progress → review → done,
- * or dropped / parked; a task (backlog →) planned → in-progress → done, or dropped.
+ * or dropped / parked; a task (backlog →) planned → in-progress → review → done, or dropped.
  */
 export const DEFAULT_AREAS: readonly AreaDef[] = [
   {
@@ -74,7 +74,7 @@ export const DEFAULT_AREAS: readonly AreaDef[] = [
       column("backlog", "Backlog", ["task"]),
       column("planned", "Planned", ET),
       column("in-progress", "In progress", ET),
-      column("review", "Review", ["epic"]),
+      column("review", "Review", ET),
       column("done", "Done", ET, "main", true),
       column("dropped", "Dropped", ET, "side"),
       column("parked", "Parked", ["epic"], "side"),
@@ -109,7 +109,7 @@ export function canTake(column: ColumnDef, kind: Kind): boolean {
   return column.kinds.includes(kind);
 }
 
-/** Why `column` refuses `kind` — "Tasks can't be in Review". */
+/** Why `column` refuses `kind` — "Tasks can't be in Parked". */
 export function refusalText(column: ColumnDef, kind: Kind): string {
   return `${KIND_PLURAL[kind]} can't be in ${column.label}`;
 }

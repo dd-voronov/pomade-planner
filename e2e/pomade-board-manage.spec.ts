@@ -176,6 +176,14 @@ test.describe("E-002 in a real Pomade", () => {
     test.info().annotations.push({ type: "drop out of review → row gone from Needs you (ms)", description: String(Date.now() - dropped) });
     await expect.poll(() => readFile(deltaPath("E-018"), "utf8")).toContain("status: in-progress");
 
+    // A task dropped into Review needs you too; dragged back out, it leaves.
+    await drag(page, card(b, "T-004"), column(b, "review"));
+    await expect.poll(() => readFile(deltaPath("T-004"), "utf8")).toContain("status: review");
+    await expect(p.locator('[data-testid="needs-you-row"][data-id="T-004"]')).toBeVisible({ timeout: 1_500 });
+    await shot(page, "t014-pomade-task-in-review");
+    await drag(page, card(b, "T-004"), column(b, "planned"));
+    await expect(p.locator('[data-testid="needs-you-row"][data-id="T-004"]')).toHaveCount(0, { timeout: 1_500 });
+
     // A click opens the ticket in the editor.
     await p.locator('[data-testid="needs-you-row"][data-id="P-013"]').click();
     await expect(page.getByTestId("tabstrip").getByRole("tab", { name: deltaName("P-013"), selected: true })).toBeVisible();

@@ -48,7 +48,7 @@ The switcher at the top picks an area; areas never mix. Each tab shows the area'
   A collapsed column shows its label and count — click it to expand; an expanded one collapses again
   from the ‹ in its header.
 - A kind can only be dropped where the convention allows it: on Solutions, **Backlog** takes tasks
-  only, **Review** and **Parked** take epics only.
+  only and **Parked** epics only; **Review** takes both.
 - A ticket always sits in the column of its `status:`, even one its kind couldn't be dropped into
   (the file is the truth).
 - **Order** in a column: priority (P0 first, none last), then ID.
@@ -78,8 +78,8 @@ project. Title, body and every other field are edited there.
 Drag a card to another column. The Board writes two frontmatter lines — `status:` and
 `updated: <today>` — and leaves every other byte alone.
 
-- While dragging, columns the kind can't take are dimmed and the card says why: "Tasks can't be in
-  Review". A drop there is refused.
+- While dragging, columns the kind can't take are dimmed and the card says why: "Epics can't be in
+  Backlog". A drop there is refused.
 - **Done moves the file:** an epic or task dropped on Done moves into `done/` (created if missing);
   dragged out of Done it moves back. Problems and signals never move. Turn this off per backlog:
   **⋯ → Move done epics and tasks to `done/`** (on by default).

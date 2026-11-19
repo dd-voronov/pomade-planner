@@ -37,8 +37,16 @@ describe("planDrop", () => {
     });
   });
 
+  it("writes status: review for a task dropped on Review", () => {
+    expect(plan(t("T-1", { status: "in-progress" }), SOLUTIONS, "review")).toEqual({
+      kind: "write",
+      path: `${BACKLOG}/T-1-x.md`,
+      fields: fields("review"),
+      move: null,
+    });
+  });
+
   it.each([
-    ["T-1", "review", "Tasks can't be in Review"],
     ["T-1", "parked", "Tasks can't be in Parked"],
     ["E-1", "backlog", "Epics can't be in Backlog"],
   ])("refuses %s onto %s", (id, status, reason) => {

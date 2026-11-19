@@ -57,7 +57,7 @@ Pomade's file tree, `git mv`). The type is changed in the file's `type:`.
 | "… — using the default backlog folder." | `Apps/pomade-board/settings.json` has a bad `backlogPathPattern` | fix the file |
 | Unreadable strip: "can't read — open to fix" | a ticket-named file whose frontmatter doesn't parse | click it, fix the YAML |
 | Unreadable strip: "status “wip” has no column — open to fix" | a status this area has no column for, or none | fix `status:` |
-| "Tasks can't be in Review" while dragging | that column doesn't take this kind | drop elsewhere |
+| "Epics can't be in Backlog" while dragging | that column doesn't take this kind | drop elsewhere |
 | "Changed on disk since the board read it — not saved. …" | the file changed after you grabbed the card | drag again |
 | "Couldn't save: permission denied." | the file or folder is read-only | fix permissions, drag again |
 | "Status saved, but not moved: … already exists." | `done/` (or the backlog folder) already has a file of that name | rename one file, then move it |

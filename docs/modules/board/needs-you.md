@@ -15,7 +15,7 @@ workspace at Workspace. It is live, so it doubles as an inbox.
 
 ## Inside a project
 
-`needsYou(tickets)`: tickets in `review` (any kind) and signals in `new`, as two groups ("In review",
+`needsYou(tickets)`: tickets in `review` (any kind: a problem, an epic or a task) and signals in `new`, as two groups ("In review",
 "New signals"), each ordered by priority then ID (`compareTickets`); a group with nothing is left
 out, and with nothing at all the panel says "Nothing needs you". A project without a backlog folder
 says so ("No backlog found"). A row shows kind badge, ID, priority and title; a click opens the

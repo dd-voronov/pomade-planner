@@ -60,7 +60,8 @@ renders whatever mapping it is given, and the Board tab gives it this one. No se
   again from its header. The open area and the columns toggled from their default are per-project
   view state ([[settings-and-state]]).
 - A column appears only where the convention lets a kind be in it: `backlog` on Solutions holds
-  standalone tasks; `review` and `parked` hold epics (`ColumnDef.kinds`, `canTake`).
+  standalone tasks; `parked` holds epics; `review` holds epics and tasks — a task runs `(backlog →)
+  planned → in-progress → review → done` / `dropped` (`ColumnDef.kinds`, `canTake`).
 - A ticket sits in the column of its status even when its kind could not be dropped there
   (`buildArea`).
 

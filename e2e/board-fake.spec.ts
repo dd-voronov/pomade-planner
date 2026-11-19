@@ -433,19 +433,38 @@ test.describe("drag", () => {
   test("a drop on a column the kind can't take is refused: the column is dimmed during the drag and nothing is written", async ({ page }) => {
     const app = await openBoard(page);
     await app.getByTestId("area-solutions").click();
+    const path = alphaPath("E-001");
+    const before = await readFile(page, path);
+    await drag(page, card(app, "E-001"), column(app, "backlog"), async () => {
+      await expect(column(app, "backlog")).toHaveAttribute("data-refused", "true");
+      await expect(column(app, "review")).toHaveAttribute("data-refused", "false");
+      await expect(column(app, "parked")).toHaveAttribute("data-refused", "false");
+      await expect(app.getByTestId("drop-refusal")).toHaveText("Epics can't be in Backlog");
+      await expect(column(app, "backlog")).toHaveCSS("opacity", "0.4");
+      await shot(page, "board-fake-refused-drop");
+    });
+    await expect(column(app, "in-progress").locator('[data-id="E-001"]')).toBeVisible();
+    await expect(column(app, "backlog")).toHaveAttribute("data-refused", "false");
+    expect(await readFile(page, path)).toBe(before);
+  });
+
+  test("a task drops into Review: its file gets status: review and it counts as needing you", async ({ page }) => {
+    const app = await openBoard(page);
+    await app.getByTestId("area-solutions").click();
     const path = alphaPath("T-001");
     const before = await readFile(page, path);
     await drag(page, card(app, "T-001"), column(app, "review"), async () => {
-      await expect(column(app, "review")).toHaveAttribute("data-refused", "true");
-      await expect(column(app, "backlog")).toHaveAttribute("data-refused", "false");
+      await expect(column(app, "review")).toHaveAttribute("data-refused", "false");
       await expect(column(app, "parked")).toHaveAttribute("data-refused", "true");
-      await expect(app.getByTestId("drop-refusal")).toHaveText("Tasks can't be in Review");
-      await expect(column(app, "review")).toHaveCSS("opacity", "0.4");
-      await shot(page, "board-fake-refused-drop");
+      await expect(app.getByTestId("drop-refusal")).toHaveCount(0);
     });
-    await expect(column(app, "in-progress").locator('[data-id="T-001"]')).toBeVisible();
-    await expect(column(app, "review")).toHaveAttribute("data-refused", "false");
-    expect(await readFile(page, path)).toBe(before);
+    await expect(column(app, "review").locator('[data-id="T-001"]')).toBeVisible();
+    await expect.poll(() => readFile(page, path)).toBe(withStatus(before, "review"));
+    await shot(page, "t014-fake-task-in-review");
+
+    await page.evaluate(() => window.fakeHost.setActiveProject(null));
+    const alpha = app.locator('[data-testid="chooser-project"][data-project="alpha"]');
+    await expect(alpha.getByTestId("chooser-needs-you")).toHaveText("3 in review · 1 new signal");
   });
 
   test("a file changed during the drag is not written: the card shows an inline error and the file as it is now", async ({ page }) => {
