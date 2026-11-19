@@ -35,7 +35,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const exists = (page: Page, path: string) =>
   page.evaluate((p) => {
@@ -323,7 +323,7 @@ test.describe("quick add: the project field", () => {
     await shot(page, "e004-fake-quick-add-from-panel-picker");
     await page.keyboard.press("Enter");
     await page.keyboard.press("Enter");
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     expect(await exists(page, "Tasks/Pomade/2026-11-17-ship-the-leaderboard.md")).toBe(true);
     // QuizLab's Today doesn't list it: it is Pomade's.
     await expect(row(a, "Ship the leaderboard")).toHaveCount(0);

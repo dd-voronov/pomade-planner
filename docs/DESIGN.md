@@ -27,11 +27,18 @@ current design; the reasoning and Daniil's scenarios are in the G2 grill outcome
 
 **One codebase, two builds.** Each app is a folder under `apps/` — its page, its entry and its
 manifest with its icon — over the code in `src/`: `src/planner/` goes into the Planner only,
-`src/board/` into the Board only, and `src/core/` (the shell, the Host API helpers, the tokens and
-base styles) is compiled into both. `npm run build` makes two self-contained app folders,
+`src/board/` into the Board only, and `src/core/` (the shell, the Host API helpers and the base
+styles) is compiled into both. `npm run build` makes two self-contained app folders,
 `dist/planner/` and `dist/board/`, each installable as it is. A frame renders only its own app's
 views: at a route of the other app it says it has no view there. Neither app calls the other, reads
 the other's settings or state, or needs it installed.
+
+**Looks like Pomade.** Both apps draw with Pomade's design tokens (`pomade-kit/tokens.css`) and
+wear Pomade's theme: `followTheme` puts `welcome.theme` on each frame's root (`data-theme`) and
+follows `theme.changed`; a Pomade that names no theme is light, and so is a page with no host. The
+Mac's appearance is never read. Every colour is a token — no colour literal in a style, a
+component or an icon, SVG glyphs in `currentColor`, an image only as a mask over a token colour —
+so a theme Pomade adds restyles both apps whole (`test/colors.test.ts` holds this).
 
 Each app uses only the Host API (`pomade-kit` SDK) and `pomade-kit`'s pure logic:
 `frontmatter-write` (through the Host API), `schedule-format`, `date-phrases`. Each manifest asks

@@ -31,10 +31,12 @@ export function RepeatEditor({ draft, onChange, result, anchor }: RepeatEditorPr
           <label className="qa-field__label qa-repeat__label" htmlFor={`${id}-mode`}>
             Repeat
           </label>
-          <select id={`${id}-mode`} className="field-input qa-repeat__select" data-testid="qa-repeat-mode" value={draft.mode} onChange={(e) => set({ mode: e.target.value as RepeatMode })}>
-            <option value="every">every</option>
-            <option value="after">after done</option>
-          </select>
+          <span className="qa-repeat__picker">
+            <select id={`${id}-mode`} className="field-input qa-repeat__select" data-testid="qa-repeat-mode" value={draft.mode} onChange={(e) => set({ mode: e.target.value as RepeatMode })}>
+              <option value="every">every</option>
+              <option value="after">after done</option>
+            </select>
+          </span>
         </div>
         <div className="qa-repeat__group qa-repeat__group--grow">
           <input
@@ -47,13 +49,15 @@ export function RepeatEditor({ draft, onChange, result, anchor }: RepeatEditorPr
             aria-invalid={bad("count")}
             onChange={(e) => set({ count: e.target.value })}
           />
-          <select className="field-input qa-repeat__select" data-testid="qa-repeat-unit" aria-label="Unit" value={draft.unit} onChange={(e) => set({ unit: e.target.value as RepeatUnit, on: "" })}>
-            {UNITS.map((u) => (
-              <option key={u} value={u}>
-                {plural ? `${u}s` : u}
-              </option>
-            ))}
-          </select>
+          <span className="qa-repeat__picker">
+            <select className="field-input qa-repeat__select" data-testid="qa-repeat-unit" aria-label="Unit" value={draft.unit} onChange={(e) => set({ unit: e.target.value as RepeatUnit, on: "" })}>
+              {UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {plural ? `${u}s` : u}
+                </option>
+              ))}
+            </select>
+          </span>
           {showOn ? (
             <span className="qa-repeat__on">
               <label className="qa-field__label qa-repeat__inline-label" htmlFor={`${id}-on`}>

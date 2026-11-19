@@ -37,7 +37,7 @@ function harness(open: Open): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const overlaysOpened = (page: Page) => page.evaluate(() => window.fakeHost.overlays.length);
 const overlaysAsked = (page: Page) => page.evaluate(() => window.fakeHost.overlays);
@@ -97,7 +97,7 @@ test.describe("the add form in place, in the tab", () => {
     await expect(a.getByTestId("add-item")).toHaveText("Add task");
     expect(await fileText(page, "Tasks/2026-11-17-call-the-bank.md")).toBe(quickAdded({ title: "Call the bank", doOn: "2026-11-17", deadline: "2026-11-20", created: "2026-11-17" }));
     expect(await overlaysOpened(page)).toBe(0);
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
   });
 
   test("from All the form starts without a do-on; Escape closes it and gives the focus back to +; a second + keeps the one form", async ({ page }) => {
@@ -198,7 +198,7 @@ test.describe("the add form in place, in the tab", () => {
       "---\ntype: recurring\ntitle: Upload invoices\nstatus: open\ndo-on: 2026-12-05\nrepeat:\n  monthly: { days: [5] }\ncreated: 2026-11-17\n---\n",
     );
     expect(await overlaysOpened(page)).toBe(0);
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
   });
 
   test("an item the view doesn't list: the foot says which view does and Show takes there, the row focused and marked", async ({ page }) => {
@@ -292,7 +292,7 @@ test.describe("the panel adds in the overlay", () => {
         await expect(a.getByTestId("add-form")).toHaveCount(0);
         await expect(button).toBeVisible();
         await page.keyboard.press("Escape");
-        await expect(page.locator("#overlay iframe")).toHaveCount(0);
+        await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
         await expect(opener).toBeFocused();
       }
     }
@@ -313,7 +313,7 @@ test.describe("the panel adds in the overlay", () => {
     await shot(page, "e008-fake-panel-recurring-overlay");
     await page.keyboard.type("Upload invoices");
     await page.keyboard.press("Enter");
-    await expect(page.locator("#overlay iframe")).toHaveCount(0);
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     await expect(row(a, "Upload invoices")).toHaveCount(1);
     await expect(a.getByTestId("add-item")).toBeFocused();
   });

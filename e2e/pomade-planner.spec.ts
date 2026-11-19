@@ -103,6 +103,15 @@ test.describe("the Planner in a real Pomade", () => {
     await shot(page, "e003-pomade-empty-today");
   });
 
+  test("the panel wears Pomade's theme and tokens: light on its root (also from a Pomade that names no theme), Pomade's --bg and --text", async () => {
+    const p = await openPanel();
+    const root = p.locator("html");
+    await expect(root).toHaveAttribute("data-theme", "light");
+    await expect(root).toHaveCSS("color-scheme", "light");
+    await expect(root).toHaveCSS("color", "rgb(31, 41, 51)");
+    await expect(root).toHaveCSS("background-color", "rgb(250, 251, 252)");
+  });
+
   test("files added in Finder or Obsidian appear within ~1 s, a deleted one disappears; yesterday's do-on shows as “planned 1 day ago”; a broken one is greyed", async () => {
     const p = await openPanel();
     await writeFile(todo("2026-11-16-call-the-dentist.md"), "---\ntype: task\ntitle: Call the dentist\nstatus: open\ndo-on: 2026-11-16\ncreated: 2026-11-16\n---\n");

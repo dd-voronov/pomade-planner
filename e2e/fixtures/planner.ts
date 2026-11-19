@@ -30,8 +30,8 @@ export async function settled(frame: FrameLocator, day?: string): Promise<void> 
   await expect(frame.locator(day === undefined ? 'main[data-daily]:not([data-daily="pending"])' : `main[data-daily="${day}"]`)).toHaveCount(1);
 }
 
-/** The overlay the app opened itself (`overlay.open`), as the fake-host harness mounts it. */
-export const overlay = (page: Page): FrameLocator => page.frameLocator("#overlay iframe");
+/** The overlay the app opened itself (`overlay.open`), as the kit's `mountApp` mounts it in the fake-host harness. */
+export const overlay = (page: Page): FrameLocator => page.frameLocator('iframe[data-surface="overlay"]');
 
 /** Click the Planner panel's + in `app` and wait for quick add's overlay, its title focused. */
 export async function openQuickAdd(page: Page, app: FrameLocator): Promise<FrameLocator> {

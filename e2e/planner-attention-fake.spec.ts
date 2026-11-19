@@ -33,7 +33,7 @@ function harness(open: Open = {}): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const badges = (page: Page) => page.evaluate(() => window.fakeHost.badges);
 const notices = (page: Page) => page.evaluate(() => window.fakeHost.notices);
 const state = (page: Page, key: string) => page.evaluate((k) => window.fakeHost.state[k] ?? null, key);

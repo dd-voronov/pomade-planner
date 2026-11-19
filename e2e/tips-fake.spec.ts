@@ -21,7 +21,7 @@ function planner(surface: "tab" | "panel", panelWidth?: number): string {
 
 const board = `http://localhost:${HARNESS_PORT}/index.html?${new URLSearchParams({ app: BOARD_URL, surface: "tab", icon: "board" }).toString()}`;
 
-const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const tip = (a: FrameLocator): Locator => a.getByTestId("tip");
 
 async function openPlanner(page: Page, surface: "tab" | "panel", panelWidth?: number): Promise<FrameLocator> {

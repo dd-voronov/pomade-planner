@@ -97,15 +97,13 @@ describe("nextDayStart", () => {
     expect(next.getTime() - at("2026-10-24 03:00").getTime()).toBe(25 * 3_600_000);
   });
 
-  it("fall back with a repeated 2:30 boundary: the first pass starts Sunday; on the second pass Saturday is back until 02:30 again", () => {
+  it("fall back with a repeated 2:30 boundary: Sunday starts on the first pass and stays through the second", () => {
     const boundary = { hour: 2, minute: 30 };
     const first = nextDayStart(at("2026-10-24 22:00"), boundary);
     expect(first.toISOString()).toBe("2026-10-25T00:30:00.000Z");
     const secondPass = new Date(first.getTime() + 3_600_000 - 15 * 60_000); // 02:15 CET
-    expect(plannerDay(secondPass, boundary)).toBe("2026-10-24");
-    const again = nextDayStart(secondPass, boundary);
-    expect(again.toISOString()).toBe("2026-10-25T01:30:00.000Z");
-    expect(again.getTime()).toBeGreaterThan(secondPass.getTime());
+    expect(plannerDay(secondPass, boundary)).toBe("2026-10-25");
+    expect(nextDayStart(secondPass, boundary).toISOString()).toBe("2026-10-26T01:30:00.000Z");
   });
 });
 

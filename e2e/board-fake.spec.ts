@@ -18,7 +18,7 @@ function harness(project?: string): string {
   return `http://localhost:${HARNESS_PORT}/index.html?${params.toString()}`;
 }
 
-const frame = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const frame = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 
 function spec(id: string) {
   const s = SAMPLE_TICKETS.find((t) => t.id === id);
@@ -279,7 +279,7 @@ test.describe("backlog location", () => {
     // Cancelling changes nothing; a folder outside the project is refused by the picker.
     await page.evaluate(() => window.fakeHost.answerPick("Projects/alpha/docs"));
     await app.getByTestId("choose-backlog").click();
-    await expect.poll(() => page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ root: "Projects/beta", initial: "Projects/beta" });
+    await expect.poll(() => page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ kind: "folder", root: "Projects/beta", initial: "Projects/beta" });
     await expect(app.getByTestId("choose-backlog-state")).toBeVisible();
 
     await page.evaluate(() => window.fakeHost.answerPick("Projects/beta/tickets"));

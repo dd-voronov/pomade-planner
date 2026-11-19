@@ -15,7 +15,7 @@ const DELTA = "Projects/delta/docs/roadmap";
 const GAMMA = "Projects/gamma/plans";
 const SCALE_REVIEW = Object.values(scaleBacklog(300)).filter((text) => text.includes("\nstatus: review\n")).length;
 
-const frame = (page: Page): FrameLocator => page.frameLocator("#stage iframe");
+const frame = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nth=0");
 const pathOf = (folder: string, id: string): string => {
   const spec = (folder === DELTA ? DELTA_TICKETS : SAMPLE_TICKETS).find((t) => t.id === id);
   if (!spec) throw new Error(id);
