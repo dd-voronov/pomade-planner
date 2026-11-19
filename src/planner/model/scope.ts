@@ -1,4 +1,4 @@
-// What each view shows in a context (DESIGN §3.6). The context is the active Pomade project or
+// What each view shows in a context ([[views]] "Context"). The context is the active Pomade project or
 // Workspace. At Workspace, Today and Project span everything (Today grouped by project); inside a
 // project, Today and Project show the project's items plus its mixed-in sources — workspace-level
 // items and other projects — and a mixed-in row carries its source's label. All always spans
@@ -63,7 +63,7 @@ export function revealInAll(view: PlannerView, source: Source, type: string): Pl
  * The Project view's rows (tasks and recurring items — notes, thoughts and daily notes live in
  * All): every open task, and the ones ticked on `day` (crossed out until the
  * boundary), in list order; a recurring item only while it is in Today — between occurrences it
- * shows in the Recurring view alone (DESIGN §3.4).
+ * shows in the Recurring view alone ([[recurring]] "`do-on` and where an item stands").
  */
 export function projectRows(tasks: readonly Task[], day: LocalDate): Task[] {
   return tasks.filter((t) => isScheduled(t) && (t.repeat !== null ? recurringRow(t, day) !== null : !t.done || t.doneOn === day)).sort(compareTasks);

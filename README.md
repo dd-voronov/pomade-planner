@@ -5,9 +5,9 @@ and **Board** (`pomade-board` — kanban over project backlogs). Each is install
 its own and works without the other.
 
 Part of the Pomade family — the platform and its rules live in the sibling repo `Pomade`
-(`docs/PLATFORM.md`, protocol in `docs/HOST-API.md`). Design: `docs/DESIGN.md`. Backlog:
+(`docs/PLATFORM.md`, protocol in `docs/HOST-API.md`). Design: `docs/DESIGN.md` (overview), `docs/modules/` (per module). Backlog:
 `docs/BACKLOG.md`. The apps require Pomade `main` — the platform with `pomade:T-237`–`T-248`
-(DESIGN §6).
+(`docs/modules/core/host-api-usage.md`).
 
 User guide — how to use both apps: [`docs/user-guide/user-guide.md`](docs/user-guide/user-guide.md).
 
@@ -37,7 +37,7 @@ Pomade loads an app in an iframe; the surface it is opened on (`host.welcome.sur
 | tab (Board strip icon, new-tab menu, the Workspace chooser's `tabs.openApp`) | `board` or `""` | Board |
 | panel (Board strip icon) | `needs-you` | Needs you |
 
-The Planner's command, `pomade-planner today [--project <name>] [--json] [--date YYYY-MM-DD]` (DESIGN §7): Pomade links it
+The Planner's command, `pomade-planner today [--project <name>] [--json] [--date YYYY-MM-DD]` (`docs/modules/planner/today-command.md`): Pomade links it
 into its command folder on install, so it is on `PATH` in Pomade's terminals and — once the PATH
 line is added (Pomade ▸ Settings ▸ General ▸ Commands) — in any login shell. It reads
 `Apps/pomade-planner/settings.json` (with the project-id → folder map) and the tasks root with its
@@ -47,14 +47,14 @@ Opened outside Pomade an app shows "No Pomade host". Each app's folder under `ap
 its entry and its manifest; the build makes one installable app folder per app, `dist/planner/` and
 `dist/board/` (Build, below). Each app keeps its own data: synced settings in
 `<workspace>/Apps/pomade-planner/settings.json` and `<workspace>/Apps/pomade-board/settings.json`,
-state and per-project settings under its own id (DESIGN §5).
+state and per-project settings under its own id (`docs/modules/core/settings-and-state.md`).
 
 | Folder | Holds |
 |---|---|
 | `apps/planner/`, `apps/board/` | one folder per app: `index.html`, the entry `main.tsx` (the app's name and its views, handed to the shared shell) and `public/` — `manifest.json` and the app's icon, copied into the build as they are |
-| `src/core/` | compiled into both apps — the shell (`mount.tsx`, `App.tsx`): handshake, routing, tokens and base styles, the view switcher's styles; what both apps share — Host API helpers, the live folder read (`live-folder.ts`), reading and merging an app's synced settings file (`settings-file.ts`), slugs, the anchored popover, the tooltips of the app's controls (`Tips.tsx`: a control names itself with `data-tip`) |
+| `src/core/` | compiled into both apps — the shell (`mount.tsx`, `App.tsx`): handshake, routing, tokens and base styles, the view switcher's styles; what both apps share — Host API helpers, the live folder read (`live-folder.ts`), reading and merging an app's synced settings file (`settings-file.ts`), slugs, the anchored popover and its placement (`place.ts`), the tooltips of the app's controls (`Tips.tsx`: a control names itself with `data-tip`) |
 | `src/board/` | the Board app's code: the Board tab, the Workspace project chooser, the Needs-you panel (`NeedsYouPanel.tsx` inside a project, `NeedsYouWorkspace.tsx` the list and its levels at Workspace, `NeedsYouGroups.tsx` the groups both show), the create form, card popover and triage picker; Host API reads and watches (`useBoardData.ts`) and writes (`write.ts`) |
-| `src/board/model/` | the Board's pure logic, each with its vitest matrix: tickets, areas and columns, order, drops and popover edits, ticket creation (IDs, slugs, file text), parent candidates, Needs you (the groups, the counts, the Workspace levels), popover placement, settings, view state |
+| `src/board/model/` | the Board's pure logic, each with its vitest matrix: tickets, areas and columns, order, drops and popover edits, ticket creation (IDs, slugs, file text), parent candidates, Needs you (the groups, the counts, the Workspace levels), settings, view state |
 | `src/planner/` | the Planner app's code: the Planner panel and tab (onboarding, Today with the daily note's card, Project, Recurring, All with mix-ins, filters and Show archived, pins, row actions, select mode with the delete confirmation, the tab's excerpts, settings page), an item's compact view in the tab (`ItemPane` beside the lists, styled in `item-pane.css`; which item is open and how it follows its file, `useOpenItem.ts`; the file's version and the view's writes over it, `useItemFile.ts`), the add form with its five types and Details (`AddForm` over the fields of `ItemFields`: in the overlay the shortcut and the panel's **+** and Add button open, `QuickAdd`, and in place at the foot of the tab's lists, `AddInPlace`; its placements' styles in `add-form.css`), the project picker and the repeat editor; its clock and day (`clock.ts`), Host API reads with a text cache (`usePlannerData.ts`), app state and the day's daily note (`usePlannerState.ts`), the badge and the morning summary (`useAttention.ts`), Pomade's projects and the folder reconciliation (`useProjects.ts`), writes (`write.ts`) |
 | `src/planner/model/` | the Planner's pure logic, each with its vitest matrix: settings, items, the Today module (`today.ts`), attention (`attention.ts`: what is due, the badge, the summary's text and when it posts), recurring items (`recurring.ts`: the rule, the log, lead time / missed / ended, done and skip), daily notes (`daily.ts`: when one is made, the template merge, the built-in note), body reads (`body.ts`: checkbox progress, excerpts), pins (`pins.ts`), archive paths (`archive.ts`), All's select mode and delete results (`selection.ts`), quick add's repeat editor (`repeat-draft.ts`), project folders, the map and rename plans (`projects.ts`), what each view shows per context (`scope.ts`), the picker (`picker.ts`), row labels, the add form's draft and what it comes to (`item-draft.ts`), a file as that draft and what an edited one writes back — the fields, and Details over the body with its log (`item-edit.ts`), its fields' values and the file text with Details as the body (`create.ts`), ticking, view state, the command's arguments and output |
 | `cli/` | the `pomade-planner` command (`main.ts`): reads the files and hands them to the Today and projects modules; built into the Planner's folder |

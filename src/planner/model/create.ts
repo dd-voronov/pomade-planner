@@ -1,6 +1,6 @@
-// Quick add (DESIGN §3.7): the fields as typed — date phrases resolved against the planner day,
+// Quick add ([[quick-add]]): the fields as typed — date phrases resolved against the planner day,
 // importance as a number — and the new item's file: `<created>-<slug>.md` in the tasks root (a
-// taken name becomes `-2`, `-3`, …), its frontmatter in the §3.2 order. A recurring item carries
+// taken name becomes `-2`, `-3`, …), its frontmatter in the order of [[storage-and-item-types]] "Writing an item". A recurring item carries
 // its `repeat:` block as `pomade-kit` formats it; a note or a thought has no dates. Details are the
 // file's body, as typed.
 

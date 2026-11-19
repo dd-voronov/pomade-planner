@@ -19,7 +19,7 @@ type AddState =
   | { kind: "added"; added: Added; from: PlannerViewId };
 
 /**
- * Adding in place in the Planner tab (DESIGN §3.7): one form, opened by the header's **+** or the
+ * Adding in place in the Planner tab ([[quick-add]] "One form, two placements"): one form, opened by the header's **+** or the
  * list's Add button, closed by Escape — focus then returns to what opened it — or by the add itself.
  */
 export function useAddInPlace() {

@@ -1,4 +1,4 @@
-// Quick add's repeat editor (DESIGN §3.7): "Every [1] [month] on [5]" or "[3] [months] after done",
+// Quick add's repeat editor ([[quick-add]] "Recurring — the repeat editor"): "Every [1] [month] on [5]" or "[3] [months] after done",
 // lead time in days, start and end as date phrases — turned into a `pomade-kit` schedule, checked
 // by the kit (its own readable errors), described in its plain words, with the first `do-on`.
 //

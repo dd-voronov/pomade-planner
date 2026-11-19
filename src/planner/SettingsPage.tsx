@@ -45,7 +45,7 @@ function useTemplateProblem(host: HostClient, path: string | null): string | nul
   return problem.path === path ? problem.text : null;
 }
 
-/** The Planner tab's settings page (DESIGN §5): the tasks root, the day boundary and the daily-note template, saved in the synced settings file. */
+/** The Planner tab's settings page ([[settings-and-onboarding]]): the tasks root, the day boundary and the daily-note template, saved in the synced settings file. */
 export function SettingsPage({ host, settings, reload, onBack }: SettingsPageProps) {
   const { tasksRoot, dayBoundary, dailyNoteTemplate } = settings.settings;
   const [template, setTemplate] = useState(dailyNoteTemplate ?? "");

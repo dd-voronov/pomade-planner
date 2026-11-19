@@ -198,7 +198,7 @@ export interface ItemFieldsProps {
 }
 
 /**
- * An item's fields (DESIGN §3.7), values in and changes out — what the form that adds an item
+ * An item's fields ([[quick-add]] "Fields"), values in and changes out — what the form that adds an item
  * shows, and what the compact view that edits one shows (`edit`): the title; the project (the two-step picker
  * opens on ↓, Space, a click or typing in the field and takes the fields' place while open); the
  * type switch after it in the Tab order, so "title, Tab, qui" still picks a project; then the

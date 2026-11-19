@@ -1,4 +1,4 @@
-// An item's fields as the form holds them (DESIGN §3.7): the type, the title, the project, a
+// An item's fields as the form holds them ([[quick-add]] "Fields"): the type, the title, the project, a
 // task's date phrases and importance, a recurring item's repeat editor, Details — and what they
 // come to: each field's value or problem, and the item to write.
 

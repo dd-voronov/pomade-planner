@@ -1,6 +1,6 @@
 // A folder read live through the Host API: read once, again once its watch holds (a change made
-// in between reaches no watch), then after each burst of relevant watch changes (DESIGN §2 "Live
-// from disk"). While the folder is missing, its nearest existing
+// in between reaches no watch), then after each burst of relevant watch changes ([[file-model]]
+// "Live from disk"). While the folder is missing, its nearest existing
 // ancestor is watched, so the folder showing up (made, moved in, checked out) loads it.
 
 import { useCallback, useEffect, useRef, useState } from "react";

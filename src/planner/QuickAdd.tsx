@@ -10,7 +10,7 @@ import { usePlannerSettings } from "./usePlannerData";
 import { useProjectList } from "./useProjects";
 
 /**
- * The quick-add overlay (DESIGN §3.7): the frame Pomade opens over the active tab on the
+ * The quick-add overlay ([[quick-add]] "One form, two placements"): the frame Pomade opens over the active tab on the
  * Pomade-wide shortcut, whether or not the Planner was ever opened, and on the Planner panel's
  * **+** and Add button (`overlay.open` beside the panel, the view's pre-fills in the route). The
  * form sizes the frame to itself (`useOverlayFit`). Adding closes it

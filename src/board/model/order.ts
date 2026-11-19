@@ -1,4 +1,4 @@
-// Order inside a column (DESIGN §4.3): priority, P0 first, then ID — `E-9` before `E-10`, and by
+// Order inside a column ([[convention-areas-columns]] "Cards"): priority, P0 first, then ID — `E-9` before `E-10`, and by
 // kind letter across kinds (`E-…` before `T-…`). A missing or unknown priority sorts after P3.
 
 import type { Ticket } from "./ticket";

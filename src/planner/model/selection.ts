@@ -1,4 +1,4 @@
-// All's select mode (DESIGN §3.6 "Trimming"): which rows are selected, the confirmation a delete
+// All's select mode ([[trimming]]): which rows are selected, the confirmation a delete
 // shows, and what the Host API's per-file answers mean for the rows. The selection is always a
 // subset of the rows All shows — a filter that hides a row drops it — so a delete never touches a
 // file the user can't see.
@@ -77,7 +77,7 @@ export function selectedRows(rows: readonly SelectableRow[], selection: Selectio
   return rows.filter((r) => selection.paths.has(r.path));
 }
 
-/** A readable note not yet archived — the one kind of row Archive moves (DESIGN §3.6 "Row actions"). */
+/** A readable note not yet archived — the one kind of row Archive moves ([[views]] "Rows"). */
 export const isArchivable = (row: SelectableRow): boolean => row.type === "note" && row.readable && !row.archived;
 
 /** Bulk Archive applies when every selected row is a note not yet archived. */

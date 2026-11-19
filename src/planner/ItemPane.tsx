@@ -90,7 +90,7 @@ interface ItemPaneProps {
 }
 
 /**
- * An item's compact view in the Planner tab (DESIGN §3.6 "The item's compact view"): its type, the
+ * An item's compact view in the Planner tab ([[item-in-place]]): its type, the
  * row's own actions, **Open in tab**, then the title, the type's fields and Details (the add
  * form's `ItemFields`, editing), a recurring item's log, and a foot naming the file and what was
  * saved. Nothing has a save button: a field is written when it is committed (Enter, or the focus

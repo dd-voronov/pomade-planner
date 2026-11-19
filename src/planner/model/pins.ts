@@ -1,4 +1,4 @@
-// Pins (DESIGN §3.6): per view and per context, in machine-local app state — one key per context
+// Pins ([[views]] "Pins"): per view and per context, in machine-local app state — one key per context
 // (`planner.pins.<projectId>`, `__workspace__` for Workspace) holding each view's pinned paths in
 // pin order. A pinned row shows above the view's list, in pin order, while the view lists it; a
 // pin whose item is gone or out of the view simply isn't shown. The daily note is pinned on the

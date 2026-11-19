@@ -1,4 +1,4 @@
-// Ticking (DESIGN §3.3): field-only writes of `status` and `done-on` — `done` and the planner day,
+// Ticking ([[days-and-today]] "Ticking"): field-only writes of `status` and `done-on` — `done` and the planner day,
 // or back to `open` with `done-on` removed. The file stays where it is.
 
 import type { LocalDate } from "pomade-kit/schedule";
@@ -23,7 +23,7 @@ export function tickWrites(done: boolean, day: LocalDate): FieldWrite[] {
       ];
 }
 
-/** Resolving a thought (DESIGN §3.2): `status: resolved` and `done-on`, or back to `open` with `done-on` removed. */
+/** Resolving a thought ([[storage-and-item-types]] "Writing an item"): `status: resolved` and `done-on`, or back to `open` with `done-on` removed. */
 export function resolveWrites(resolved: boolean, day: LocalDate): FieldWrite[] {
   return resolved
     ? [

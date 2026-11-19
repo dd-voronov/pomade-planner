@@ -1,4 +1,4 @@
-// The Planner's view of Pomade's projects (DESIGN §3.1, §3.6): the groups → projects tree, live,
+// The Planner's view of Pomade's projects ([[projects]], [[views]]): the groups → projects tree, live,
 // and the reconciliation that keeps each project's sub-folder of the tasks root in line with its
 // name and group — on a `project.renamed` or `project.updated` event, and on every open, so a rename
 // made while Pomade (or the Planner) was closed is caught up through the map and the stable id.

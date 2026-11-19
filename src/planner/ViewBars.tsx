@@ -44,7 +44,7 @@ interface MixBarProps {
 }
 
 /**
- * The mix-in chips of a project context (DESIGN §3.6): "No-project items" toggles the
+ * The mix-in chips of a project context ([[views]] "Context"): "No-project items" toggles the
  * workspace-level items in; "+ Project" picks another project (the two-step picker); each mixed-in
  * project is a chip that × removes.
  */

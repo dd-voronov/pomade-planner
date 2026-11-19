@@ -1,4 +1,4 @@
-// Daily notes (DESIGN §3.5): one `type: daily-note` file per planner day, `<tasks root>/Daily/
+// Daily notes ([[daily-notes]]): one `type: daily-note` file per planner day, `<tasks root>/Daily/
 // <YYYY-MM-DD>.md`, made from the template set in the settings (or the built-in one).
 //
 // - **When:** the first time the Planner's launch panel frame runs on a planner day — at Pomade's
@@ -66,7 +66,7 @@ export interface DailyNoteText {
   problem: string | null;
 }
 
-/** The day's note from the template (DESIGN §3.5). */
+/** The day's note from the template ([[daily-notes]] "Template"). */
 export function dailyNoteText(day: LocalDate, template: TemplateRead): DailyNoteText {
   if (template.kind === "none") return { text: builtInDailyNote(day), problem: null };
   if (template.kind === "error") return { text: builtInDailyNote(day), problem: template.reason };

@@ -1,4 +1,4 @@
-// The quick-add project picker (DESIGN §3.7): two steps, group → project, over Pomade's groups →
+// The quick-add project picker ([[quick-add]] "Project picker"): two steps, group → project, over Pomade's groups →
 // projects tree. Step one lists "No project" first, then every group path that holds projects
 // ("Building tools › Tools"), in sidebar order, and "Ungrouped" last; typing filters it to the
 // matching projects (straight to them: "qui" → QuizLab) and the matching groups. Step two lists the

@@ -1,4 +1,4 @@
-// Attention (DESIGN §3.8), run by the Planner's launch panel frame only — the panel Pomade starts
+// Attention ([[attention]]), run by the Planner's launch panel frame only — the panel Pomade starts
 // hidden at launch (`startOnLaunch`) and later shows for the Planner icon — so no two frames set
 // the badge or post the summary: the badge on the Planner icon, live with the items and the
 // planner day; and the morning summary, once per planner day on Pomade's start (`pomade.ready`).

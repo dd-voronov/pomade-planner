@@ -1,4 +1,4 @@
-// The parent picker's candidates (DESIGN §4.4): problems for an epic or a signal, epics for a task.
+// The parent picker's candidates ([[editing-drag-create]] "Parent list"): problems for an epic or a signal, epics for a task.
 // Open ones first, then closed ones (a done epic can still be a task's parent); newest ID first in
 // each. Type-to-filter matches every word of the query against the ID and the title.
 

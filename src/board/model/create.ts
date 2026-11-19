@@ -1,6 +1,6 @@
-// Creating a ticket from the Board (DESIGN §4.4): the next free ID per kind, the file name, and the
-// file's text — the convention's frontmatter (Pomade BACKLOG "One item = one file", DESIGN §4.2 for
-// a signal) and the body's empty sections per kind.
+// Creating a ticket from the Board ([[editing-drag-create]] "Create"): the next free ID per kind, the file name, and the
+// file's text — the convention's frontmatter (Pomade BACKLOG "One item = one file", [[convention-areas-columns]]
+// "Convention" for a signal) and the body's empty sections per kind.
 //
 // - The next ID is the highest `<prefix>-NNN` in the backlog folder and its `done/` sub-folder plus
 //   one, zero-padded to 3 (`T-999` → `T-1000`); an ID is never reused. Both the file names and the
@@ -89,7 +89,7 @@ export interface NewTicket {
   today: string;
 }
 
-/** The body's empty sections per kind (DESIGN §4.4), under a `# <ID> — <title>` heading. */
+/** The body's empty sections per kind ([[editing-drag-create]] "Create"), under a `# <ID> — <title>` heading. */
 const SECTIONS: Record<Kind, readonly string[]> = {
   problem: ["Problem", "Outcome"],
   epic: ["Goal", "Scope", "Acceptance"],
@@ -98,7 +98,7 @@ const SECTIONS: Record<Kind, readonly string[]> = {
 };
 
 /**
- * A new ticket's text. Keys in the convention's order — a signal's after DESIGN §4.2 (`source`
+ * A new ticket's text. Keys in the convention's order — a signal's after [[convention-areas-columns]] "Convention" (`source`
  * after `status`, no `type`); scalars written plain when they read back the same, else quoted.
  */
 export function newTicketContent(t: NewTicket): string {

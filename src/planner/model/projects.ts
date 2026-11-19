@@ -1,4 +1,4 @@
-// Projects in the tasks root (DESIGN §3.1): each project's items live in a sub-folder named after
+// Projects in the tasks root ([[projects]]): each project's items live in a sub-folder named after
 // it, and the synced settings hold a project-id → folder map (`projectFolders`) that is the
 // source of truth once written — so a rename in Pomade never orphans a project's tasks. Pure: the
 // UI, the reconciliation and the `today` command all decide with these functions.

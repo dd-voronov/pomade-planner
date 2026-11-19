@@ -1,5 +1,5 @@
 // The Board's writes through the Host API: field-only writes conditional on the mtime the board
-// read (DESIGN §4.4 "Never over a newer file"), and creating a ticket with its ID re-checked at write time.
+// read ([[editing-drag-create]] "Never over a newer file"), and creating a ticket with its ID re-checked at write time.
 
 import { HostError, type HostClient } from "pomade-kit/sdk";
 

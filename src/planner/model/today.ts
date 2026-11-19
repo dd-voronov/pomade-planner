@@ -1,4 +1,4 @@
-// The Today module (DESIGN §3.3): the planner day, which tasks are in Today and why, the order of
+// The Today module ([[days-and-today]]): the planner day, which tasks are in Today and why, the order of
 // every list, and when the next planner day starts. Pure — "now" and the day boundary are inputs —
 // and shared by the Planner's views and the `today` command, so both show the same items.
 //

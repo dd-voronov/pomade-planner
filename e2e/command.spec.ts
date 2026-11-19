@@ -1,4 +1,4 @@
-// `pomade-planner today` (DESIGN §7) from the build: dist/planner/cli/main.mjs, copied alone into an empty
+// `pomade-planner today` ([[today-command]]) from the build: dist/planner/cli/main.mjs, copied alone into an empty
 // folder — as an installed app folder has no node_modules — and run with Node against throwaway
 // workspaces, with no Pomade at all. The real Pomade shim is run by e2e/pomade-planner.spec.ts.
 

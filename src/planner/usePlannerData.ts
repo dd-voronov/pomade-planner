@@ -1,5 +1,5 @@
 // The Planner's reads through the Host API: its settings (the synced settings file, live) and the
-// items of the tasks root (its top-level files, live). DESIGN §2, §3.1, §5.
+// items of the tasks root (its top-level files, live). [[file-model]], [[storage-and-item-types]], [[settings-and-state]].
 
 import { useCallback, useEffect, useMemo } from "react";
 import type { HostClient } from "pomade-kit/sdk";
@@ -132,7 +132,7 @@ function readSub(host: HostClient, path: string, folder: string | null, options:
 }
 
 /**
- * The tasks root's items (DESIGN §3.1) — its own, `Daily/`'s, each project sub-folder's, and the
+ * The tasks root's items ([[storage-and-item-types]] "Storage") — its own, `Daily/`'s, each project sub-folder's, and the
  * archived ones in `_archive/` and its sub-folders; `null` when the root doesn't exist.
  */
 export async function readItemsAt(host: HostClient, root: string, options: ReadOptions = NO_OPTIONS): Promise<Items | null> {

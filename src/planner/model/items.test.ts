@@ -10,7 +10,7 @@ function entry(name: string, text: string, mtimeMs = 7): ItemEntry {
 }
 
 describe("taskOf", () => {
-  it("reads every §3.2 field", () => {
+  it("reads every item-type field", () => {
     const t = taskOf(
       entry(
         "2026-11-09-renew.md",

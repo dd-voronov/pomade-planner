@@ -26,7 +26,7 @@ export function movedPath(path: string, from: string, to: string): string | null
 }
 
 /**
- * The item open in the Planner tab's compact view (DESIGN §3.6 "The item's compact view"): one at
+ * The item open in the Planner tab's compact view ([[item-in-place]]): one at
  * a time, by its path (`open`; a path no folder read lists shows nothing). It follows its file — a move this frame made (`moved`) or a rename the
  * watcher reports, of the file or a folder above it — and closes when the file is gone, and when
  * the context changes. Closing gives the focus back to the item's row (`split` is the element the

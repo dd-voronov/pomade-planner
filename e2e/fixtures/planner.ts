@@ -62,7 +62,7 @@ export function ticked(before: string, day: string): string {
   return after;
 }
 
-/** The text the add form writes for a task (DESIGN §3.7), spelled out — not computed by the app's code. */
+/** The text the add form writes for a task ([[storage-and-item-types]] "Writing an item"), spelled out — not computed by the app's code. */
 export function quickAdded(t: { title: string; doOn?: string; deadline?: string; importance?: number; created: string; body?: string }): string {
   const lines = ["type: task", `title: ${t.title}`, "status: open"];
   if (t.doOn !== undefined) lines.push(`do-on: ${t.doOn}`);
@@ -73,7 +73,7 @@ export function quickAdded(t: { title: string; doOn?: string; deadline?: string;
 }
 
 /**
- * `before` after done or skip on a recurring item (DESIGN §3.4), spelled out: `do-on: <from>`
+ * `before` after done or skip on a recurring item ([[recurring]] "Done and skip"), spelled out: `do-on: <from>`
  * becomes `do-on: <to>` and `entry` is the newest `## Log` line — right under the heading when the
  * section is there, else a new section at the end of the body after one blank line. Every other
  * byte as it was.

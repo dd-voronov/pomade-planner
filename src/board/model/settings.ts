@@ -1,4 +1,4 @@
-// The Board's settings (DESIGN §5) and where a project's backlog is (§4.1).
+// The Board's settings ([[settings-and-state]]) and where a project's backlog is ([[backlog-location]]).
 //
 // - Synced settings: `<workspace>/Apps/pomade-board/settings.json` (core/settings-file), git-synced
 //   with the workspace. The Board reads `backlogPathPattern` (default `docs/roadmap/`): the backlog folder,

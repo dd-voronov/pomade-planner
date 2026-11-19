@@ -1,4 +1,4 @@
-// What a drop does (DESIGN §4.4): a field-only write of `status` and `updated: <today>`; for an
+// What a drop does ([[editing-drag-create]]): a field-only write of `status` and `updated: <today>`; for an
 // epic or task, a move into `done/` when it lands in `done` and back to the backlog folder when it
 // leaves `done` — only while the backlog's "move done to done/" setting is on. Problems and signals
 // never move. A column the kind can't take refuses the drop. A signal dropped on `triaged` without a

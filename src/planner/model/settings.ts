@@ -1,4 +1,4 @@
-// The Planner's synced settings file, `<workspace>/Apps/pomade-planner/settings.json` (DESIGN §5,
+// The Planner's synced settings file, `<workspace>/Apps/pomade-planner/settings.json` ([[settings-and-state]],
 // core/settings-file), and its keys: `tasksRoot` — the
 // workspace-relative folder the tasks live in, chosen on first run (no default) — `dayBoundary` —
 // when a planner day starts, `H:MM`, default 3:00 — and `projectFolders`, the project-id → folder

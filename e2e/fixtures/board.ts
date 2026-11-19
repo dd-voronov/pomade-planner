@@ -72,7 +72,7 @@ export function withFields(before: string, changes: Record<string, string | null
   return after;
 }
 
-/** The text of a ticket the Board creates (DESIGN §4.4), spelled out — not computed by the app's code. */
+/** The text of a ticket the Board creates ([[editing-drag-create]] "Create"), spelled out — not computed by the app's code. */
 export function createdTicket(t: {
   id: string;
   kind: "problem" | "epic" | "task" | "signal";

@@ -83,7 +83,7 @@ describe("taskFileName", () => {
 });
 
 describe("newTaskContent", () => {
-  it("writes the §3.2 keys in order, only the set ones, and no body", () => {
+  it("writes the item-type keys in order, only the set ones, and no body", () => {
     expect(newTaskContent({ title: "Renew Nora's swimming class", doOn: null, deadline: "2026-11-20", importance: null, created: "2026-11-17" })).toBe(
       "---\ntype: task\ntitle: Renew Nora's swimming class\nstatus: open\ndeadline: 2026-11-20\ncreated: 2026-11-17\n---\n",
     );

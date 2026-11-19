@@ -1,4 +1,4 @@
-// Archiving a note (DESIGN §3.1, §3.6): the file moves into `<tasks root>/_archive/`, into the same
+// Archiving a note ([[storage-and-item-types]] "Storage", [[views]] "Rows"): the file moves into `<tasks root>/_archive/`, into the same
 // sub-folder it was in (`QuizLab/idea.md` → `_archive/QuizLab/idea.md`); a taken name becomes
 // `idea-2.md`, `idea-3.md`, …. Restoring moves it back the same way.
 

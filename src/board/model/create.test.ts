@@ -172,7 +172,7 @@ describe("newTicketContent", () => {
     );
   });
 
-  it("a signal: DESIGN §4.2's keys (source after status and priority, no type), the description under the heading", () => {
+  it("a signal: [[convention-areas-columns]]'s keys (source after status and priority, no type), the description under the heading", () => {
     expect(newTicketContent({ ...base, id: "S-001", kind: "signal", title: "Cmd+click opened files", status: "new", parent: null })).toBe(
       "---\nid: S-001\nkind: signal\ntitle: Cmd+click opened files\nstatus: new\npriority: P2\nsource: daniil\ncreated: 2026-11-17\nupdated: 2026-11-17\n---\n\n# S-001 — Cmd+click opened files\n",
     );

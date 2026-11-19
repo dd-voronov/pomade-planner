@@ -1,4 +1,4 @@
-// Recurring items (DESIGN §3.2, §3.4): the `repeat:` rule in `pomade-kit`'s schedule format, the
+// Recurring items ([[recurring]]): the `repeat:` rule in `pomade-kit`'s schedule format, the
 // `## Log` section of the body, and — relative to the planner day — where an item stands: waiting
 // for its lead time, inside it, due, missed, or ended. Pure; the Today module and the views call it.
 //

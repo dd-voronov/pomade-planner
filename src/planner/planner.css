@@ -572,7 +572,7 @@
   padding: 0 var(--space-2) var(--space-2) var(--space-3);
 }
 
-/* ── All's select mode (DESIGN §3.6 "Trimming"): the bar under the filters, rows that select ── */
+/* ── All's select mode ([[trimming]]): the bar under the filters, rows that select ── */
 
 .select-bar {
   display: flex;

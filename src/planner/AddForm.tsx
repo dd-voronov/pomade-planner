@@ -48,7 +48,7 @@ interface AddFormProps {
 }
 
 /**
- * The form that adds an item (DESIGN §3.7): in the overlay of the Pomade-wide shortcut, and in
+ * The form that adds an item ([[quick-add]]): in the overlay of the Pomade-wide shortcut, and in
  * place at the foot of a Planner list. A head naming the type and the folder the item goes into,
  * the item's fields (`ItemFields`), and a foot: what stops the add or a recurring item's rule, and
  * the keys (in the overlay's one line the first takes the place of the second). Enter adds the item

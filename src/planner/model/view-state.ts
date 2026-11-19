@@ -1,4 +1,4 @@
-// The Planner's machine-local view state per context (Host API `state`, DESIGN §3.6, §5): one key
+// The Planner's machine-local view state per context (Host API `state`, [[views]], [[settings-and-state]]): one key
 // per project and one for Workspace, holding the selected view, the All view's "Show done", "Show
 // archived" and filters (projects, types; empty = everything), and — in a project — the mixed-in sources.
 

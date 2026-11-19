@@ -1,4 +1,4 @@
-// Quick add's overlay frame sized to its form (DESIGN §3.7, HOST-API §4 `overlay`): the form keeps
+// Quick add's overlay frame sized to its form ([[quick-add]] "The overlay", HOST-API §4 `overlay`): the form keeps
 // its own height and asks Pomade for a frame that tall as it grows and shrinks. Pomade clamps the
 // height (120 px to 60% of the pane area); a form taller than the cap fills the frame instead, and
 // what it holds back scrolls inside it — Details first.

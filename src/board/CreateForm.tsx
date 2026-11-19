@@ -35,7 +35,7 @@ interface CreateFormProps {
   restoreFocus: () => void;
 }
 
-/** The **+** form (DESIGN §4.4): kind, title, parent, priority, and on Signals the source. */
+/** The **+** form ([[editing-drag-create]] "Create"): kind, title, parent, priority, and on Signals the source. */
 export function CreateForm({ anchor, align, column, kinds, initialKind, tickets, nextIds, onSubmit, onClose, restoreFocus }: CreateFormProps) {
   const [kind, setKind] = useState<Kind>(initialKind !== undefined && kinds.includes(initialKind) ? initialKind : (kinds[0] ?? "task"));
   const [title, setTitle] = useState("");

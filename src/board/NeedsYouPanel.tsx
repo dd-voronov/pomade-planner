@@ -44,7 +44,7 @@ function ProjectNeedsYou({ host, project }: { host: HostClient; project: Project
   );
 }
 
-/** The Board icon's side panel (DESIGN §4.5): what waits on you — for the active project, or the workspace's projects at Workspace. */
+/** The Board icon's side panel ([[needs-you]]): what waits on you — for the active project, or the workspace's projects at Workspace. */
 export function NeedsYouPanel({ host }: { host: HostClient }) {
   const project = useActiveProject(host);
   if (project.kind === "workspace") return <NeedsYouWorkspace host={host} />;

@@ -1,0 +1,66 @@
+# Settings and state — what each app keeps, and where
+
+**Module:** `core` · **UI:** the Planner's settings page ([[settings-and-onboarding]]), the Board
+tab's ⋯ menu ([[backlog-location]]) · **Code:** `src/core/settings-file.ts`,
+`src/planner/model/settings.ts`, `src/planner/model/view-state.ts`, `src/planner/model/pins.ts`,
+`src/planner/usePlannerState.ts`, `src/planner/clock.ts`, `src/planner/write.ts` (`saveSettings`,
+`saveProjectFolders`), `src/board/model/settings.ts`, `src/board/model/view-state.ts`,
+`src/board/useBoardData.ts` · **e2e:** `pomade-two-apps.spec.ts`, `planner-fake.spec.ts`,
+`pomade-planner-template.spec.ts` · **Unit:** `src/core/settings-file.test.ts`,
+`src/planner/model/settings.test.ts`, `src/planner/model/view-state.test.ts`,
+`src/planner/model/pins.test.ts`, `src/board/model/settings.test.ts`,
+`src/board/model/view-state.test.ts` · **Contract:** `../Pomade/docs/HOST-API.md` §4 `state`,
+`project.getSettings` / `setSettings`
+
+## What it does
+
+Each app owns its data; neither reads or writes the other's. Three stores, by how far a value
+should travel: synced settings travel with the workspace (git), per-project settings live in the
+workspace config under the app's id, and view state stays on the machine. Nothing of either kind is
+ever written into an item file.
+
+| What | Planner | Board |
+|---|---|---|
+| Synced settings, `<workspace>/Apps/<app id>/settings.json` | `Apps/pomade-planner/settings.json`: `tasksRoot` (workspace-relative; no default), `dailyNoteTemplate` (workspace-relative `.md`), `dayBoundary` (`H:MM`, default `3:00`), `projectFolders` (the project-id → folder map, [[projects]]) | `Apps/pomade-board/settings.json`: `backlogPathPattern` (default `docs/roadmap/`, [[backlog-location]]) |
+| Per-project settings (Host API per-project app settings, kept per app id in the workspace config) | none | `backlogPath` (backlog folder override, relative to the project root), `moveDoneToDoneFolder` (default on) |
+| Machine-local state (Host API `state`), `<userData>/app-state/<app id>/` | `planner.view.<contextId>` (view, "Show done", "Show archived", mix-ins, All's filters; `__workspace__` for Workspace), `planner.pins.<contextId>`, `planner.dailyNoteDay` (the day the Planner last ran on), `planner.dailyNoteUnpinned`, `planner.summaryDay`, `planner.settingsWritten` (bumped by a settings write so the other frames re-read) | `board.view.<projectId>` (area and toggled columns) |
+
+## Synced settings file
+
+`settings-file.ts`, used by both apps:
+
+- `settingsPathOf(appId)` → `Apps/<appId>/settings.json`.
+- `parseSettingsText(text)`: a missing file (`null`) is `{}` — every default; invalid JSON or a
+  non-object is a problem, not an exception.
+- `mergeSettingsText(text, patch)`: sets each key of the patch (removes it for `undefined`), keeps
+  every other key in its order; a file that isn't a JSON object is refused, never overwritten. An
+  app creates its file on its first settings write, never on a read.
+
+Each app parses its own keys (`parsePlannerSettings`, `parseSyncedSettings`): a key with a wrong
+value falls back to its default and the problem is returned, so the views say what is wrong
+("dayBoundary must be a time like "3:00"") while working on the defaults.
+
+The Planner's writes (`saveSettings`, `saveProjectFolders` in `src/planner/write.ts`) read the file
+fresh, merge, then create or overwrite it, and bump the state key `planner.settingsWritten`
+(`SETTINGS_CHANGED_KEY`) so the app's other frames re-read. The settings folder itself is a live folder ([[file-model]] "Live from
+disk"), so a hand edit shows too. The Board's synced file is edited by hand; its per-project
+settings are set from the Board tab and followed through `project.updated`
+(`useProjectSettingsChanges`).
+
+## Machine-local state
+
+- Planner view state (`view-state.ts`): `parsePlannerView` / `serializePlannerView`, a bad value
+  falling back to `DEFAULT_VIEW` (Today); lists capped at 500 keys against a hand-edited state
+  file. Pins (`pins.ts`): each view's paths in pin order, capped at 200 per view ([[views]] "Pins").
+- `usePlannerState.ts`: a key read once and followed through the other frames' changes, with a
+  setter that stores it; and the day's daily note, made by the launch panel frame
+  ([[daily-notes]] "When").
+- Board view state (`src/board/model/view-state.ts`): the open area and the columns toggled away
+  from their default, per project.
+
+## Test hook
+
+The state key `test.clock` (`{ "offsetMs": n }`) shifts the Planner's "now" in every frame — tab,
+panel and quick-add overlay — so specs reach 01:30 or the boundary without waiting
+(`src/planner/clock.ts`); `window.__plannerTest.setClock(instantMs | null)` sets it from a spec.
+Nothing in the app sets it. It is the Planner's own state (`app-state/pomade-planner/`).

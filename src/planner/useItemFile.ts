@@ -1,4 +1,4 @@
-// One item's file as its compact view holds it (DESIGN §3.6 "The item's compact view"): the
+// One item's file as its compact view holds it ([[item-in-place]] "Only over the version the view read"): the
 // version the view read — the item's fields from the folder read and its text, both of one mtime —
 // and the view's writes, one at a time, each made over that version and followed by the next.
 

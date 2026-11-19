@@ -1,4 +1,4 @@
-// What the Planner reads from an item's body (DESIGN §3.5, §3.6): a daily note's checkbox progress
+// What the Planner reads from an item's body ([[daily-notes]] "Progress", [[views]] "Rows"): a daily note's checkbox progress
 // ("5/8") and the description excerpt the full tab shows under a title.
 //
 // - **Progress** counts GFM task-list items: a list item (`-`, `+`, `*`, `1.`, `1)`; nested, inside

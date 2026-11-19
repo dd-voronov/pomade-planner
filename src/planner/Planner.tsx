@@ -709,7 +709,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   };
   const where = `${root === "" ? "" : `${root}/`}${ownFolder === null ? "" : `${ownFolder}/`}`;
 
-  /** What an add starts with here (DESIGN §3.7); the project is the context's on every path. */
+  /** What an add starts with here ([[quick-add]] "Pre-fills"); the project is the context's on every path. */
   const prefill: QuickAddPrefill = { doOn: view.view === "today" ? "today" : "", kind: view.view === "recurring" ? "recurring" : "task" };
   /** Adding from **+** or the Add button: in place in the tab; from the panel, too narrow for the form, in the overlay beside it, at the form's height. */
   const openAdd = (from: HTMLElement) => {
@@ -1004,7 +1004,7 @@ function SelectBar({ count, all, rows, archive, busy, deleteButton, onToggleAll,
 }
 
 /**
- * All's select mode (DESIGN §3.6 "Trimming"): on or off, the selection, the rows the last delete or
+ * All's select mode ([[trimming]]): on or off, the selection, the rows the last delete or
  * archive left (and why), the confirmation and a write under way. A context switch ends it. Focus
  * goes back to the control that starts it (the tab's Select, the panel's ⋯) when it ends, and to Delete when the confirmation closes with rows left.
  */

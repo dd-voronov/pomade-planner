@@ -1,4 +1,4 @@
-// Attention (DESIGN §3.8): the Planner icon's badge and the morning summary, from the Today
+// Attention ([[attention]]): the Planner icon's badge and the morning summary, from the Today
 // module's rows on the planner day. Pure; the launch panel frame (useAttention.ts) calls it.
 //
 // - **What is due:** the open Today rows of the whole workspace, in three kinds — `overdue` (a

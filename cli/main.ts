@@ -1,4 +1,4 @@
-// `pomade-planner` — the Planner's command on PATH (DESIGN §7, HOST-API §2 "Commands"). It reads
+// `pomade-planner` — the Planner's command on PATH ([[today-command]], HOST-API §2 "Commands"). It reads
 // the app's synced settings (with the project-id → folder map) and the tasks root with its project
 // sub-folders straight from the workspace — never through Pomade — so it works whether Pomade runs
 // or not, and hands the files to the same Today and projects modules the Planner's views use; it

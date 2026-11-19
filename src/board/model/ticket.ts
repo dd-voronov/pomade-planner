@@ -1,7 +1,7 @@
 // Which backlog files are tickets: a Markdown file directly in the backlog folder or its `done/`
-// sub-folder whose frontmatter carries a known `kind:` (DESIGN §2 "Recognised files only", §4.1).
+// sub-folder whose frontmatter carries a known `kind:` ([[file-model]] "Recognised files only", [[backlog-location]]).
 // A file named like a ticket whose frontmatter can't be parsed is "unreadable" — shown, never
-// dropped (§2 "Unreadable is visible"). Everything else is ignored.
+// dropped ([[file-model]] "Unreadable is visible"). Everything else is ignored.
 
 import type { FileEntry } from "pomade-kit/protocol";
 
@@ -51,7 +51,7 @@ export type Classified =
   | { type: "unreadable"; file: UnreadableFile }
   | { type: "ignored" };
 
-/** The frontmatter key naming a kind's parent (`null`: a problem has none) — BACKLOG "One item = one file", DESIGN §4.2. */
+/** The frontmatter key naming a kind's parent (`null`: a problem has none) — BACKLOG "One item = one file", [[convention-areas-columns]] "Convention". */
 export const PARENT_KEY: Record<Kind, "problem" | "epic" | null> = { problem: null, epic: "problem", task: "epic", signal: "problem" };
 
 /** The kind a kind's parent is. */

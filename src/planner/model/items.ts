@@ -1,11 +1,11 @@
-// Which files in the tasks root are Planner items (DESIGN §2, §3.1, §3.2): a Markdown file directly
+// Which files in the tasks root are Planner items ([[file-model]], [[storage-and-item-types]]): a Markdown file directly
 // in the root or in `Daily/` (a workspace-level item), directly in one of its project sub-folders
 // (that project's item), or directly in `_archive/` or one of its sub-folders (an archived item of
 // the same place), whose frontmatter carries a `type:` the Planner knows. A file with a known `type:` line
 // whose frontmatter can't be parsed is "unreadable" — shown greyed, never dropped. Every other
 // file (no frontmatter, no `type:`, a type the Planner doesn't know) is ignored.
 //
-// Fields (§3.2): `title`, `status` (`done` — `resolved` for a thought — else open), `do-on`,
+// Fields ([[storage-and-item-types]] "Item types"): `title`, `status` (`done` — `resolved` for a thought — else open), `do-on`,
 // `deadline`, `created`, `done-on`, a daily note's `date` (`YYYY-MM-DD`), `importance` (a number;
 // higher = more important). A field that is set but isn't a value of its kind counts as unset, and
 // the item names it in `problems`. A `recurring` item also carries its `repeat:` rule (or the kit's
@@ -259,7 +259,7 @@ export function mergeItems(parts: readonly Omit<Items, "folders">[], folders: re
   return { tasks: parts.flatMap((p) => p.tasks), unreadable, folders: [...folders] };
 }
 
-/** The folders the Planner reads besides the project sub-folders (DESIGN §3.1). */
+/** The folders the Planner reads besides the project sub-folders ([[storage-and-item-types]] "Storage"). */
 export const DAILY_FOLDER = "Daily";
 export const ARCHIVE_FOLDER = "_archive";
 

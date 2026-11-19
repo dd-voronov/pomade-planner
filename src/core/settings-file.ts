@@ -1,4 +1,4 @@
-// An app's synced settings file (DESIGN §5): `<workspace>/Apps/<app id>/settings.json`, git-synced
+// An app's synced settings file ([[settings-and-state]]): `<workspace>/Apps/<app id>/settings.json`, git-synced
 // with the workspace. Each app has its own and reads no other's. A write changes only the keys it
 // names and keeps every other key. A missing file means every default; an app creates its file on
 // its first settings write, never on a read.

@@ -1,4 +1,4 @@
-// The Board's areas as data (DESIGN §4.3): area → kinds → columns, and which kinds each column
+// The Board's areas as data ([[convention-areas-columns]] "Areas and columns"): area → kinds → columns, and which kinds each column
 // takes. The Board renders whatever mapping it is given.
 
 import { compareTickets } from "./order";
@@ -39,7 +39,7 @@ const P: readonly Kind[] = ["problem"];
 const ET: readonly Kind[] = ["epic", "task"];
 
 /**
- * The default mapping, after Pomade's BACKLOG "Statuses" and DESIGN §4.2: a signal is new, then
+ * The default mapping, after Pomade's BACKLOG "Statuses" and [[convention-areas-columns]] "Convention": a signal is new, then
  * triaged (linked to a problem) or dismissed; a problem runs backlog → grooming → planned →
  * delivering → review → done, or dropped / parked; an epic planned → in-progress → review → done,
  * or dropped / parked; a task (backlog →) planned → in-progress → done, or dropped.
@@ -82,7 +82,7 @@ export const DEFAULT_AREAS: readonly AreaDef[] = [
   },
 ];
 
-/** The area a board opens on until the user picks another (DESIGN §4.3); the first area when the mapping has no such area. */
+/** The area a board opens on until the user picks another ([[convention-areas-columns]] "Areas and columns"); the first area when the mapping has no such area. */
 export const DEFAULT_AREA_ID = "problems";
 
 export function defaultAreaId(areas: readonly AreaDef[]): string {

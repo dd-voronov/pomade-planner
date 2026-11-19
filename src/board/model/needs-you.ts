@@ -1,4 +1,4 @@
-// "Needs you" (DESIGN §4.5): what waits on Daniil in a backlog — tickets in `review` (any kind) and
+// "Needs you" ([[needs-you]]): what waits on Daniil in a backlog — tickets in `review` (any kind) and
 // signals in `new` — each group ordered by priority, then ID; the counts shown next to a project;
 // and the Workspace panel's levels: the list of projects, every project at once, or one project.
 

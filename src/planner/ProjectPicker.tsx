@@ -36,7 +36,7 @@ function Check() {
 const optionKey = (o: PickerOption): string => (o.kind === "none" ? "none" : o.kind === "group" ? `g:${o.group.id}` : `p:${o.project.id}`);
 
 /**
- * The two-step project picker (DESIGN §3.7): a search field over a listbox. Step one: "No project",
+ * The two-step project picker ([[quick-add]] "Project picker"): a search field over a listbox. Step one: "No project",
  * the group paths, and — once something is typed — the matching projects straight away; step two:
  * one group's projects. ↑ ↓ highlight, Enter picks a project or opens a group, Backspace in an
  * empty field goes back a step, Escape cancels. Keys it handles never reach the form or Pomade.

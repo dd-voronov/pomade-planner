@@ -113,7 +113,7 @@ export async function saveBody(host: HostClient, task: Task, body: string): Prom
 }
 
 /**
- * Done or skip on a recurring item read at `task.mtimeMs` (DESIGN §3.4) — one logical action of two
+ * Done or skip on a recurring item read at `task.mtimeMs` ([[recurring]] "One action, two writes, log first") — one logical action of two
  * writes, refused when the file changed since the read:
  * 1. the body gets `- <day> <word>` as the newest `## Log` entry (`setBody`, conditional on the
  *    mtime read; the frontmatter's bytes stay);
@@ -196,7 +196,7 @@ export function restoreItem(host: HostClient, root: string, task: Task): Promise
   return moveToFree(host, task.path, (n) => restorePath(root, task.path, n), "restore");
 }
 
-/** The daily-note template's text, or why it can't be read (DESIGN §3.5). */
+/** The daily-note template's text, or why it can't be read ([[daily-notes]] "Template"). */
 export async function readTemplate(host: HostClient, path: string | null): Promise<TemplateRead> {
   if (path === null) return { kind: "none" };
   try {
@@ -208,7 +208,7 @@ export async function readTemplate(host: HostClient, path: string | null): Promi
 }
 
 /**
- * Make `day`'s daily note from the template (DESIGN §3.5) unless its file is there. `created`:
+ * Make `day`'s daily note from the template ([[daily-notes]]) unless its file is there. `created`:
  * this call made it; `exists`: it was there (another frame's, or the user's).
  */
 export async function createDailyNote(host: HostClient, root: string, day: LocalDate, template: string | null): Promise<{ path: string; result: "created" | "exists" }> {

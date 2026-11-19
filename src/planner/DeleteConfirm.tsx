@@ -10,7 +10,7 @@ interface DeleteConfirmProps {
 }
 
 /**
- * All's delete confirmation (DESIGN §3.6 "Trimming"): a modal over the Planner listing every file
+ * All's delete confirmation ([[trimming]] "Delete"): a modal over the Planner listing every file
  * the delete takes — title and path — and saying where they go. Cancel has the focus, so Enter
  * never deletes by accident; Escape cancels; Tab stays inside.
  */

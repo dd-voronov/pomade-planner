@@ -1,4 +1,4 @@
-// Editing an item in place (DESIGN §3.6 "The item's compact view"): the file as the form's draft —
+// Editing an item in place ([[item-in-place]] "Saving, no button"): the file as the form's draft —
 // the title, a task's dates and importance, a recurring item's rule in the repeat editor, Details —
 // and what a changed draft writes back: field-only writes for the fields, the body for Details.
 //

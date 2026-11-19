@@ -1,4 +1,4 @@
-// E-003's trimming on the fake host (DESIGN §3.6 "Trimming"): All's select mode — clicks,
+// E-003's trimming on the fake host ([[trimming]]): All's select mode — clicks,
 // Shift-click ranges, select all within the filters, the keyboard — the delete confirmation listing
 // the files, `files.delete` with exactly the chosen paths, a file Pomade can't trash left selected
 // with its reason, and bulk Archive for notes. The fixture is the planner workspace with notes

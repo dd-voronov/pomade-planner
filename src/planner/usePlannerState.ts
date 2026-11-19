@@ -1,6 +1,6 @@
-// The Planner's machine-local app state besides the view (Host API `state`, DESIGN §5): a key read
+// The Planner's machine-local app state besides the view (Host API `state`, [[settings-and-state]]): a key read
 // once and followed through the other frames' changes; and the day's daily note, made by the
-// launch panel frame the first time it runs on a planner day (DESIGN §3.5, model/daily).
+// launch panel frame the first time it runs on a planner day ([[daily-notes]], model/daily).
 
 import { useCallback, useEffect, useState } from "react";
 import type { HostClient } from "pomade-kit/sdk";
@@ -41,7 +41,7 @@ export function useAppState<T>(host: HostClient, key: string, parse: (value: Jso
 
 /**
  * Make `day`'s daily note in `root` the first time the Planner runs on that day — at Pomade's
- * launch, or when the day boundary passes while it runs (DESIGN §3.5). Only the frame `enabled`
+ * launch, or when the day boundary passes while it runs ([[daily-notes]] "When"). Only the frame `enabled`
  * makes it: the Planner's launch panel frame, which runs from Pomade's launch on. The file create
  * is still the guard (a taken path is the note already there). The day is recorded once the note
  * is there, so a relaunch that day, or a note deleted that day, makes nothing. A made note is read

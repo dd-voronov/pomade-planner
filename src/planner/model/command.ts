@@ -1,4 +1,4 @@
-// `pomade-planner today` (DESIGN §7): its arguments and what it prints — the Today module's rows as
+// `pomade-planner today` ([[today-command]]): its arguments and what it prints — the Today module's rows as
 // text or JSON, grouped by project like the Workspace Today, or narrowed to one project. The
 // command itself (cli/main.ts) only reads files.
 

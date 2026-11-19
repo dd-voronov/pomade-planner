@@ -14,7 +14,7 @@ interface RepeatEditorProps {
 const UNITS: RepeatUnit[] = ["day", "week", "month"];
 
 /**
- * Quick add's repeat editor (DESIGN §3.7), two compact rows: "Repeat [every] [1] [month] on [5]"
+ * Quick add's repeat editor ([[quick-add]] "Recurring — the repeat editor"), two compact rows: "Repeat [every] [1] [month] on [5]"
  * (or "[after done] [3] [months]"), then days early, start and end. What it makes of them — the kit's words,
  * or the problem — shows in the form's foot.
  */

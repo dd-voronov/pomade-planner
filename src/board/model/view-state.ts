@@ -1,4 +1,4 @@
-// The Board's machine-local view state per project (Host API `state`, DESIGN §5): the open area
+// The Board's machine-local view state per project (Host API `state`, [[settings-and-state]]): the open area
 // and which columns the user expanded or collapsed against their default.
 
 import type { JsonValue } from "pomade-kit/protocol";

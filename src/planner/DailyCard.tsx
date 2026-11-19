@@ -4,7 +4,7 @@ import { displayTitle, longDate } from "./model/labels";
 import { PinGlyph } from "./TaskRow";
 
 /**
- * Today's daily note, pinned on the Workspace Today (DESIGN §3.5, §3.6): its title, its date, its
+ * Today's daily note, pinned on the Workspace Today ([[daily-notes]] "Pinned on the Workspace Today"): its title, its date, its
  * checklist progress ("5/8") as text and a bar; a click opens it as a row's does (`direct`: with ⌘
  * or Ctrl held); the pin button unpins it for the rest of the planner day.
  */
