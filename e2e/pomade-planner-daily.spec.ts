@@ -15,6 +15,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
 import { DAILY_TEMPLATE } from "../test/fixtures/workspace";
+import { frameShown } from "./fixtures/frames";
 import { row, setClock, settled, titles } from "./fixtures/planner";
 import { POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
@@ -327,6 +328,8 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     await p.getByTestId("planner-open-tab").click();
     const tab = page.frameLocator(TAB);
     await expect(tab.getByTestId("view-planner-tab")).toBeVisible();
+    // A tab just opened takes clicks only once Pomade has drawn it.
+    await frameShown(page);
     await expect(tab.getByTestId("view-all")).toHaveAttribute("aria-selected", "true");
     await expect(row(tab, "Quiz timer idea").getByTestId("task-excerpt")).toHaveText("A countdown on every question.");
     await shot(page, "e006-pomade-full-tab-all");
