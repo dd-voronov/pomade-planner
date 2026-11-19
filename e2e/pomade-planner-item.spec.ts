@@ -2,7 +2,8 @@
 // into the fixture's user data, on real files: in the Planner tab a click on a task opens its
 // compact view beside the list and Pomade opens no tab; a deadline typed as `fri` changes only the
 // file's `deadline:` line, Details only its body; an edit made on disk shows in the open view
-// within about a second, and Details typed over a version that changed on disk is not written;
+// within about a second, and Details typed over a version that changed on disk is not written; a
+// recurring item's rule changed in the view rewrites only its `repeat:` lines (T-006);
 // in the panel a click on a note brings up the Planner tab with the note open — through the tab's
 // route, for a tab already open and for the same note asked again — and Open in tab opens
 // Pomade's editor; ⌘-click on a row opens the editor and no view; ⇧⌘↵ in the overlay opens the
@@ -32,6 +33,9 @@ const GIFTS = "2026-11-12-gift-ideas.md";
 const GIFTS_TEXT = "---\ntype: note\ntitle: Gift ideas for Greta\nstatus: open\ncreated: 2026-11-12\n---\n- the blue scarf from the market\n";
 const DENTIST = "2026-11-15-call-the-dentist.md";
 const DENTIST_TEXT = "---\ntype: task\ntitle: Call the dentist\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-15\n---\n";
+const INVOICES = "2026-01-01-upload-invoices.md";
+const INVOICES_TEXT =
+  "---\ntype: recurring\ntitle: Upload invoices   # monthly\nstatus: open\ndo-on: 2026-12-05\nrepeat:   # the rule\n  monthly: { days: [5] }\n  lead-days: 3\ncreated: 2026-01-01\n---\nUpload all invoices.\n\n## Log\n- 2026-11-04 done\n";
 
 test.describe("an item opened in place in a real Pomade", () => {
   test.describe.configure({ mode: "serial" });
@@ -48,7 +52,7 @@ test.describe("an item opened in place in a real Pomade", () => {
   const pomadeFocus = () => page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? null);
 
   /** Select a view; a click sent in the frame Pomade shows the tab in can be lost, so it is sent until it took. */
-  async function view(frame: FrameLocator, id: "today" | "all"): Promise<void> {
+  async function view(frame: FrameLocator, id: "today" | "all" | "recurring"): Promise<void> {
     await expect(async () => {
       await frame.getByTestId(`view-${id}`).click();
       await expect(frame.getByTestId(`view-${id}`)).toHaveAttribute("aria-selected", "true", { timeout: 1_000 });
@@ -71,6 +75,7 @@ test.describe("an item opened in place in a real Pomade", () => {
     await writeFile(todo(TAX), TAX_TEXT);
     await writeFile(todo(GIFTS), GIFTS_TEXT);
     await writeFile(todo(DENTIST), DENTIST_TEXT);
+    await writeFile(todo(INVOICES), INVOICES_TEXT);
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
     expect(out).toContain("Planner 0.1.0 (pomade-planner)");
     const state = join(fixture.userDataDir, "app-state/pomade-planner");
@@ -151,6 +156,23 @@ test.describe("an item opened in place in a real Pomade", () => {
     await expect(pane).toHaveCount(0);
     await expect(row(t, "Pay the tax today").getByTestId("task-open")).toBeFocused();
     expect(await read(TAX)).toBe(theirs);
+  });
+
+  test("a rule changed in the view rewrites only the repeat: key's lines (files.setKeyLines) and moves do-on; every other byte stays", async () => {
+    const t = tab();
+    await view(t, "recurring");
+    await row(t, "Upload invoices").getByTestId("task-open").click();
+    const pane = t.getByTestId("item-pane");
+    await expect(pane).toHaveAttribute("data-path", `${TODOS}/${INVOICES}`);
+    await pane.getByTestId("qa-repeat-on").fill("10");
+    await pane.getByTestId("qa-repeat-on").press("Enter");
+    await expect
+      .poll(() => read(INVOICES))
+      .toBe(INVOICES_TEXT.replace("repeat:   # the rule\n  monthly: { days: [5] }\n", "repeat:\n  monthly: { days: [10] }\n").replace("do-on: 2026-12-05", "do-on: 2026-12-10"));
+    await expect(pane.getByTestId("item-repeat")).toHaveText("monthly on the 10th, shows 3 days early · next Thu, Dec 10");
+    await page.keyboard.press("Escape");
+    await expect(pane).toHaveCount(0);
+    await view(t, "all");
   });
 
   test("⌘-click on a row opens Pomade's editor and no view", async () => {

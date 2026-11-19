@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../../apps/planner/public/manifest.json" with { type: "json" };
 import { recurring } from "./model/fixtures";
 import { readItemsAt, type TextCache } from "./usePlannerData";
-import { archiveItem, completeRecurring, createDailyNote, createTask, moveProjectFolder, resolveThought, restoreItem, saveBody, saveItemEdit, saveProjectFolders, saveSettings, StaleError, tickTask, withRepeat, WriteError } from "./write";
+import { archiveItem, completeRecurring, createDailyNote, createTask, moveProjectFolder, resolveThought, restoreItem, saveBody, saveItemEdit, saveProjectFolders, saveSettings, StaleError, tickTask, WriteError } from "./write";
 
 const TEXT = "---\ntype: task\ntitle: Pay the tax # due soon\nstatus: open\ndeadline: 2026-11-14\nimportance: 5\ncreated: 2026-11-09\n---\nBody stays.\n";
 
@@ -369,11 +369,50 @@ describe("saveItemEdit and saveBody — an item edited in its compact view", () 
     expect((await task(host, "Tasks/invoices.md")).repeat).toMatchObject({ kind: "ok", description: "monthly on the 10th, shows 3 days early" });
   });
 
-  it("withRepeat keeps CRLF line endings and a body that looks like frontmatter", () => {
+  it("a rule edit changes only the repeat: key's lines — CRLF line endings and a body that looks like frontmatter stay", async () => {
     const crlf = INVOICES.replaceAll("\n", "\r\n");
-    const next = withRepeat(crlf, rule({ weekly: { days: ["mon"] } }));
-    expect(next).toBe(crlf.replace("repeat:                    # the rule\r\n  monthly: { days: [5] }\r\n  lead-days: 3\r\n", "repeat:\r\n  weekly: { days: [mon] }\r\n"));
     const tricky = `${INVOICES}---\nrepeat:\n  not: this\n---\n`;
-    expect(withRepeat(tricky, rule({ daily: {} }))).toBe(tricky.replace("repeat:                    # the rule\n  monthly: { days: [5] }\n  lead-days: 3\n", "repeat:\n  daily: {}\n"));
+    const { fake, host } = await setup({ "Tasks/crlf.md": crlf, "Tasks/tricky.md": tricky });
+    await saveItemEdit(host, await task(host, "Tasks/crlf.md"), { repeat: rule({ weekly: { days: ["mon"] } }), fields: [] });
+    expect(fake.readFile("Tasks/crlf.md")).toBe(crlf.replace("repeat:                    # the rule\r\n  monthly: { days: [5] }\r\n  lead-days: 3\r\n", "repeat:\r\n  weekly: { days: [mon] }\r\n"));
+    await saveItemEdit(host, await task(host, "Tasks/tricky.md"), { repeat: rule({ daily: {} }), fields: [] });
+    expect(fake.readFile("Tasks/tricky.md")).toBe(tricky.replace("repeat:                    # the rule\n  monthly: { days: [5] }\n  lead-days: 3\n", "repeat:\n  daily: {}\n"));
+  });
+
+  it("a rule edit over a file changed since the read is refused by the host (changed-on-disk) as a StaleError — nothing written", async () => {
+    const { fake, host } = await setup({ "Tasks/invoices.md": INVOICES });
+    const stale = await task(host, "Tasks/invoices.md");
+    const changed = INVOICES.replace("Upload all.", "Edited elsewhere.");
+    fake.writeFile("Tasks/invoices.md", changed);
+    await expect(saveItemEdit(host, stale, { repeat: rule({ daily: {} }), fields: [{ key: "do-on", value: "2026-12-10" }] })).rejects.toBeInstanceOf(StaleError);
+    expect(fake.readFile("Tasks/invoices.md")).toBe(changed);
+  });
+});
+
+describe("conditional writes", () => {
+  /** `host` recording each `files.*` call's method and params. */
+  function recording(host: HostClient, calls: [string, Record<string, unknown>][]): HostClient {
+    const files = new Proxy(host.files, {
+      get(target, key, receiver) {
+        const value = Reflect.get(target, key, receiver) as unknown;
+        if (typeof value !== "function") return value;
+        return (params: Record<string, unknown>) => {
+          calls.push([String(key), params]);
+          return (value as (p: unknown) => Promise<unknown>).call(target, params);
+        };
+      },
+    });
+    return new Proxy(host, { get: (target, key, receiver) => (key === "files" ? files : (Reflect.get(target, key, receiver) as unknown)) });
+  }
+
+  it("the first write of an action carries the mtime read as ifMtime — no re-read, no mtime compare of the Planner's own", async () => {
+    const { host } = await setup();
+    const t = await task(host, "Tasks/tax.md");
+    const calls: [string, Record<string, unknown>][] = [];
+    await tickTask(recording(host, calls), t, true, "2026-11-17");
+    expect(calls).toEqual([
+      ["setField", { path: "Tasks/tax.md", key: "status", value: "done", ifMtime: t.mtimeMs }],
+      ["setField", { path: "Tasks/tax.md", key: "done-on", value: "2026-11-17" }],
+    ]);
   });
 });

@@ -46,7 +46,9 @@ a normal Pomade editor tab (frontmatter as editable properties, the body as desc
 - **Live from disk.** The app subscribes to its folders through the Host API watcher. A create,
   edit, delete or rename by anyone — Pomade's editor, Obsidian, Finder, git, an agent — shows in
   the open views within ~1 s. A view showing a changed item refreshes; the app never writes over
-  a newer file version.
+  a newer file version: an action's first write is conditional on the mtime the app read (the
+  Host API's `ifMtime`), and Pomade refuses it (`changed-on-disk`) with nothing written when the
+  file changed since.
 - **Recognised files only.** A file is an item when its frontmatter carries a known `type:`
   (Planner) or `kind:` (Board). Other files in the folder are ignored.
 - **Unreadable is visible.** A file with a known type/kind whose frontmatter can't be parsed shows
@@ -378,7 +380,8 @@ The Planner renders in the **side panel** (compact) and, via **Open in tab**, as
     holds (`fri` → `2026-11-20`).
   - **Only over the version the view read.** The pane holds one version of the file — the
     folder read's fields and the file's text of one mtime (`useItemFile`) — writes one thing at
-    a time, and each write is refused when the file's mtime is another. A file that changed
+    a time, each conditional on that mtime (`ifMtime`): Pomade refuses it (`changed-on-disk`)
+    when the file's mtime is another. A file that changed
     elsewhere shows in the pane as it is with the next read (the watch, within ~1 s); when
     something typed was not yet written, or a write was refused, nothing is written over the
     file and the pane says so: "The file changed on disk — nothing was written over it. This is
@@ -603,8 +606,9 @@ Switcher at the top of the Board tab; areas never mix. Areas are a configurable 
   While a card is dragged, the columns its kind can't take are dimmed and the dragged card names
   why ("Tasks can't be in Review"); a drop there is refused. Keyboard: Space lifts a card, ← → move
   it a column, Space or Enter drops, Esc cancels.
-- **Never over a newer file:** the drop re-reads the file and writes only when its mtime is the
-  one the board showed when the card was grabbed. Otherwise, and on any refused write (permission,
+- **Never over a newer file:** the drop's first write is conditional on the mtime the board
+  showed when the card was grabbed (`ifMtime`); Pomade refuses it (`changed-on-disk`) with nothing
+  written when the file changed since. Then, and on any refused write (permission,
   a missing file, a taken `done/` name), the card shows an inline error and is reloaded from disk;
   nothing is retried. A failed move after a saved status opens the target column to show it.
 - **Done moves the file:** an epic or task dropped on `done` moves into `done/` (created if
@@ -724,8 +728,9 @@ summary's click is a notice action `openApp` at route `today` in the Workspace; 
 API's `state` store; an app opens its own tab at a route with `tabs.openApp`, never the other app's — the Planner panel's rows at
 an item's route, which an open tab receives as `route.changed`; the compact view's edits are
 `files.setField` / `removeField` / `setBody`, and a recurring item's rule — a mapping, which
-`files.setField` doesn't take — is written as the file's text with the `repeat:` key's own lines
-replaced by the kit's field-only code (`setComplexKeyLines`, `formatSchedule`); the `today`
+`files.setField` doesn't take — is `files.setKeyLines` with the `repeat:` key's own lines
+(`formatSchedule`); an action's first write to an item or a ticket is conditional on the mtime read (`ifMtime`,
+refused as `changed-on-disk`); the `today`
 command finds the workspace with `pomade-kit/node`'s `resolveWorkspace()`. Protocol reference:
 `../Pomade/docs/HOST-API.md`; usage reference: the `pomade-kit` README. A new need goes to
 `../Pomade/docs/PLATFORM-INTAKE.md`.

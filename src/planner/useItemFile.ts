@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { HostClient } from "pomade-kit/sdk";
 
 import { errorText } from "../core/host";
-import type { Task } from "./model/items";
+import { taskOf, type ItemEntry, type Task } from "./model/items";
 import { StaleError, WriteError } from "./write";
 
 /** A version of the file: the item as the folder read gave it and the file's text, both at `task.mtimeMs`. */
@@ -102,8 +102,11 @@ export function useItemFile(host: HostClient, task: Task | null, reload: () => P
     const last = lastTask.current;
     if (last === null) return null;
     try {
-      const { content, mtimeMs } = await host.files.readFile({ path: last.path });
-      return { task: { ...last, mtimeMs }, content, own: true };
+      const { content, mtimeMs, frontmatter, frontmatterError } = await host.files.readFile({ path: last.path, frontmatter: true });
+      const entry: ItemEntry = { path: last.path, name: last.name, kind: "file", mtimeMs, frontmatter: frontmatter ?? null };
+      if (frontmatterError !== undefined) entry.frontmatterError = frontmatterError;
+      const task = taskOf(entry, last.folder, content, last.archived);
+      return task === null ? null : { task, content, own: true };
     } catch {
       return null;
     }

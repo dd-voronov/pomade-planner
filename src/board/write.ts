@@ -1,5 +1,5 @@
-// The Board's writes through the Host API: field-only writes guarded by the mtime the board read
-// (DESIGN §4.4 "Never over a newer file"), and creating a ticket with its ID re-checked at write time.
+// The Board's writes through the Host API: field-only writes conditional on the mtime the board
+// read (DESIGN §4.4 "Never over a newer file"), and creating a ticket with its ID re-checked at write time.
 
 import { HostError, type HostClient } from "pomade-kit/sdk";
 
@@ -34,15 +34,20 @@ export function failureOf(error: unknown, fallback: WriteStep = "field"): WriteF
 }
 
 /**
- * Field-only writes to a ticket the board read at `ticket.mtimeMs`: refused (`changed`) when the
- * file changed since; each write sets its key, or removes it when `value` is `null`.
+ * Field-only writes to a ticket the board read at `ticket.mtimeMs`; each write sets its key, or
+ * removes it when `value` is `null`. The first write is conditional on that mtime (`ifMtime`): when
+ * the file changed since, the host refuses it (`changed-on-disk`), nothing is written and the
+ * failure is `changed`. The writes after it follow the board's own.
  */
 export async function writeFields(host: HostClient, ticket: Ticket, fields: readonly FieldWrite[]): Promise<void> {
-  const current = await step("read", () => host.files.readFile({ path: ticket.path }));
-  if (current.mtimeMs !== ticket.mtimeMs) throw new Failure({ kind: "changed" });
-  for (const field of fields) {
-    const { key, value } = field;
-    await step("field", () => (value === null ? host.files.removeField({ path: ticket.path, key }) : host.files.setField({ path: ticket.path, key, value })));
+  for (const [i, { key, value }] of fields.entries()) {
+    const target = i === 0 ? { path: ticket.path, key, ifMtime: ticket.mtimeMs } : { path: ticket.path, key };
+    try {
+      await step("field", () => (value === null ? host.files.removeField(target) : host.files.setField({ ...target, value })));
+    } catch (error) {
+      if (error instanceof Failure && error.failure.kind === "host" && error.failure.code === "changed-on-disk") throw new Failure({ kind: "changed" });
+      throw error;
+    }
   }
 }
 

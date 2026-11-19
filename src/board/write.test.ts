@@ -81,10 +81,21 @@ describe("writeFields", () => {
     expect(fake.readFile(`${B}/E-1.md`)).toBe("---\nid: E-1\nkind: epic\npriority: P0 # keep\nupdated: 2026-11-17\n---\nBody\n");
   });
 
-  it("refuses a file changed since the board read it, writing nothing", async () => {
+  it("refuses a file changed since the board read it (the host's changed-on-disk), writing nothing", async () => {
     const { fake, host } = await hostWith({ [`${B}/E-1.md`]: text });
-    const ticket = { path: `${B}/E-1.md`, mtimeMs: -1 } as Parameters<typeof writeFields>[1];
-    await expect(writeFields(host, ticket, [{ key: "priority", value: "P0" }])).rejects.toMatchObject({ failure: { kind: "changed" } });
-    expect(fake.readFile(`${B}/E-1.md`)).toBe(text);
+    const { mtimeMs } = await host.files.readFile({ path: `${B}/E-1.md` });
+    const ticket = { path: `${B}/E-1.md`, mtimeMs } as Parameters<typeof writeFields>[1];
+    const changed = text.replace("Body", "Edited elsewhere");
+    fake.writeFile(`${B}/E-1.md`, changed);
+    await expect(writeFields(host, ticket, [{ key: "status", value: "done" }, { key: "updated", value: "2026-11-17" }])).rejects.toMatchObject({ failure: { kind: "changed" } });
+    expect(fake.readFile(`${B}/E-1.md`)).toBe(changed);
+  });
+
+  it("a file gone since the read is a host failure of the field step", async () => {
+    const { fake, host } = await hostWith({ [`${B}/E-1.md`]: text });
+    const { mtimeMs } = await host.files.readFile({ path: `${B}/E-1.md` });
+    fake.deleteFile(`${B}/E-1.md`);
+    const ticket = { path: `${B}/E-1.md`, mtimeMs } as Parameters<typeof writeFields>[1];
+    await expect(writeFields(host, ticket, [{ key: "priority", value: "P0" }])).rejects.toMatchObject({ failure: { kind: "host", step: "field", code: "not-found" } });
   });
 });

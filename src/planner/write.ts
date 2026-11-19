@@ -6,9 +6,9 @@
 // folder (the Host API's move; never over a folder that is there), and saving its settings (only
 // the Planner's keys of the shared settings file).
 
-import { getBody, setComplexKeyLines, splitFrontmatter } from "pomade-kit/frontmatter";
-import { HostError, type HostClient } from "pomade-kit/sdk";
-import { formatSchedule, type LocalDate, type Schedule } from "pomade-kit/schedule";
+import { getBody } from "pomade-kit/frontmatter";
+import { HostError, type HostClient, type IfMtime } from "pomade-kit/sdk";
+import { formatSchedule, type LocalDate } from "pomade-kit/schedule";
 
 import { joinPath } from "pomade-kit/protocol";
 
@@ -57,78 +57,66 @@ export async function resolveThought(host: HostClient, task: Task, resolved: boo
   await writeFields(host, task, resolveWrites(resolved, day));
 }
 
-/** The text of an item read at `task.mtimeMs`; refused (`StaleError`) when the file changed since. */
-async function readCurrent(host: HostClient, task: Task): Promise<string> {
-  let content: string;
-  let mtimeMs: number;
-  try {
-    ({ content, mtimeMs } = await host.files.readFile({ path: task.path }));
-  } catch (error) {
-    throw new WriteError(`Not saved: ${hostReason(error)}.`);
+/** A refused write of an item: `StaleError` when the host refused it as changed on disk. */
+function notSaved(error: unknown): WriteError {
+  if (error instanceof HostError && error.code === "changed-on-disk") return new StaleError();
+  return new WriteError(`Not saved: ${hostReason(error)}.`);
+}
+
+/** One Host API write of an item, given the `ifMtime` it is conditional on (or none). */
+type ItemWrite = (guard: IfMtime) => Promise<unknown>;
+
+/**
+ * An action's writes to an item read at `task.mtimeMs`, in order. The first is conditional on that
+ * mtime (`ifMtime`): when the file changed since, the host refuses it (`changed-on-disk` →
+ * `StaleError`) and nothing is written. The writes after it follow the action's own.
+ */
+async function writeOver(task: Task, writes: readonly ItemWrite[]): Promise<void> {
+  for (const [i, write] of writes.entries()) {
+    try {
+      await write(i === 0 ? { ifMtime: task.mtimeMs } : {});
+    } catch (error) {
+      throw notSaved(error);
+    }
   }
-  if (mtimeMs !== task.mtimeMs) throw new StaleError();
-  return content;
+}
+
+/** A field-only write: set the key, or remove it when `value` is `null`. */
+function fieldWrite(host: HostClient, path: string, { key, value }: FieldWrite): ItemWrite {
+  return (guard) => (value === null ? host.files.removeField({ path, key, ...guard }) : host.files.setField({ path, key, value, ...guard }));
 }
 
 /** Field-only writes to an item read at `task.mtimeMs`; refused when the file changed since. */
 async function writeFields(host: HostClient, task: Task, writes: readonly FieldWrite[]): Promise<void> {
-  await readCurrent(host, task);
-  await setFields(host, task.path, writes);
-}
-
-async function setFields(host: HostClient, path: string, writes: readonly FieldWrite[]): Promise<void> {
-  try {
-    for (const { key, value } of writes) {
-      if (value === null) await host.files.removeField({ path, key });
-      else await host.files.setField({ path, key, value });
-    }
-  } catch (error) {
-    throw new WriteError(`Not saved: ${hostReason(error)}.`);
-  }
-}
-
-/** `text` with `schedule` in the place of its `repeat:` block's lines — every other byte, and its line endings, as they were. */
-export function withRepeat(text: string, schedule: Schedule): string {
-  const crlf = text.includes("\r\n");
-  const { frontmatter, body } = splitFrontmatter(crlf ? text.replaceAll("\r\n", "\n") : text);
-  const next = `${setComplexKeyLines(frontmatter, FIELD.repeat, formatSchedule(FIELD.repeat, schedule))}${body}`;
-  return crlf ? next.replaceAll("\n", "\r\n") : next;
+  await writeOver(
+    task,
+    writes.map((w) => fieldWrite(host, task.path, w)),
+  );
 }
 
 /**
  * The fields edited in an item's compact view, over the item read at `task.mtimeMs` (refused when
- * the file changed since): a recurring item's rule first — a mapping, which the Host API's
- * field-only write doesn't take, so the `repeat:` key's own lines are replaced in the file's text
- * with the kit's field-only code (`setComplexKeyLines`) and the text is written — then each field
- * as a field-only write.
+ * the file changed since): a recurring item's rule first — a mapping, written as the `repeat:`
+ * key's own lines (`files.setKeyLines`; every other byte of the file stays) — then each field as a
+ * field-only write.
  */
 export async function saveItemEdit(host: HostClient, task: Task, edit: ItemEdit): Promise<void> {
-  const content = await readCurrent(host, task);
-  if (edit.repeat !== null) {
-    try {
-      await host.files.write({ path: task.path, content: withRepeat(content, edit.repeat) });
-    } catch (error) {
-      throw new WriteError(`Not saved: ${hostReason(error)}.`);
-    }
-  }
-  await setFields(host, task.path, edit.fields);
+  const { path } = task;
+  const rule = edit.repeat;
+  const repeat: ItemWrite[] = rule === null ? [] : [(guard) => host.files.setKeyLines({ path, key: FIELD.repeat, text: formatSchedule(FIELD.repeat, rule), ...guard })];
+  await writeOver(task, [...repeat, ...edit.fields.map((w) => fieldWrite(host, path, w))]);
 }
 
 /** The body typed in an item's compact view, over the item read at `task.mtimeMs` (refused when the file changed since): a body-only write. */
 export async function saveBody(host: HostClient, task: Task, body: string): Promise<void> {
-  await readCurrent(host, task);
-  try {
-    await host.files.setBody({ path: task.path, body });
-  } catch (error) {
-    throw new WriteError(`Not saved: ${hostReason(error)}.`);
-  }
+  await writeOver(task, [(guard) => host.files.setBody({ path: task.path, body, ...guard })]);
 }
 
 /**
  * Done or skip on a recurring item read at `task.mtimeMs` (DESIGN §3.4) — one logical action of two
  * writes, refused when the file changed since the read:
- * 1. the body gets `- <day> <word>` as the newest `## Log` entry (`setBody`; the frontmatter's
- *    bytes stay);
+ * 1. the body gets `- <day> <word>` as the newest `## Log` entry (`setBody`, conditional on the
+ *    mtime read; the frontmatter's bytes stay);
  * 2. `do-on` moves to the next occurrence (a field-only write; removed when the rule has none).
  * The log goes first, so a failure never leaves the item advanced without its log line. When the
  * second write fails, the file's text from before is written back; only when that fails too does
@@ -137,13 +125,15 @@ export async function saveBody(host: HostClient, task: Task, body: string): Prom
  */
 export async function completeRecurring(host: HostClient, task: Task, word: LogWord, day: LocalDate): Promise<LocalDate | null> {
   if (task.repeat?.kind !== "ok") throw new WriteError("Not saved: fix the repeat rule first.");
-  const content = await readCurrent(host, task);
-  const next = advancedDoOn(task, task.repeat.schedule, day);
+  let content: string;
   try {
-    await host.files.setBody({ path: task.path, body: appendLog(getBody(content), day, word) });
+    ({ content } = await host.files.readFile({ path: task.path }));
   } catch (error) {
-    throw new WriteError(`Not saved: ${hostReason(error)}.`);
+    throw notSaved(error);
   }
+  const next = advancedDoOn(task, task.repeat.schedule, day);
+  // A text read newer than `task.mtimeMs` is refused here: the log line goes only into the version the row shows.
+  await writeOver(task, [(guard) => host.files.setBody({ path: task.path, body: appendLog(getBody(content), day, word), ...guard })]);
   try {
     if (next === null) await host.files.removeField({ path: task.path, key: FIELD.doOn });
     else await host.files.setField({ path: task.path, key: FIELD.doOn, value: next });

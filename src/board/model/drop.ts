@@ -91,12 +91,12 @@ export function planEdit(ticket: Ticket, field: EditableField, value: string | n
 
 /** Why a drop's write did not happen, or stopped half-way. */
 export type WriteFailure =
-  /** The file's mtime differs from the one the board read: someone changed it in between. */
+  /** The file changed on disk since the board read it: the host refused the write (`changed-on-disk`). */
   | { kind: "changed" }
   /** The host refused a call (`HostError`): its code and message, and which step it was. */
   | { kind: "host"; step: WriteStep; code: string; message: string; moveTo?: string };
 
-/** The Host API call a write was at: the mtime re-read, a field write, the `done/` move, a file create. */
+/** The Host API call a write was at: the backlog folder's re-read, a field write, the `done/` move, a file create. */
 export type WriteStep = "read" | "field" | "move" | "create";
 
 /** The inline error a card shows after a failed drop; the card is reloaded from disk, never retried. */
