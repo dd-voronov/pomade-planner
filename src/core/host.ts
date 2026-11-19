@@ -6,9 +6,6 @@ import type { ProjectRef } from "pomade-kit/protocol";
 
 export const isNotFound = (error: unknown): boolean => error instanceof HostError && error.code === "not-found";
 
-/** The host has no such method — an older Pomade than the call needs. */
-export const isUnknownMethod = (error: unknown): boolean => error instanceof HostError && error.code === "unknown-method";
-
 export const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 const ERRNO: Record<string, string> = {

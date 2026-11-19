@@ -114,6 +114,9 @@ default). The root can be anywhere, including inside the Knowledge vault.
   collision: nothing moves or merges, the tasks stay in the old folder, and the panel says so until
   one of the folders is renamed or moved — then the rename catches up by itself. A mapped folder
   that is gone points the entry at the new name.
+- **A project removed** from the workspace (`project removed`) leaves the project pickers and All's
+  project filter at once. Its folder and map entry stay: its tasks are listed under its last-seen
+  name. When it was the active project, the Planner shows the Workspace.
 - **Changing the tasks root** re-points the app; no files move.
 - **Filename:** `<created-date>-<slug>.md` (`created` is the planner day it was added on; a taken
   name gets `-2`, `-3`, …; a title with nothing to slug gives `<created-date>-task.md`); the title
@@ -267,9 +270,8 @@ which the Today module, the views and the `today` command share.
 - **Template:** the md file set in settings ("Daily note template", a workspace-relative path;
   checked to be a readable `.md` file when saved). The path is typed, or picked with **Choose…** —
   Pomade's file dialog (`files.pickFile`) in the tasks folder, `.md` files only: a pick fills the
-  field and saves, Cancel changes nothing; on a Pomade without the picker (`unknown-method`)
-  Choose… gives way to "This Pomade can't open a file picker — type the path." **Clear** returns
-  to no template. The note is the template with `type:
+  field and saves, Cancel changes nothing, a picker that fails says so under the field. **Clear**
+  returns to no template. The note is the template with `type:
   daily-note` and `date:` first in its frontmatter, then the template's other keys with their
   bytes and order (its own `type`/`date` give way), then its body as it is; a template without
   frontmatter gets the app's block over its text. Until one is set, and whenever it is missing or
@@ -573,8 +575,9 @@ icon shows — runs both, from the workspace-wide Today module (`src/planner/mod
 - **At Workspace** (no active project) the Board tab shows a **project chooser**: every project
   whose backlog resolves, in sidebar order with its group, each with its count of open tickets
   (not done, dropped, parked, triaged or dismissed) and what needs you there
-  ("14 open · 2 in review · 1 new signal", §4.5); counts update live. A click opens that project's
-  Board tab.
+  ("14 open · 2 in review · 1 new signal", §4.5); counts update live, and a project removed from
+  the workspace leaves the list at once. A click opens that project's Board tab. A Board tab whose
+  project is removed shows the chooser.
 
 ### 4.2 Convention
 
@@ -736,6 +739,7 @@ the Planner's own state (`app-state/pomade-planner/`).
 | Strip icons, panel / tab / both actions, badge | `pomade:E-029` |
 | Folder read + watch, frontmatter, field-only write, create/move/rename, open file in a tab, active project, groups → projects, stable project ids, per-project settings | `pomade:E-030` |
 | `project renamed`, `active project changed`, `Pomade ready` events | `pomade:E-031` |
+| `project removed` event | `pomade:T-247` |
 | Notice with click action, icon badge | `pomade:E-032` |
 | `pomade-planner today` on `PATH` | `pomade:E-028` |
 | Rule-8 banner when the app writes an open dirty file | `pomade:E-035` |
@@ -744,6 +748,9 @@ the Planner's own state (`app-state/pomade-planner/`).
 | Field-only frontmatter write | `pomade-kit:E-002` |
 | Recurrence engine | `pomade-kit:E-003` |
 | Date phrases | `pomade-kit:E-004` |
+
+The apps require Pomade `main`: the platform with `pomade:T-237`–`T-248`. A manifest naming
+`project.removed` does not install on a Pomade without it.
 
 Each of the two apps is an ordinary app to Pomade — its own manifest, install, dev link, new-tab
 menu row and frames — and the table's needs are met per app. The quick-add form is the Host API's overlay surface (a shortcut with action `overlay`, and

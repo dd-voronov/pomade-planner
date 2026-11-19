@@ -467,27 +467,25 @@ test.describe("full tab and settings", () => {
     expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ tasksRoot: "Tasks" });
   });
 
-  test("settings on a Pomade without a file picker: Choose… gives way to a note, and a typed path still saves", async ({ page }) => {
+  test("settings: a file picker that fails says so under the field; a typed path still saves", async ({ page }) => {
     await page.goto(harness({ surface: "tab", route: "settings", template: null }));
-    // An older Pomade: files.pickFile is not in its Host API.
     await page.evaluate(() => {
       type Frame = { post(message: unknown): void };
       const fake = window.fakeHost as unknown as { answer(frame: Frame, call: { id: string; method: string }): void };
       const answer = fake.answer.bind(fake);
       fake.answer = (frame, call) => {
         if (call.method !== "files.pickFile") return answer(frame, call);
-        frame.post({ channel: "pomade", type: "result", id: call.id, ok: false, error: { code: "unknown-method", message: 'no method "files.pickFile" in Host API v1' } });
+        frame.post({ channel: "pomade", type: "result", id: call.id, ok: false, error: { code: "io-error", message: "the dialog didn't open" } });
       };
     });
     const a = app(page);
     await a.getByTestId("settings-template-choose").click();
-    await expect(a.getByTestId("settings-template-choose")).toHaveCount(0);
-    await expect(a.getByTestId("settings-template-no-picker")).toHaveText("This Pomade can't open a file picker — type the path.");
-    await expect(a.getByTestId("settings-template-error")).toHaveCount(0);
-    await shot(page, "t010-fake-settings-no-picker");
+    await expect(a.getByTestId("settings-template-error")).toHaveText("Couldn't open the file picker: the dialog didn't open");
+    await expect(a.getByTestId("settings-template-choose")).toBeVisible();
     await a.getByTestId("settings-template").fill("Templates/Daily.md");
     await a.getByTestId("settings-template").press("Enter");
     await expect(a.getByTestId("settings-saved")).toHaveText("Daily note template saved.");
+    await expect(a.getByTestId("settings-template-error")).toHaveCount(0);
     expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ tasksRoot: "Tasks", dailyNoteTemplate: "Templates/Daily.md" });
   });
 });

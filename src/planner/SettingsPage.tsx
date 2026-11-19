@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type MouseEvent } from "react";
 import type { HostClient } from "pomade-kit/sdk";
 import { parseTime } from "pomade-kit/schedule";
 
-import { errorText, isUnknownMethod } from "../core/host";
+import { errorText } from "../core/host";
 import { dailyNoteText } from "./model/daily";
 import { formatBoundary, normalizeTemplatePath, PLANNER_KEYS, SYNCED_SETTINGS_PATH, type ParsedPlannerSettings } from "./model/settings";
 import { chooseTasksRoot } from "./Planner";
@@ -50,8 +50,6 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
   const { tasksRoot, dayBoundary, dailyNoteTemplate } = settings.settings;
   const [template, setTemplate] = useState(dailyNoteTemplate ?? "");
   const [templateError, setTemplateError] = useState<string | null>(null);
-  /** The Pomade has no file picker (`files.pickFile` is an unknown method): Choose… gives way to typing. */
-  const [noPicker, setNoPicker] = useState(false);
   const templateProblem = useTemplateProblem(host, dailyNoteTemplate);
   useEffect(() => setTemplate(dailyNoteTemplate ?? ""), [dailyNoteTemplate]);
   const [boundary, setBoundary] = useState(formatBoundary(dayBoundary));
@@ -154,10 +152,7 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
         setTemplate(path);
         commitTemplate(path);
       },
-      (err: unknown) => {
-        if (isUnknownMethod(err)) setNoPicker(true);
-        else setTemplateError(`Couldn't open the file picker: ${errorText(err)}`);
-      },
+      (err: unknown) => setTemplateError(`Couldn't open the file picker: ${errorText(err)}`),
     );
   };
 
@@ -251,11 +246,9 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
                 onChange={(e) => setTemplate(e.target.value)}
                 onBlur={() => submitTemplate()}
               />
-              {noPicker ? null : (
-                <button type="button" className="btn btn--ghost" data-testid="settings-template-choose" onMouseDown={keepFocus} onClick={chooseTemplate}>
-                  Choose…
-                </button>
-              )}
+              <button type="button" className="btn btn--ghost" data-testid="settings-template-choose" onMouseDown={keepFocus} onClick={chooseTemplate}>
+                Choose…
+              </button>
               {dailyNoteTemplate !== null ? (
                 <button type="button" className="btn btn--ghost" data-testid="settings-template-clear" onMouseDown={keepFocus} onClick={clearTemplate}>
                   Clear
@@ -264,10 +257,6 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
               {templateError !== null ? (
                 <p className="settings__error" role="alert" data-testid="settings-template-error">
                   {templateError}
-                </p>
-              ) : noPicker ? (
-                <p className="settings__help settings__note" role="status" data-testid="settings-template-no-picker">
-                  This Pomade can&apos;t open a file picker — type the path.
                 </p>
               ) : templateProblem !== null && dailyNoteTemplate !== null ? (
                 <p className="settings__warning" role="status" data-testid="settings-template-problem">

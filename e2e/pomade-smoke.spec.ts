@@ -10,7 +10,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type ElectronApplication, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
 import { shot } from "./fixtures/screens";
-import { BOARD_BUILD, BOTH_BUILDS, POMADE_BIN, REINSTALL_RETITLES_TABS, TINTED_APP_ICONS, createPomadeFixture, expectAppIcon, launchPomade, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
+import { BOARD_BUILD, BOTH_BUILDS, POMADE_BIN, createPomadeFixture, expectAppIcon, launchPomade, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 
 const INSTALL_SCRIPT = resolve(import.meta.dirname, "../scripts/install-app.mjs");
 
@@ -96,7 +96,6 @@ test.describe("dev-linked into a real Pomade", () => {
   });
 
   test("the strip icons are drawn in Pomade's colours: idle like Git, hovered like a hovered Git, selected like a selected Files", async () => {
-    test.skip(!TINTED_APP_ICONS, "a Pomade build before pomade:T-244 shows an app icon as its image"); // eslint-disable-line playwright/no-skipped-test -- not built before pomade:T-244
     const files = page.getByTestId("strip-files");
     const git = page.getByTestId("strip-git");
     const planner = page.getByTestId(ICON.planner).getByTestId("app-icon-pomade-planner");
@@ -192,7 +191,6 @@ test.describe("installed into a real Pomade", () => {
   });
 
   test("the Board tab opened from the renamed strip icon takes the icon's new title", async () => {
-    test.skip(!REINSTALL_RETITLES_TABS, "a Pomade build before pomade:T-244 keeps an open tab's title"); // eslint-disable-line playwright/no-skipped-test -- not built before pomade:T-244
     const tabs = page.getByTestId("tabstrip").getByRole("tab");
     await expect(tabs.filter({ hasText: "Board (updated)" })).toHaveCount(1);
     await expect(tabs.filter({ hasText: /^Board$/ })).toHaveCount(0);

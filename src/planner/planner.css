@@ -1142,10 +1142,6 @@
   font-size: var(--fs-sm);
 }
 
-.settings__note {
-  flex-basis: 100%;
-}
-
 .settings__warning {
   flex-basis: 100%;
   margin: 0;

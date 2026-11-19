@@ -6,7 +6,8 @@ its own and works without the other.
 
 Part of the Pomade family — the platform and its rules live in the sibling repo `Pomade`
 (`docs/PLATFORM.md`, protocol in `docs/HOST-API.md`). Design: `docs/DESIGN.md`. Backlog:
-`docs/BACKLOG.md`.
+`docs/BACKLOG.md`. The apps require Pomade `main` — the platform with `pomade:T-237`–`T-248`
+(DESIGN §6).
 
 ## Shape
 
@@ -114,8 +115,8 @@ npm run lint && npm run typecheck && npm run build && npm run test:unit && npm r
   Planner's, `E2E_BOARD_PORT`, `E2E_HARNESS_PORT` move the three servers). `fake-host`: every surface
   of each app in Chromium on the fake host with that app's manifest, an app at the other's routes,
   and standalone (`fake-host.spec.ts`); `board-fake.spec.ts` drives the Board there, `board-manage-fake.spec.ts` creating,
-  the card popover, Signals and Needs you inside a project, `board-needs-you-fake.spec.ts` Needs you at Workspace (the list, a project, All projects, the back row, live, the 160px panel); `planner-fake.spec.ts` the Planner at Workspace (its clock set
-  through the `test.clock` state hook), `planner-projects-fake.spec.ts` its projects (the harness's
+  the card popover, Signals and Needs you inside a project, `board-needs-you-fake.spec.ts` Needs you at Workspace (the list, a project, All projects, the back row, live, a project removed, the 160px panel); `planner-fake.spec.ts` the Planner at Workspace (its clock set
+  through the `test.clock` state hook), `planner-projects-fake.spec.ts` its projects, renamed, regrouped and removed (the harness's
   `fixture=planner`, `mount=manual` to change the workspace before the app opens), `planner-notes-fake.spec.ts`
   daily notes, notes and thoughts, pins, the five quick-add types, the tab's excerpts and the template setting (`extra=notes`, `template`);
   `planner-trim-fake.spec.ts` All's select mode, the delete confirmation, a refused delete and bulk Archive;
@@ -124,7 +125,7 @@ npm run lint && npm run typecheck && npm run build && npm run test:unit && npm r
   `planner-item-fake.spec.ts` an item opened in place (the compact view beside the tab's list, field-only and body-only saves, a file changed on disk, the row's actions, a recurring item's rule and log, Open in tab and ⌘-click, the daily note's card, the view following its file, tabs from 360px, the item route, the panel's rows);
   `planner-attention-fake.spec.ts` the badge, the morning summary on `pomade.ready` and the tab at route `today` (`state` seeds app state); `command.spec.ts` the bundled command, copied alone into
   an empty folder, against throwaway workspaces. `pomade`: a real Pomade from the Pomade checkout (`$POMADE_DIR`, default the `Pomade` folder beside this repository;
-  it must hold a build, `out/main/index.js`, and `node_modules/electron`) launched with the apps
+  Pomade `main`, built: `out/main/index.js` and `node_modules/electron`) launched with the apps
   dev-linked (`POMADE_DEV_APPS`) or installed, each run with its own temp workspace, user data and
   `POMADE_HOME`; `pomade-smoke.spec.ts` both apps dev-linked, installed, and one reinstalled from a changed build while the other keeps running; `pomade-two-apps.spec.ts` T-004's (both named by `pomade apps list` and listed in the new-tab menu, each opening its own tab; each installed alone and working with the other removed; the Board's pattern read from `Apps/pomade-board/settings.json`, its per-project settings and state under its own id); `pomade-board.spec.ts` checks E-001's acceptance on real files (git diff of a drop,
   the editor's changed-on-disk banner, a restart, 300 tickets), `pomade-board-manage.spec.ts`
@@ -140,6 +141,8 @@ installed command run from `POMADE_HOME/bin` with Pomade closed, a restart),
   `pomade-planner-projects.spec.ts` E-004's (quick add through the picker into a project folder,
   grouped Workspace Today, mix-ins per project, a rename in Pomade's sidebar and project dialog,
   All's filters, a collision, a rename made while Pomade was closed, `--project`),
+  `pomade-project-removed.spec.ts` T-013's (projects deleted in Pomade's sidebar leaving Needs you,
+  the chooser and the Planner's All filter, the active one taking the Planner to the Workspace),
   `pomade-planner-recurring.spec.ts` E-005's (a recurring item made in the overlay, lead time, done
   and skip with their exact bytes, missed months as one row, `repeat:` edited in Pomade's editor,
   the command's recurring reasons), `pomade-planner-daily.spec.ts` E-006's (the daily note made on the
