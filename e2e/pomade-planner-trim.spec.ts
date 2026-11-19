@@ -145,10 +145,11 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
 
   test("over an editor in QuizLab: + on All opens it with no do-on and QuizLab as the project; Esc puts the focus back on +", async () => {
     await page.getByTestId(`project-${quiz()}`).click();
-    const p = await openPanel();
-    await view(p, "today");
-    await row(p, "Fix the timer").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    // A file of QuizLab's own, from Pomade's file tree: the Planner opens its tasks in the Workspace that holds them.
+    await page.locator('[data-testid^="tree-node-"][data-testid$="README.md"]').click();
     await expect(vis('[data-testid="mode-toggle"]')).toBeVisible();
+    await expect(page.getByTestId(`project-${quiz()}`)).toHaveAttribute("data-active", "true");
+    const p = await openPanel();
     await view(p, "all");
 
     await p.getByTestId("planner-add").click();

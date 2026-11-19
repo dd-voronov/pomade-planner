@@ -40,8 +40,6 @@ const app = (page: Page): FrameLocator => page.frameLocator("#stage iframe >> nt
 const fileText = (page: Page, path: string) => page.evaluate((p) => window.fakeHost.readFile(p), path);
 const writeFile = (page: Page, path: string, content: string) => page.evaluate(([p, c]) => window.fakeHost.writeFile(p, c), [path, content] as const);
 const openedTabs = (page: Page) => page.evaluate(() => window.fakeHost.openedTabs);
-/** The test id of the focused element of `a`'s frame. */
-const focused = (a: FrameLocator) => a.locator("html").evaluate((el) => (el.ownerDocument.activeElement as HTMLElement | null)?.dataset.testid ?? null);
 
 const TAX = "Tasks/2026-11-01-pay-the-tax.md";
 const TAX_TEXT = "---\ntype: task\ntitle: Pay the tax\nstatus: open\ndeadline: 2026-11-14\nimportance: 5\ncreated: 2026-11-09\n---\n";
@@ -317,6 +315,22 @@ test.describe("the compact view in the tab", () => {
     await expect(a.locator('[data-open="true"]')).toHaveCount(0);
   });
 
+  test("the editor tab opens in the project that holds the file, not the one in front: Workspace for a tasks folder in no project", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "quiz" });
+    const task = "Tasks/QuizLab/2026-11-17-timer.md";
+    await writeFile(page, task, "---\ntype: task\ntitle: Add the timer\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-17\n---\n");
+    await row(a, "Add the timer").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "__workspace__", path: task }]);
+  });
+
+  test("…and that project for a tasks folder inside one", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "quiz", tasks: "Projects/Pomade" });
+    const task = "Projects/Pomade/QuizLab/2026-11-17-timer.md";
+    await writeFile(page, task, "---\ntype: task\ntitle: Add the timer\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-17\n---\n");
+    await row(a, "Add the timer").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "pomade", path: task }]);
+  });
+
   test("a file that can't be read opens the editor tab straight away", async ({ page }) => {
     const a = await openPlanner(page, { surface: "tab" });
     await a.locator('[data-testid="unreadable-row"] button').click();
@@ -576,8 +590,9 @@ test.describe("the panel, too narrow to edit in", () => {
     await expect(a.locator('[data-open="true"]')).toHaveCount(0);
 
     await row(a, "Sound effects").getByTestId("task-open").click({ modifiers: ["Meta"] });
-    await expect.poll(async () => (await openedTabs(page)).at(-1)).toEqual({ kind: "file", projectId: "quiz", path: "Tasks/QuizLab/2026-11-12-sound-effects.md" });
-    expect(await focused(a)).toBe("task-open");
+    // The file is in no project: its editor tab is the Workspace's, and Pomade switches there — the panel follows.
+    await expect.poll(async () => (await openedTabs(page)).at(-1)).toEqual({ kind: "file", projectId: "__workspace__", path: "Tasks/QuizLab/2026-11-12-sound-effects.md" });
+    await expect(a.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "__workspace__");
   });
 
   test("the daily note's card does the same", async ({ page }) => {

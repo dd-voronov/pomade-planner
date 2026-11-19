@@ -109,11 +109,11 @@ export function Board(props: BoardProps) {
 
   const open = useCallback(
     (path: string) => {
-      host.tabs.openFile({ path }).catch((error: unknown) => {
+      host.tabs.openFile({ path, projectId: project.id }).catch((error: unknown) => {
         setErrors((e) => ({ ...e, [path]: `Couldn't open: ${error instanceof Error ? error.message : String(error)}` }));
       });
     },
-    [host],
+    [host, project.id],
   );
 
   const dismissError = useCallback((path: string) => {

@@ -47,6 +47,9 @@ for the capabilities and events its own code uses, no more.
 **Item detail:** a Planner item opens in place in the Planner tab — a compact view of its fields
 and its text (§3.6), with **Open in tab** for the full editor; a Board ticket opens its md file in
 a normal Pomade editor tab (frontmatter as editable properties, the body as description).
+Every editor tab an app opens is in the project that holds the file — the Planner's in the deepest
+project whose folder holds it, else the Workspace; the Board's in its board's project — so Pomade
+never marks it "Outside this project". Pomade switches to that project, as for any tab it opens.
 
 ## 2. Shared file model
 

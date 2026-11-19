@@ -4,6 +4,7 @@ import { FILES_DELETE_MAX_PATHS, type JsonValue } from "pomade-kit/protocol";
 
 import { EmptyState } from "../core/EmptyState";
 import { errorText, useActiveProject } from "../core/host";
+import { openFileInItsProject } from "../core/open-file";
 import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
 import { dailyNotePath } from "./model/daily";
@@ -407,7 +408,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
 
   const knownKeys = useMemo(() => new Set([...(list?.projects.map((p) => p.id) ?? []), ...[...sources.values()].map((s) => s.key)]), [list, sources]);
 
-  const openFile = (path: string) => void host.tabs.openFile({ path }).catch((e: unknown) => setError(`Couldn't open ${path}: ${errorText(e)}`));
+  const openFile = (path: string) => void openFileInItsProject(host, path).catch((e: unknown) => setError(`Couldn't open ${path}: ${errorText(e)}`));
   /**
    * A click on an item: its compact view beside the tab's lists; from the panel, too narrow to edit
    * in, the Planner tab of this context with that view open. `direct` (⌘-click): the editor tab.
