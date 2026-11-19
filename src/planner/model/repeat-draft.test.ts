@@ -50,6 +50,31 @@ describe("resolveDraft — the editor's rows as a kit schedule", () => {
     expect(resolve({ count: "6", on: "1", start: "jan 1" })).toMatchObject({ yaml: "repeat:\n  monthly: { days: [1], months: [jan, jul] }\n  start: 2027-01-01", doOn: "2027-01-01" });
   });
 
+  it("every N days or weeks: fixed dates counted from start — the ticket's “every 2 weeks on Mon from Nov 2” and “every 10 days from Jan 3”", () => {
+    expect(resolve({ count: "2", unit: "week", on: "mon", start: "2026-11-02" })).toEqual({
+      yaml: "repeat:\n  weekly: { every: 2, days: [mon] }\n  start: 2026-11-02",
+      description: "every other Mon, from Nov 2, 2026",
+      doOn: "2026-11-30",
+    });
+    expect(resolve({ count: "10", unit: "day", start: "2026-01-03" })).toEqual({
+      yaml: "repeat:\n  daily: { every: 10 }\n  start: 2026-01-03",
+      description: "every 10 days, from Jan 3, 2026",
+      doOn: "2026-11-19",
+    });
+    expect(resolve({ count: "3", unit: "week", on: "mon, thu", lead: "2", start: "2026-11-02" })).toMatchObject({
+      yaml: "repeat:\n  weekly: { every: 3, days: [mon, thu] }\n  start: 2026-11-02\n  lead-days: 2",
+      doOn: "2026-11-23",
+    });
+  });
+
+  it("every N days or weeks with no start: counted from today, which is written as start", () => {
+    expect(resolve({ count: "2", unit: "week" })).toMatchObject({ yaml: "repeat:\n  weekly: { every: 2, days: [wed] }\n  start: 2026-11-18", doOn: "2026-11-18" });
+    expect(resolve({ count: "3", unit: "day" })).toMatchObject({ yaml: "repeat:\n  daily: { every: 3 }\n  start: 2026-11-18", doOn: "2026-11-18" });
+    // Every 1 needs no start, and after done never counts from one.
+    expect(resolve({ count: "1", unit: "day" })).toMatchObject({ yaml: "repeat:\n  daily: {}" });
+    expect(resolve({ mode: "after", count: "2", unit: "week" })).toMatchObject({ yaml: "repeat:\n  after-completion: { weeks: 2 }" });
+  });
+
   it("start and end as date phrases; end shows in the words", () => {
     expect(resolve({ on: "5", end: "2027-03-31" })).toMatchObject({ yaml: "repeat:\n  monthly: { days: [5] }\n  end: 2027-03-31", description: "monthly on the 5th, until Mar 31, 2027" });
   });
@@ -61,8 +86,6 @@ describe("resolveDraft — the editor's rows as a kit schedule", () => {
   it.each([
     [{ count: "0" }, "count", "How often: a whole number, 1 or more"],
     [{ count: "x" }, "count", "How often: a whole number, 1 or more"],
-    [{ count: "2", unit: "day" as const }, "count", "Fixed dates come every day — for every few days, choose “after done”"],
-    [{ count: "2", unit: "week" as const }, "count", "Fixed weekdays come every week — for every few weeks, choose “after done”"],
     [{ count: "5" }, "count", "Every 1, 2, 3, 4, 6 or 12 months"],
     [{ unit: "week" as const, on: "fry" }, "on", '"fry" is not a weekday — use mon, tue, wed, thu, fri, sat or sun'],
     [{ on: "32" }, "on", expect.stringContaining("32")],
@@ -89,6 +112,8 @@ describe("draftOfSchedule — a file's rule as the editor's rows", () => {
     [{ monthly: { days: ["first mon"] } }, { mode: "every", count: "1", unit: "month", on: "first mon", lead: "", start: "", end: "" }],
     [{ weekly: { days: ["mon", "thu"] }, start: "2026-12-01", end: "2027-03-31" }, { mode: "every", count: "1", unit: "week", on: "mon, thu", lead: "", start: "2026-12-01", end: "2027-03-31" }],
     [{ daily: {} }, { mode: "every", count: "1", unit: "day", on: "", lead: "", start: "", end: "" }],
+    [{ daily: { every: 10 }, start: "2026-01-03" }, { mode: "every", count: "10", unit: "day", on: "", lead: "", start: "2026-01-03", end: "" }],
+    [{ weekly: { every: 2, days: ["mon"] }, start: "2026-11-02", "lead-days": 1 }, { mode: "every", count: "2", unit: "week", on: "mon", lead: "1", start: "2026-11-02", end: "" }],
     [{ "after-completion": { months: 3 } }, { mode: "after", count: "3", unit: "month", on: "", lead: "", start: "", end: "" }],
     [{ "after-completion": { days: 10 }, "lead-days": 2 }, { mode: "after", count: "10", unit: "day", on: "", lead: "2", start: "", end: "" }],
   ])("%j", (repeat, draft) => {
@@ -110,7 +135,7 @@ describe("draftOfSchedule — a file's rule as the editor's rows", () => {
     expect(of({ monthly: { days: [10] }, end: "2026-10-31" })).toMatchObject({ on: "10", end: "2026-10-31" });
   });
 
-  it.each([[{ once: "2026-12-24" }], [{ daily: {}, only: "weekdays" }], [{ monthly: { days: [5], months: ["jan", "feb"] } }], [{ monthly: { days: [5], months: ["jan", "feb", "mar", "apr", "may"] } }]])(
+  it.each([[{ once: "2026-12-24" }], [{ daily: {}, only: "weekdays" }], [{ daily: { every: 2 }, only: "weekdays", start: "2026-11-02" }], [{ monthly: { days: [5], months: ["jan", "feb"] } }], [{ monthly: { days: [5], months: ["jan", "feb", "mar", "apr", "may"] } }]])(
     "a rule the rows can't say is none: %j",
     (repeat) => {
       expect(of(repeat)).toBeNull();

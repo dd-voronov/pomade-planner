@@ -229,4 +229,16 @@ describe("recurring items in the command", () => {
       "Today — Wed, Nov 18, 2026\n  [ ] Upload invoices — missed 2×, since Oct 5, monthly on the 5th, shows 3 days early\n  [ ] Bins out — due in 1 day, every Mon, shows 1 day early\n  [ ] Swim kit — due in 2 days, every Mon, shows 2 days early\n",
     );
   });
+
+  it("every N days or weeks from a start date: in Today on its runs only, as in the views", () => {
+    const cycles = [
+      recurring({ weekly: { every: 2, days: ["mon"] }, start: "2026-11-02" }, { title: "Pay the cleaner", path: "T/cleaner.md", doOn: "2026-11-30" }),
+      recurring({ daily: { every: 10 }, start: "2026-01-03", "lead-days": 1 }, { title: "Water the ficus", path: "T/ficus.md", doOn: "2026-11-19" }),
+    ];
+    expect(todayText(day, todayRows(cycles, day), [])).toBe("Today — Wed, Nov 18, 2026\n  [ ] Water the ficus — due in 1 day, every 10 days, from Jan 3, 2026, shows 1 day early\n");
+    expect(todayReport("2026-11-30", todayRows(cycles, "2026-11-30"), []).items.map((i) => [i.title, i.reason, i.missed])).toEqual([
+      ["Water the ficus", "recurring-due", 2],
+      ["Pay the cleaner", "recurring-due", 0],
+    ]);
+  });
 });

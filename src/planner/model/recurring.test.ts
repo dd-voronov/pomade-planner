@@ -249,6 +249,34 @@ describe("advancedDoOn — done and skip", () => {
     expect(recurringState(item(r, { doOn: next }), "2026-12-05").phase).toBe("ended");
   });
 
+  it("every N weeks on a weekday: done and skip move to the next run of the cycle — across both DST changes", () => {
+    const r = { weekly: { every: 2, days: ["mon"] }, start: "2026-11-02" };
+    const s = schedule(r);
+    expect(advancedDoOn(item(r, { doOn: "2026-11-02" }), s, "2026-11-02")).toBe("2026-11-16");
+    expect(advancedDoOn(item(r, { doOn: "2026-11-16" }), s, "2026-11-18")).toBe("2026-11-30");
+    // Missed Nov 16 and Nov 30: one row, missed 2×; done jumps to Dec 14.
+    expect(recurringState(item(r, { doOn: "2026-11-16" }), "2026-12-01")).toMatchObject({ phase: "missed", missed: 2 });
+    expect(advancedDoOn(item(r, { doOn: "2026-11-16" }), s, "2026-12-01")).toBe("2026-12-14");
+    // 2026-10-25 and 2026-03-29 (Madrid) change the clocks: the cycle counts dates.
+    const fall = { weekly: { every: 2, days: ["mon"] }, start: "2026-10-19" };
+    expect(advancedDoOn(item(fall, { doOn: "2026-10-19" }), schedule(fall), "2026-10-19")).toBe("2026-11-02");
+    const spring = { weekly: { every: 2, days: ["mon"] }, start: "2026-03-16" };
+    expect(advancedDoOn(item(spring, { doOn: "2026-03-16" }), schedule(spring), "2026-03-16")).toBe("2026-03-30");
+  });
+
+  it("every N days from a start date: done and skip move by the cycle, not from the completion date — across both DST changes", () => {
+    const r = { daily: { every: 10 }, start: "2026-01-03" };
+    const s = schedule(r);
+    expect(firstDoOn(s, "2026-11-18")).toBe("2026-11-19");
+    // Ticked two days late, the next run stays on the cycle: Nov 29, not Dec 1.
+    expect(advancedDoOn(item(r, { doOn: "2026-11-19" }), s, "2026-11-21")).toBe("2026-11-29");
+    expect(advancedDoOn(item(r, { doOn: "2026-10-20" }), s, "2026-10-20")).toBe("2026-10-30");
+    expect(advancedDoOn(item(r, { doOn: "2026-03-24" }), s, "2026-03-24")).toBe("2026-04-03");
+    // Oct 20 missed across the fall-back night: once until the next run, Oct 30, makes it twice.
+    expect(recurringState(item(r, { doOn: "2026-10-20" }), "2026-10-29")).toMatchObject({ phase: "missed", missed: 1 });
+    expect(recurringState(item(r, { doOn: "2026-10-20" }), "2026-10-30")).toMatchObject({ phase: "missed", missed: 2 });
+  });
+
   it("a once: no next date", () => {
     expect(advancedDoOn(item({ once: "2026-11-18" }, { doOn: "2026-11-18" }), schedule({ once: "2026-11-18" }), "2026-11-18")).toBeNull();
   });
