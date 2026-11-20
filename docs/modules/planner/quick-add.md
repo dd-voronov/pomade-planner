@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/quick-add.md
+audience: engineers, product
+holds: one add form in place in the tab and in Pomade's overlay elsewhere: entry points, pre-fills, fields and Details, the keys, the repeat editor, the project picker, after an add
+kind: reference
+---
+
 # Quick add — one add form, in place and in the overlay
 
 **Module:** `planner` · **UI:** the form in place at the foot of the Planner tab's list; the

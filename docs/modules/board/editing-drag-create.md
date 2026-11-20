@@ -1,3 +1,10 @@
+---
+doc: docs/modules/board/editing-drag-create.md
+audience: engineers, product
+holds: drag as a status write (never over a newer file), `done/` moves, signal triage, the card popover, the parent list, and creating a ticket: ID, file name, text
+kind: reference
+---
+
 # Editing — drag, the card popover, triage, create
 
 **Module:** `board` · **UI:** the Board tab: dragging cards, the card popover, the triage picker,
@@ -15,8 +22,8 @@ the **+** create form, the reporter setting · **Code:** `src/board/Board.tsx`, 
 
 The Board edits only what a kanban is for — status, priority, parent — and creates tickets with the
 next free ID; everything else, including the title, is edited in the file. Every edit is a
-field-only write, never over a file that changed since the board read it. The Board never edits a
-`BACKLOG.md` index.
+field-only write, never over a file that changed since the board read it. The Board never edits an
+index or plan file (`BACKLOG.md`, `PLAN.md`).
 
 ## Drag = status edit
 

@@ -1,4 +1,4 @@
-// Synthetic backlogs in Pomade's convention (BACKLOG "One item = one file"), for the fake host,
+// Synthetic backlogs in Pomade's convention (process/backlog "One item = one file"), for the fake host,
 // dev:fake and the real-Pomade specs. Paths are relative to the backlog folder. Never a real
 // workspace.
 

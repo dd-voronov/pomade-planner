@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/theme.md
+audience: engineers, product
+holds: Pomade's tokens and theme on every frame, the surface background, and the rule that every colour is a token
+kind: reference
+---
+
 # Theme — both apps look like Pomade
 
 **Module:** `core` · **UI:** every frame of both apps · **Code:** `src/core/mount.tsx`,

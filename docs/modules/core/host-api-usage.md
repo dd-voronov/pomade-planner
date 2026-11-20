@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/host-api-usage.md
+audience: engineers, product
+holds: which Pomade and `pomade-kit` features the apps need and how each is used: overlay, launch panel, badge, notices, tabs, conditional writes, pickers, bulk delete, project events; editor tabs opened in the project that holds the file
+kind: reference
+---
+
 # Host API and kit usage — what the apps take from Pomade and pomade-kit
 
 **Module:** `core` · **UI:** — · **Code:** `src/core/host.ts`, `src/core/open-file.ts`,

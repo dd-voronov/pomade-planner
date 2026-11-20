@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/getting-started.md
+audience: users
+holds: how the apps get into Pomade, removing them, and the first run — the tasks folder and a project's backlog folder
+kind: reference
+---
+
 # Getting started
 
 [← User guide](user-guide.md)

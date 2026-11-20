@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/views.md
+audience: engineers, product
+holds: the panel and the tab, the header and the narrowing switcher, the context, what Today, Project, Recurring and All show, mix-ins, All's filters, row actions, excerpts and pins
+kind: reference
+---
+
 # Views — Today, Project, Recurring and All, per context
 
 **Module:** `planner` · **UI:** the Planner panel (the Planner strip icon) and the Planner tab ·

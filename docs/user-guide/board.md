@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/board.md
+audience: users
+holds: using the Board — the backlog location, areas and columns, dragging, the card popover, creating tickets, triaging signals, Needs you
+kind: reference
+---
+
 # Board
 
 [← User guide](user-guide.md)
@@ -28,8 +35,8 @@ any file change.
 - Later: the tab's **⋯** (Board settings) → **Change backlog folder…**.
 - While the folder is missing the Board keeps watching, so a backlog folder created, moved in or
   checked out later loads the board by itself.
-- Files without a known `kind:` (`BACKLOG.md`, plans, lists) are ignored. The Board never edits a
-  `BACKLOG.md` index.
+- Files without a known `kind:` (`BACKLOG.md`, `PLAN.md`, lists) are ignored. The Board never
+  edits them.
 
 The header shows the backlog folder (`docs/roadmap`) at the right, then **⋯**.
 

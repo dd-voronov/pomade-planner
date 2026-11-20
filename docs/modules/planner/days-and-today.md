@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/days-and-today.md
+audience: engineers, product
+holds: the planner day and its 03:00 boundary across sleep and DST, the pure Today module (what is in Today and why), ticking, and the order of every list
+kind: reference
+---
+
 # Days and Today — the planner day, the Today module, list order
 
 **Module:** `planner` · **UI:** the Today view; every list's order · **Code:**

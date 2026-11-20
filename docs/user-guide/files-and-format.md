@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/files-and-format.md
+audience: users
+holds: what to write by hand — frontmatter per item type, the repeat rule, the log, ticket frontmatter — and what the apps write and never touch
+kind: reference
+---
+
 # Files and format
 
 [← User guide](user-guide.md)
@@ -237,8 +244,8 @@ body stay byte for byte.
 | **+** | a new ticket file |
 | ⋯ → Reporter for new tickets… | `reporter` in `Apps/pomade-board/settings.json` |
 
-**Never:** a file without a known `type:`/`kind:`, a ticket's title or body, a `BACKLOG.md` index,
-anything else in the tasks folder or backlog. Files whose frontmatter can't be parsed are shown
+**Never:** a file without a known `type:`/`kind:`, a ticket's title or body, an index or plan file
+(`BACKLOG.md`, `PLAN.md`), anything else in the tasks folder or backlog. Files whose frontmatter can't be parsed are shown
 greyed ("can't read — open to fix") and never edited.
 
 ## Changed on disk

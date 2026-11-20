@@ -1,3 +1,10 @@
+---
+doc: docs/modules/board/convention-areas-columns.md
+audience: engineers, product
+holds: the ticket convention and the `signal` kind, the fixed areas and columns, the Unreadable strip, empty areas, cards and their order
+kind: reference
+---
+
 # Convention, areas and columns — what a board shows
 
 **Module:** `board` · **UI:** the Board tab: the area switcher, the columns, the cards, the

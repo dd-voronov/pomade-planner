@@ -1,3 +1,10 @@
+---
+doc: docs/modules/board/backlog-location.md
+audience: engineers, product
+holds: the backlog folder from the workspace pattern or a per-project choice, live even while missing, and the Workspace project chooser with its counts
+kind: reference
+---
+
 # Backlog location — which folder a board reads, and the Workspace chooser
 
 **Module:** `board` · **UI:** the Board tab (a project's board, "Choose backlog folder", the ⋯

@@ -1,3 +1,10 @@
+---
+doc: docs/DESIGN.md
+audience: engineers, product
+holds: the cross-cutting overview — the two apps' shape and placement, what lives where, and the map of the docs
+kind: reference
+---
+
 # pomade-planner — Design
 
 The `pomade-planner` repository builds two Pomade apps, for personal planning and for project
@@ -9,8 +16,8 @@ frontmatter, the file on disk is the truth, the app writes single frontmatter fi
 every other byte alone, and an item's full detail opens in Pomade's own editor.
 
 This doc is the cross-cutting overview: the shape of the two apps and what lives where. Each feature
-area's design and implementation is in [[modules]] (`docs/modules/`); the user's view is the user
-guide (`docs/user-guide/user-guide.md`). The reasoning and Daniil's scenarios are in the G2 grill
+area's design and implementation is in [modules](modules/index.md) (`docs/modules/`); the user's view is the [user
+guide](user-guide/index.md). The reasoning and the Owner's scenarios are in the G2 grill
 outcome (`../Pomade/docs/auxiliary/grills/2026-11-09-g2-planner.md`), the platform frame in
 `../Pomade/docs/PLATFORM.md`.
 
@@ -58,7 +65,7 @@ tabs in their project").
 
 ## 3. Where the detail lives
 
-- **`docs/modules/`** ([[modules]]) — engineering and product docs per module:
+- **`docs/modules/`** ([index](modules/index.md)) — engineering and product docs per module:
   - `core/` — the shell and the two builds, the shared file model (live folders, field-only and
     conditional writes, unreadable items), settings and state, Host API usage, theme, tooltips and
     popovers, the test harness.
@@ -66,7 +73,9 @@ tabs in their project").
     trimming, the item in place, quick add, attention, settings and onboarding, the `today` command.
   - `board/` — the backlog location and Workspace chooser, the convention with its areas and
     columns, editing (drag, popover, triage, create), "Needs you".
-- **`docs/user-guide/`** (`docs/user-guide/user-guide.md`) — how to use both apps, from the user's
+- **`docs/user-guide/`** ([index](user-guide/index.md)) — how to use both apps, from the user's
   side: getting started, the Planner, the Board, files and their format, settings, shortcuts,
   troubleshooting.
-- **`docs/BACKLOG.md`** — the modules and the backlog index; one file per item in `docs/roadmap/`.
+- **`docs/PLAN.md`** — the state of work: recently delivered, in review, in progress, next; one
+  file per ticket in `docs/roadmap/`.
+- **`docs/GLOSSARY.md`** — the apps' own terms; the platform's are in `../Pomade/docs/GLOSSARY.md`.

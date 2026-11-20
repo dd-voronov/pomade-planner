@@ -1,11 +1,26 @@
+---
+doc: docs/modules/index.md
+audience: engineers, product
+holds: the module map — each module's scope, where it lives in code, and a summary of its feature docs
+kind: reference
+---
+
 # pomade-planner — modules
 
-Engineering and product docs per module (the modules of [[BACKLOG]] "Modules"): what each feature
-area does and why, and how it is built — code paths, data flow, key functions, state, edge cases,
-invariants, tests. One folder per module, one doc per feature area, each opening with a header line
-of its module, UI, code, e2e specs, unit tests and Host API contract. The cross-cutting shape is in
-[[DESIGN]]; the user's view of the same features is the user guide,
-`docs/user-guide/user-guide.md`.
+A module is a real area of the apps with a home in the code. Tickets name one in `module:`
+(`../Pomade/docs/process/backlog.md`). Each module folder here holds one doc per feature area: what it
+does and why, and how it is built — code paths, data flow, key functions, state, edge cases,
+invariants, tests — each opening with a header line of its module, UI, code, e2e specs, unit tests
+and Host API contract. The cross-cutting shape is in [DESIGN](../DESIGN.md); how to *use* each
+feature is in the [user guide](../user-guide/index.md).
+
+| Module | Covers | Where in code |
+|---|---|---|
+| `core` | app shell: manifest, install, surfaces/routing, settings and app state, the shared file model (read, watch, field-only writes, unreadable items), test harness | `src/core/`, `apps/*/public/manifest.json`, `fake-host/`, `scripts/`, `test/`, `e2e/` |
+| `board` | the Board: backlog location, areas and columns, cards, drag, ticket creation and IDs, "Needs you" | `src/board/` |
+| `planner` | the Planner: item types, Today module, views, quick add, recurring, daily notes, pins, attention, the `pomade-planner today` command | `src/planner/`, `cli/` |
+
+A new area gets its row here first; when one grows its own code folder, the row follows.
 
 ## core — the shell and what both apps share
 

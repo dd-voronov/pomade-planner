@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/projects.md
+audience: engineers, product
+holds: project membership as a sub-folder, safe folder names and their candidates, the project-id → folder map that makes renames and regroups follow, collisions, headings and labels, a project removed
+kind: reference
+---
+
 # Projects — sub-folders, the project-id → folder map, renames
 
 **Module:** `planner` · **UI:** the context (Workspace or the active project), the project headings,

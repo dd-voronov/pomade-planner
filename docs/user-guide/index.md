@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/index.md
+audience: users
+holds: the user guide's map — what Planner and Board are for and a summary of each guide page
+kind: reference
+---
+
 # Planner and Board — user guide
 
 Two Pomade apps, each installed and removed on its own; neither needs the other.

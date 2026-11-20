@@ -8,7 +8,7 @@ import type { FileEntry } from "pomade-kit/protocol";
 export const KINDS = ["problem", "epic", "task", "signal"] as const;
 export type Kind = (typeof KINDS)[number];
 
-/** The sub-folder done epics and tasks move into (Pomade BACKLOG "One item = one file"). */
+/** The sub-folder done epics and tasks move into (Pomade process/backlog "One item = one file"). */
 export const DONE_FOLDER = "done";
 
 /** A ticket's file name: `<P|E|T|S>-NNN-<slug>.md` (the slug may be missing). */
@@ -53,10 +53,10 @@ export type Classified =
   | { type: "unreadable"; file: UnreadableFile }
   | { type: "ignored" };
 
-/** The `reporter:` an agent writes when it files a ticket on its own (Pomade BACKLOG "One item = one file"). */
+/** The `reporter:` an agent writes when it files a ticket on its own (Pomade process/backlog "One item = one file"). */
 export const AGENT_REPORTER = "claude";
 
-/** The frontmatter key naming a kind's parent (`null`: a problem has none) — BACKLOG "One item = one file", [[convention-areas-columns]] "Convention". */
+/** The frontmatter key naming a kind's parent (`null`: a problem has none) — Pomade process/backlog "One item = one file", [[convention-areas-columns]] "Convention". */
 export const PARENT_KEY: Record<Kind, "problem" | "epic" | null> = { problem: null, epic: "problem", task: "epic", signal: "problem" };
 
 /** The kind a kind's parent is. */

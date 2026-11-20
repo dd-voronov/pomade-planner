@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/app-shell-and-two-apps.md
+audience: engineers, product
+holds: how one codebase builds two separately installable apps: the `apps/<app>/` folders and manifests, the build, dev servers and install script, the handshake, and the route table that picks each frame's view
+kind: reference
+---
+
 # App shell and two apps — one codebase, two installable apps
 
 **Module:** `core` · **UI:** every frame of both apps · **Code:** `apps/planner/`, `apps/board/`

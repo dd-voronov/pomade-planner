@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/daily-notes.md
+audience: engineers, product
+holds: one note per planner day made by the launch frame from the template (or the built-in one), never back-filled, its checkbox progress and its card pinned on the Workspace Today
+kind: reference
+---
+
 # Daily notes — one note per planner day, from a template
 
 **Module:** `planner` · **UI:** the daily note's card on the Workspace Today, All with "Daily

@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/shortcuts.md
+audience: users
+holds: every shortcut and mouse modifier of both apps, grouped by where it works
+kind: reference
+---
+
 # Keyboard and mouse
 
 [← User guide](user-guide.md)

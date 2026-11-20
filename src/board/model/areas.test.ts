@@ -68,7 +68,7 @@ describe("DEFAULT_AREAS", () => {
   });
 });
 
-describe("canTake — which kind may sit in which column (Pomade BACKLOG Statuses)", () => {
+describe("canTake — which kind may sit in which column (Pomade process/backlog 'Statuses')", () => {
   const matrix: [AreaDef, string, Kind, boolean][] = [];
   const allowed: Record<string, Record<string, Kind[]>> = {
     signals: { new: ["signal"], triaged: ["signal"], dismissed: ["signal"] },

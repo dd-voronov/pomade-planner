@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/recurring.md
+audience: engineers, product
+holds: the `repeat:` rule in the kit's format, `do-on` as the next occurrence, lead time, missed and ended, done and skip as a log line then `do-on`, and the row's acknowledgement
+kind: reference
+---
+
 # Recurring — the rule, the log, done and skip
 
 **Module:** `planner` · **UI:** recurring rows in Today, Project, Recurring and All; the repeat

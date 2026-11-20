@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/settings-and-state.md
+audience: engineers, product
+holds: what each app keeps where: synced settings in `Apps/<app id>/settings.json`, the Board's per-project settings, machine-local view state, and the Planner's `test.clock` hook
+kind: reference
+---
+
 # Settings and state — what each app keeps, and where
 
 **Module:** `core` · **UI:** the Planner's settings page ([[settings-and-onboarding]]), the Board

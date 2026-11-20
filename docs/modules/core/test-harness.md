@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/test-harness.md
+audience: engineers, product
+holds: vitest in Europe/Madrid, the fake-host harness and its query parameters and fixtures, the real-Pomade launcher, and the Playwright projects
+kind: reference
+---
+
 # Test harness — unit tests, the fake host, and a real Pomade
 
 **Module:** `core` · **UI:** the fake-host harness page (`npm run dev:fake`) · **Code:**

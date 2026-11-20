@@ -1,3 +1,10 @@
+---
+doc: docs/modules/board/needs-you.md
+audience: engineers, product
+holds: tickets in review and new signals for the active project, and the three-level panel at Workspace. 
+kind: reference
+---
+
 # "Needs you" — what waits on the user, in the side panel
 
 **Module:** `board` · **UI:** the side panel of the Board strip icon · **Code:**

@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/storage-and-item-types.md
+audience: engineers, product
+holds: the tasks root's layout (root, `Daily/`, `_archive/`, project sub-folders), which files are read, file names, the five types and their fields, and how a new item and a tick are written
+kind: reference
+---
+
 # Storage and item types — the tasks root and the five types
 
 **Module:** `planner` · **UI:** every Planner view · **Code:** `src/planner/model/items.ts`,

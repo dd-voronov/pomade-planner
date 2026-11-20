@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/file-model.md
+audience: engineers, product
+holds: the architecture both apps rest on: items are md files with frontmatter read live through the Host API watcher, only recognised files count, unreadable ones stay visible, every edit is field-only, and an action's first write is conditional on the mtime read
+kind: reference
+---
+
 # File model — live folders, field-only and conditional writes, unreadable items
 
 **Module:** `core` · **UI:** every list of both apps · **Code:** `src/core/live-folder.ts`,

@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/settings.md
+audience: users
+holds: every setting — where it is changed and stored — and where each app keeps its data and machine-local state
+kind: reference
+---
+
 # Settings and data
 
 [← User guide](user-guide.md)

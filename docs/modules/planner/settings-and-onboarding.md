@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/settings-and-onboarding.md
+audience: engineers, product
+holds: the first-run choice of the tasks root and the settings page: tasks folder, day boundary, daily-note template
+kind: reference
+---
+
 # Settings and onboarding — the tasks root, the day boundary, the template
 
 **Module:** `planner` · **UI:** the onboarding card (panel and tab, until a tasks root is set); the

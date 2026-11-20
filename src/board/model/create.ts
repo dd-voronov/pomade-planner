@@ -1,5 +1,5 @@
 // Creating a ticket from the Board ([[editing-drag-create]] "Create"): the next free ID per kind, the file name, and the
-// file's text — the convention's frontmatter (Pomade BACKLOG "One item = one file", [[convention-areas-columns]]
+// file's text — the convention's frontmatter (Pomade process/backlog "One item = one file", [[convention-areas-columns]]
 // "Convention" for a signal) and the body's empty sections per kind.
 //
 // - The next ID is the highest `<prefix>-NNN` in the backlog folder and its `done/` sub-folder plus
@@ -102,7 +102,7 @@ const SECTIONS: Record<Kind, readonly string[]> = {
 const optional = (key: string, value: string): string[] => (value.trim() === "" ? [] : [`${key}: ${yamlString(value.trim())}`]);
 
 /**
- * A new ticket's text. Keys in the convention's order (Pomade BACKLOG "One item = one file"; a
+ * A new ticket's text. Keys in the convention's order (Pomade process/backlog "One item = one file"; a
  * signal has no `type`): `id`, `kind`, `title`, `status`, `type`, `priority`, the parent key,
  * `created`, `updated`, `reporter`, `source`. Scalars written plain when they read back the same,
  * else quoted.

@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/today-command.md
+audience: engineers, product
+holds: `pomade-planner today`: the same Today from disk without Pomade, its arguments, text and JSON output, exit codes and bundling
+kind: reference
+---
+
 # `pomade-planner today` — the Planner's Today on the command line
 
 **Module:** `planner` · **UI:** a command on `PATH` · **Code:** `cli/main.ts`,

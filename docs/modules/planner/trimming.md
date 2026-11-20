@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/trimming.md
+audience: engineers, product
+holds: All's select mode: selecting within the filters, bulk Archive, and Delete to the macOS Trash after a confirmation, with per-file results
+kind: reference
+---
+
 # Trimming — All's select mode, bulk Archive and Delete
 
 **Module:** `planner` · **UI:** the All view in select mode · **Code:** `src/planner/Planner.tsx`

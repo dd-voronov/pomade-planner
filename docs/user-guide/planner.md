@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/planner.md
+audience: users
+holds: using the Planner — item types, the four views, adding, the compact view, recurring, daily notes, pins, projects, select mode, attention, the today command
+kind: reference
+---
+
 # Planner
 
 [← User guide](user-guide.md)

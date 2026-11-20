@@ -39,7 +39,7 @@ const P: readonly Kind[] = ["problem"];
 const ET: readonly Kind[] = ["epic", "task"];
 
 /**
- * The default mapping, after Pomade's BACKLOG "Statuses" and [[convention-areas-columns]] "Convention": a signal is new, then
+ * The default mapping, after Pomade's process/backlog "Statuses" and [[convention-areas-columns]] "Convention": a signal is new, then
  * triaged (linked to a problem) or dismissed; a problem runs backlog → grooming → planned →
  * delivering → review → done, or dropped / parked; an epic planned → in-progress → review → done,
  * or dropped / parked; a task (backlog →) planned → in-progress → review → done, or dropped.

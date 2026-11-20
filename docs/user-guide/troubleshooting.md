@@ -1,3 +1,10 @@
+---
+doc: docs/user-guide/troubleshooting.md
+audience: users
+holds: messages the apps show, what they mean and what to do, and what the apps deliberately don't do
+kind: reference
+---
+
 # Troubleshooting and limits
 
 [← User guide](user-guide.md)

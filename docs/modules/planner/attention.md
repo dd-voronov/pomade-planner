@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/attention.md
+audience: engineers, product
+holds: the Planner icon's badge (overdue + due today) and the once-a-day morning summary, both run by the hidden launch frame; the summary's click to the Workspace Today
+kind: reference
+---
+
 # Attention — the Planner icon's badge and the morning summary
 
 **Module:** `planner` · **UI:** the badge on the Planner strip icon; one macOS notification per

@@ -1,3 +1,10 @@
+---
+doc: docs/modules/planner/item-in-place.md
+audience: engineers, product
+holds: the compact view beside the lists in the tab: opening from the tab or the panel, the fields and Details, saving without a button over the version read, following the file
+kind: reference
+---
+
 # Item in place — the compact view in the Planner tab
 
 **Module:** `planner` · **UI:** a pane beside the lists in the Planner tab · **Code:**

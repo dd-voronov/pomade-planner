@@ -1,3 +1,10 @@
+---
+doc: docs/modules/core/tooltips-and-popovers.md
+audience: engineers, product
+holds: the one tooltip layer per frame (`data-tip`, 350 ms, kept inside the frame) and the anchored popover both apps use
+kind: reference
+---
+
 # Tooltips and popovers — placed inside the frame
 
 **Module:** `core` · **UI:** every icon-only control of both apps; the Board's create form, card
