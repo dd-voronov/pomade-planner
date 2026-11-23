@@ -362,6 +362,13 @@
   border-color: var(--border-strong);
 }
 
+/* The row whose menu is open. */
+.task-row--menu,
+.task-row--menu:hover,
+.daily-card--menu {
+  border-color: var(--accent);
+}
+
 /* ── The daily note's card, pinned on the Workspace Today ── */
 
 .daily-card {

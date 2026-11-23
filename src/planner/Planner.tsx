@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
-import { HostError, type HostClient } from "pomade-kit/sdk";
-import { FILES_DELETE_MAX_PATHS, type JsonValue } from "pomade-kit/protocol";
+import type { HostClient } from "pomade-kit/sdk";
+import type { JsonValue } from "pomade-kit/protocol";
 
 import { EmptyState } from "../core/EmptyState";
 import { errorText, useActiveProject } from "../core/host";
@@ -17,17 +17,15 @@ import { PLANNER_KEYS, type ParsedPlannerSettings } from "./model/settings";
 import { recurringState, type LogWord } from "./model/recurring";
 import { allTasks, compareTasks, recurringRows, todayRows, type TodayRow } from "./model/today";
 import { DEFAULT_VIEW, parsePlannerView, plannerViewKey, serializePlannerView, type PlannerView, type PlannerViewId } from "./model/view-state";
+import { ROW_ACTIONS, rowActionIds, rowMenuEntries, type RowActionId, type RowMenuEntry, type RowMenuPin } from "./model/row-menu";
 import {
   canArchive,
-  deleteBatches,
-  deleteOutcome,
   EMPTY_SELECTION,
   pruneSelection,
   selectAllState,
   selectedRows,
   toggleAll,
   toggleRow,
-  type DeleteResult,
   type RowFailure,
   type SelectableRow,
   type Selection,
@@ -38,6 +36,7 @@ import { DeleteConfirm } from "./DeleteConfirm";
 import { ItemPane, ItemSplit } from "./ItemPane";
 import { OpenInTabGlyph } from "./OpenInTabGlyph";
 import { PlannerGlyph } from "./PlannerGlyph";
+import { RowMenu, useRowMenu, type RowMenuTrigger } from "./RowMenu";
 import { TaskRow, UnreadableRow, type RowAction, type RowSelect } from "./TaskRow";
 import { usePlannerItems, usePlannerSettings } from "./usePlannerData";
 import { useAttention } from "./useAttention";
@@ -45,7 +44,7 @@ import { useOpenItem, type ItemAsk } from "./useOpenItem";
 import { useAppState, useDailyNoteCreation } from "./usePlannerState";
 import { useFolderReconciliation, useProjectList, type ProjectList } from "./useProjects";
 import { FilterMenu, MixBar, type FilterOption } from "./ViewBars";
-import { archiveItem, completeRecurring, resolveThought, restoreItem, saveSettings, tickTask, WriteError } from "./write";
+import { archiveItem, completeRecurring, resolveThought, restoreItem, saveSettings, tickTask, trashFiles, WriteError } from "./write";
 
 export type PlannerSurface = "panel" | "tab";
 
@@ -358,6 +357,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const [error, setError] = useState<string | null>(null);
   const folderProblems = useFolderReconciliation(host, root, projectFolders, items.folders, projects);
   const trim = useTrimming(active.id);
+  const rowMenu = useRowMenu(active.id);
   const add = useAddInPlace();
   const split = useRef<HTMLDivElement>(null);
   const item = useOpenItem(host, root, items, active.id, itemAsk, split);
@@ -471,17 +471,15 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   if (view === null || pins === null || unpinned === null) return <main className="planner" data-testid={testId} aria-busy="true" />;
   const pinnedHere = pins[view.view];
   const pinOf = (task: Task) => ({ pinned: isPinned(pins, view.view, task.path), onToggle: () => setPins(togglePin(pins, view.view, task.path)) });
-  /** A note's Archive (an archived item's Restore), a thought's Resolve (Reopen once resolved). */
-  const actionsOf = (task: Task): RowAction[] => {
-    if (task.archived) return [{ id: "restore", label: "Restore", title: "Move it back out of _archive/", onClick: () => move(task) }];
-    if (task.type === "note") return [{ id: "archive", label: "Archive", title: "Move it into _archive/ — All shows it with “Show archived”", onClick: () => move(task) }];
-    if (task.type === "thought") {
-      return isDone(task)
-        ? [{ id: "reopen", label: "Reopen", title: "Set it open again", onClick: () => toggle(task, false) }]
-        : [{ id: "resolve", label: "Resolve", title: "Mark it resolved — status: resolved, done-on today", onClick: () => toggle(task, true) }];
-    }
-    return [];
+  /** What each row action does: a recurring item's Skip (`row`: its Today row), a note's Archive, an archived item's Restore, a thought's Resolve and Reopen. */
+  const act = (task: Task, id: RowActionId, row: TodayRow | null) => {
+    if (id === "skip") complete(task, "skipped", row);
+    else if (id === "archive" || id === "restore") move(task);
+    else toggle(task, id === "resolve");
   };
+  /** A row's actions besides its pin (`rowActionIds`): the row's buttons and its menu both offer these. */
+  const actionsOf = (task: Task, locked = false, row: TodayRow | null = null): RowAction[] =>
+    rowActionIds(task, isDone(task), locked).map((id) => ({ id, ...ROW_ACTIONS[id], onClick: () => act(task, id, row) }));
   const select = (id: PlannerViewId) => {
     if (id !== "all") trim.stop(false);
     setView({ ...view, view: id });
@@ -518,25 +516,56 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   if (inSelect && selection !== trim.selection) trim.setSelection(selection);
   const chosen = selectedRows(selectable, selection);
   const selectOf = (path: string): RowSelect | undefined =>
-    inSelect ? { selected: selection.paths.has(path), onToggle: (range) => trim.setSelection(toggleRow(selection, path, shownPaths, range)), failure: trim.failures.get(path) } : undefined;
+    inSelect ? { selected: selection.paths.has(path), onToggle: (range) => trim.setSelection(toggleRow(selection, path, shownPaths, range)) } : undefined;
+  /** Why the last delete (select mode's, or the row menu's) or archive left a row. */
+  const failureOf = (path: string) => (inSelect ? trim.failures.get(path) : rowMenu.failures.get(path));
+  /** The row whose menu is open. */
+  const menuFor = rowMenu.menu?.path ?? null;
+
+  /**
+   * A row's menu ([[views]] "Rows"): Open in tab (as ⌘-click), the pin, the row's own `actions`,
+   * then Delete…, which asks select mode's question for the one row. None in select mode.
+   */
+  const menuOf = (row: SelectableRow, actions: readonly RowAction[], pin: RowMenuPin, onPin: () => void = () => undefined): RowMenuTrigger | undefined => {
+    if (inSelect) return undefined;
+    return (anchor, focusRow) => {
+      const pick = (entry: RowMenuEntry) => () => {
+        if (entry === "open-tab") openFile(row.path);
+        else if (entry === "pin" || entry === "unpin" || entry === "unpin-today") onPin();
+        else if (entry === "delete") rowMenu.askDelete(row, focusRow);
+        else actions.find((a) => a.id === entry)?.onClick();
+      };
+      rowMenu.open({ anchor, path: row.path, title: row.title, focusRow, items: rowMenuEntries(actions.map((a) => a.id), pin).map((entry) => ({ entry, onPick: pick(entry) })) });
+    };
+  };
+  const rowOf = (task: Task): SelectableRow => ({ path: task.path, title: displayTitle(task, day), type: task.type, archived: task.archived, readable: true });
+  /** A readable row's menu props: its menu with its actions and its view pin, open or not, and what a failed delete left. */
+  const menuProps = (task: Task, actions: readonly RowAction[]) => {
+    const pin = pinOf(task);
+    return {
+      menu: menuOf(rowOf(task), actions, pin.pinned ? "pinned" : "unpinned", pin.onToggle),
+      menuOpen: menuFor === task.path,
+      failure: failureOf(task.path),
+    };
+  };
 
   /** Move the chosen files to the Trash; the ones that stay keep their selection and say why. */
   const confirmDelete = () => {
-    const paths = chosen.map((r) => r.path);
     setError(null);
     trim.setBusy(true);
-    void (async () => {
-      const results: DeleteResult[] = [];
-      for (const batch of deleteBatches(paths, FILES_DELETE_MAX_PATHS)) {
-        try {
-          results.push(...(await host.files.delete(batch)));
-        } catch (e) {
-          results.push(...batch.map((path) => ({ path, ok: false, error: { code: e instanceof HostError ? e.code : "", message: errorText(e) } })));
-        }
-      }
-      return deleteOutcome(paths, results).failed;
-    })()
+    void trashFiles(host, chosen.map((r) => r.path))
       .then(trim.settle)
+      .finally(() => void reload());
+  };
+
+  /** Move the row the menu asked about to the Trash; a file that stays says why on its row. */
+  const confirmRowDelete = () => {
+    const asked = rowMenu.deleting;
+    if (asked === null) return;
+    setError(null);
+    rowMenu.start();
+    void trashFiles(host, [asked.row.path])
+      .then(rowMenu.settle)
       .finally(() => void reload());
   };
 
@@ -600,6 +629,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
           : state.phase === "ended"
             ? "Ended — change end or do-on in the file to bring it back"
             : undefined;
+    const actions = actionsOf(task, locked !== undefined, row);
     return (
       <TaskRow
         key={task.path}
@@ -613,18 +643,19 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         }}
         onOpen={(direct) => openItem(task.path, direct)}
         open={item.open?.path === task.path}
-        actions={locked === undefined ? [{ id: "skip", label: "Skip", ariaLabel: "Skip this time", title: "Skip this time — logs “skipped” and moves to the next date", onClick: () => complete(task, "skipped", row) }] : []}
+        actions={actions}
         pin={pinOf(task)}
         excerpt={excerpt(task)}
         locked={locked}
         select={selectOf(task.path)}
+        {...menuProps(task, actions)}
       />
     );
   };
-  const todayRow = (row: TodayRow, pinned = false) =>
-    row.task.repeat !== null ? (
-      recurringRow(row.task, row.recurring === null ? [] : todayHints(row, day), row.reason, row, pinned)
-    ) : (
+  const todayRow = (row: TodayRow, pinned = false) => {
+    if (row.task.repeat !== null) return recurringRow(row.task, row.recurring === null ? [] : todayHints(row, day), row.reason, row, pinned);
+    const actions = actionsOf(row.task);
+    return (
       <TaskRow
         key={row.task.path}
         task={row.task}
@@ -635,14 +666,17 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         onToggle={(d) => toggle(row.task, d)}
         onOpen={(direct) => openItem(row.task.path, direct)}
         open={item.open?.path === row.task.path}
+        actions={actions}
         pin={pinOf(row.task)}
         excerpt={excerpt(row.task)}
+        {...menuProps(row.task, actions)}
       />
     );
-  const listRow = (task: Task, pinned = false) =>
-    task.repeat !== null && !task.archived ? (
-      recurringRow(task, recurringHints(task, recurringState(task, day), day), undefined, null, pinned)
-    ) : (
+  };
+  const listRow = (task: Task, pinned = false) => {
+    if (task.repeat !== null && !task.archived) return recurringRow(task, recurringHints(task, recurringState(task, day), day), undefined, null, pinned);
+    const actions = actionsOf(task);
+    return (
       <TaskRow
         key={task.path}
         task={task}
@@ -653,12 +687,14 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         onToggle={(d) => toggle(task, d)}
         onOpen={(direct) => openItem(task.path, direct)}
         open={item.open?.path === task.path}
-        actions={actionsOf(task)}
+        actions={actions}
         pin={pinOf(task)}
         excerpt={excerpt(task)}
         select={selectOf(task.path)}
+        {...menuProps(task, actions)}
       />
     );
+  };
   const sectioned = <T,>(rows: readonly T[], taskOf: (row: T) => Task, render: (row: T) => ReactNode, open: (row: T) => boolean = (r) => !isDone(taskOf(r))): ReactNode[] => {
     const sections = sectionsBySource(rows, (r) => sourceOf(taskOf(r).folder));
     if (sections.every((sec) => sec.source.kind === "none")) return rows.map(render);
@@ -694,10 +730,30 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const todayNote = context.kind === "workspace" && view.view === "today" ? (items.tasks.find((t) => t.type === "daily-note" && !t.archived && t.path === dailyNotePath(root, day)) ?? null) : null;
   const dailyCard =
     todayNote !== null && dailyNotePinned(day, unpinned.day) ? (
-      <DailyCard key="daily-card" note={todayNote} day={day} open={item.open?.path === todayNote.path} onOpen={(direct) => openItem(todayNote.path, direct)} onUnpin={() => setUnpinned({ day })} />
+      <DailyCard
+        key="daily-card"
+        note={todayNote}
+        day={day}
+        open={item.open?.path === todayNote.path}
+        onOpen={(direct) => openItem(todayNote.path, direct)}
+        onUnpin={() => setUnpinned({ day })}
+        menu={menuOf(rowOf(todayNote), [], "card", () => setUnpinned({ day }))}
+        menuOpen={menuFor === todayNote.path}
+        failure={failureOf(todayNote.path)}
+      />
     ) : null;
   const pinnedRows = dailyCard === null ? listed.pinned : [dailyCard, ...listed.pinned];
-  const unreadable = unreadableShown.map((u) => <UnreadableRow key={u.path} item={u} onOpen={() => openFile(u.path)} select={selectOf(u.path)} />);
+  const unreadable = unreadableShown.map((u) => (
+    <UnreadableRow
+      key={u.path}
+      item={u}
+      onOpen={() => openFile(u.path)}
+      select={selectOf(u.path)}
+      menu={menuOf({ path: u.path, title: u.name, type: u.type, archived: u.archived, readable: false }, [], null)}
+      menuOpen={menuFor === u.path}
+      failure={failureOf(u.path)}
+    />
+  ));
   const empty = rows.length === 0 && unreadable.length === 0;
   const filtering = view.projects.length > 0 || view.types.length > 0;
 
@@ -934,6 +990,8 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         )}
       </div>
       {inSelect && trim.confirming ? <DeleteConfirm rows={chosen} busy={trim.busy} onCancel={trim.cancel} onConfirm={confirmDelete} /> : null}
+      {rowMenu.menu !== null && !inSelect ? <RowMenu ask={rowMenu.menu} onClose={rowMenu.close} /> : null}
+      {rowMenu.deleting !== null && !inSelect ? <DeleteConfirm rows={[rowMenu.deleting.row]} busy={rowMenu.deleting.busy} onCancel={rowMenu.cancel} onConfirm={confirmRowDelete} /> : null}
       {(error ?? dailyError) !== null ? (
         <div className="toast" role="alert" data-testid="planner-error">
           <span>{error ?? dailyError}</span>

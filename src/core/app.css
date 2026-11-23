@@ -273,6 +273,17 @@ button {
   background: var(--border);
 }
 
+/* A destructive item (Delete…): Pomade's red text, a red wash on hover and focus. */
+.menu__item--danger {
+  color: var(--danger);
+}
+
+.menu__item--danger:hover,
+.menu__item--danger:focus-visible {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 .toast {
   position: fixed;
   bottom: var(--space-4);
@@ -316,6 +327,22 @@ button {
   border-radius: var(--radius-lg);
   background: var(--panel-raised);
   box-shadow: var(--shadow-2);
+}
+
+/* A right-click menu on the popover (a Planner row's): Pomade's context-menu shell — its border,
+   radius, padding and minimum width, never wider than the frame. */
+.popover--menu {
+  min-width: min(180px, calc(100vw - 2 * var(--space-2)));
+  padding: var(--space-1);
+  border-color: var(--border);
+  border-radius: var(--radius-md);
+}
+
+.popover--menu .menu__item {
+  flex: none;
+  padding: var(--space-2) var(--space-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .popover--form {

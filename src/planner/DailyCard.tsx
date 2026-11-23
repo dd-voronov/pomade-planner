@@ -1,21 +1,43 @@
+import { useRef } from "react";
+
 import { progressText } from "./model/body";
 import type { Task } from "./model/items";
 import { displayTitle, longDate } from "./model/labels";
-import { PinGlyph } from "./TaskRow";
+import { rowMenuHandlers, type RowMenuTrigger } from "./RowMenu";
+import { Failure, PinGlyph, type RowFailureText } from "./TaskRow";
+
+interface DailyCardProps {
+  note: Task;
+  day: string;
+  open: boolean;
+  onOpen: (direct: boolean) => void;
+  onUnpin: () => void;
+  /** Opens its menu (a right-click, Shift+F10). */
+  menu?: RowMenuTrigger | undefined;
+  menuOpen?: boolean;
+  failure?: RowFailureText;
+}
 
 /**
  * Today's daily note, pinned on the Workspace Today ([[daily-notes]] "Pinned on the Workspace Today"): its title, its date, its
  * checklist progress ("5/8") as text and a bar; a click opens it as a row's does (`direct`: with ⌘
- * or Ctrl held); the pin button unpins it for the rest of the planner day.
+ * or Ctrl held); the pin button unpins it for the rest of the planner day; a right-click opens its menu.
  */
-export function DailyCard({ note, day, open, onOpen, onUnpin }: { note: Task; day: string; open: boolean; onOpen: (direct: boolean) => void; onUnpin: () => void }) {
+export function DailyCard({ note, day, open, onOpen, onUnpin, menu, menuOpen = false, failure }: DailyCardProps) {
+  const main = useRef<HTMLButtonElement>(null);
   const title = displayTitle(note, day);
   const progress = progressText(note.progress);
   const ratio = note.progress !== null && note.progress.total > 0 ? note.progress.done / note.progress.total : 0;
   const complete = note.progress !== null && note.progress.total > 0 && note.progress.done === note.progress.total;
   return (
-    <li className={`daily-card${open ? " daily-card--open" : ""}`} data-testid="daily-card" data-path={note.path} data-open={open ? "true" : undefined}>
-      <button type="button" className="daily-card__main" data-testid="daily-card-open" title={note.path} aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
+    <li
+      className={`daily-card${open ? " daily-card--open" : ""}${menuOpen ? " daily-card--menu" : ""}`}
+      data-testid="daily-card"
+      data-path={note.path}
+      data-open={open ? "true" : undefined}
+      {...rowMenuHandlers(menu, () => main.current?.focus())}
+    >
+      <button ref={main} type="button" className="daily-card__main" data-testid="daily-card-open" title={note.path} aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
         <span className="daily-card__glyph" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
             <rect x="1.8" y="2.4" width="8.4" height="8" rx="1.4" stroke="currentColor" strokeWidth="1" />
@@ -34,6 +56,7 @@ export function DailyCard({ note, day, open, onOpen, onUnpin }: { note: Task; da
               </span>
             ) : null}
           </span>
+          <Failure failure={failure} />
         </span>
         {progress !== null ? (
           <span className={`daily-card__progress${complete ? " daily-card__progress--complete" : ""}`} title={`${progress} checklist lines ticked`}>

@@ -2,7 +2,8 @@
 // writes, never over a newer file), done and skip on a recurring item (its log line, then its
 // `do-on`), an item's fields and body edited in its compact view, creating an item (the Host API's file create; a taken name steps to `-2`, `-3`, …),
 // the day's daily note (the file create; a taken path is the note already there), archiving and
-// restoring a note (the Host API's move; a taken name steps to `-2`, …), renaming a project's
+// restoring a note (the Host API's move; a taken name steps to `-2`, …), moving files to the Trash
+// (the Host API's delete), renaming a project's
 // folder (the Host API's move; never over a folder that is there), and saving its settings (only
 // the Planner's keys of the shared settings file).
 
@@ -10,7 +11,7 @@ import { getBody } from "pomade-kit/frontmatter";
 import { HostError, type HostClient, type IfMtime } from "pomade-kit/sdk";
 import { formatSchedule, type LocalDate } from "pomade-kit/schedule";
 
-import { joinPath } from "pomade-kit/protocol";
+import { FILES_DELETE_MAX_PATHS, joinPath } from "pomade-kit/protocol";
 
 import { diskReason, errorText, isNotFound } from "../core/host";
 import { parseSettingsText, saveSettingsFile, type SettingsValue } from "../core/settings-file";
@@ -20,6 +21,7 @@ import { dailyNotePath, dailyNoteText, type TemplateRead } from "./model/daily";
 import type { ItemEdit } from "./model/item-edit";
 import { FIELD, type Task } from "./model/items";
 import { advancedDoOn, appendLog, type LogWord } from "./model/recurring";
+import { deleteBatches, deleteOutcome, type DeleteResult, type RowFailure } from "./model/selection";
 import { parseFolderMap, PROJECT_FOLDERS_KEY, serializeFolderMap, type FolderMap } from "./model/projects";
 import { SYNCED_SETTINGS_PATH } from "./model/settings";
 import { resolveWrites, tickWrites, type FieldWrite } from "./model/tick";
@@ -194,6 +196,23 @@ export function archiveItem(host: HostClient, root: string, task: Task): Promise
 /** Move an archived item back where it was archived from; resolves to its new path. */
 export function restoreItem(host: HostClient, root: string, task: Task): Promise<string> {
   return moveToFree(host, task.path, (n) => restorePath(root, task.path, n), "restore");
+}
+
+/**
+ * Move files to the macOS Trash ([[trimming]] "Delete"): `files.delete` calls of at most
+ * `FILES_DELETE_MAX_PATHS` paths each, a call that fails as a whole failing each of its paths;
+ * resolves to the files that stayed, each with its reason.
+ */
+export async function trashFiles(host: HostClient, paths: readonly string[]): Promise<RowFailure[]> {
+  const results: DeleteResult[] = [];
+  for (const batch of deleteBatches(paths, FILES_DELETE_MAX_PATHS)) {
+    try {
+      results.push(...(await host.files.delete(batch)));
+    } catch (e) {
+      results.push(...batch.map((path) => ({ path, ok: false, error: { code: e instanceof HostError ? e.code : "", message: errorText(e) } })));
+    }
+  }
+  return deleteOutcome(paths, results).failed;
 }
 
 /** The daily-note template's text, or why it can't be read ([[daily-notes]] "Template"). */

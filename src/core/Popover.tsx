@@ -6,13 +6,15 @@ interface PopoverProps {
   /** What it hangs off: an element's rect, or a point (a right-click) as a 0×0 rect. */
   anchor: Rect;
   align?: "start" | "end";
-  /** The dialog's accessible name. */
+  /** `menu`: a right-click menu, its items `menuitem`s; default a dialog. */
+  role?: "dialog" | "menu";
+  /** Its accessible name. */
   label: string;
   testId: string;
   className?: string;
   /** Close it: Escape, a click outside, or the caller's own buttons. */
   onClose: () => void;
-  /** Where focus goes when it closes (the card, the column's +). */
+  /** Where focus goes when it closes (the card, the column's +, the row). */
   restoreFocus: () => void;
   children: ReactNode;
 }
@@ -20,11 +22,11 @@ interface PopoverProps {
 const FOCUSABLE = 'input:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * A small dialog anchored to a card or a column header, after Pomade's anchored popovers: a
- * transparent scrim that closes it on a click outside, the panel placed inside the frame
+ * A small dialog or menu anchored to a card, a row or a column header, after Pomade's anchored
+ * popovers: a transparent scrim that closes it on a click outside, the panel placed inside the frame
  * (`placePopover`), Tab kept inside, Escape closing it, and focus back where it came from.
  */
-export function Popover({ anchor, align = "start", label, testId, className, onClose, restoreFocus, children }: PopoverProps) {
+export function Popover({ anchor, align = "start", role = "dialog", label, testId, className, onClose, restoreFocus, children }: PopoverProps) {
   const panel = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<Placement | null>(null);
   const restore = useRef(restoreFocus);
@@ -104,7 +106,7 @@ export function Popover({ anchor, align = "start", label, testId, className, onC
       />
       <div
         ref={panel}
-        role="dialog"
+        role={role}
         aria-label={label}
         data-testid={testId}
         data-side={place?.side}

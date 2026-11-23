@@ -1,12 +1,14 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 
 import type { Hint } from "./model/labels";
 import { importanceText } from "./model/labels";
 import { isTaskType, type PlannerType, type Task, type UnreadableItem } from "./model/items";
+import type { RowActionId } from "./model/row-menu";
+import { rowMenuHandlers, type RowMenuTrigger } from "./RowMenu";
 
 /** A row's action, shown over its right end on hover or keyboard focus ("Skip", "Archive", "Resolve"). */
 export interface RowAction {
-  id: string;
+  id: RowActionId;
   label: string;
   /** Its accessible name before the title ("Skip this time"); default `label`. */
   ariaLabel?: string;
@@ -20,9 +22,10 @@ export interface RowSelect {
   selected: boolean;
   /** `range`: Shift was held — select from the anchor to here. */
   onToggle: (range: boolean) => void;
-  /** Why the last delete or archive left this row ("Not deleted — couldn't move it to the Trash"), and the host's own words. */
-  failure?: { text: string; detail: string } | undefined;
 }
+
+/** Why the last delete or archive left this row ("Couldn't move it to the Trash."), and the host's own words. */
+export type RowFailureText = { text: string; detail: string } | undefined;
 
 interface TaskRowProps {
   task: Task;
@@ -47,8 +50,13 @@ interface TaskRowProps {
   excerpt?: string | null | undefined;
   /** The checkbox can't be used (a recurring rule that can't be read, an ended item, a write under way); its title says why. */
   locked?: string | undefined;
-  /** All's select mode: the row selects instead of ticking and opening; no actions. */
+  /** All's select mode: the row selects instead of ticking and opening; no actions, no menu. */
   select?: RowSelect | undefined;
+  /** Opens the row's menu (a right-click, Shift+F10); absent: no menu. */
+  menu?: RowMenuTrigger | undefined;
+  /** The row's menu is open. */
+  menuOpen?: boolean | undefined;
+  failure?: RowFailureText;
 }
 
 function CheckGlyph() {
@@ -144,7 +152,7 @@ const selectClick = (select: RowSelect) => ({
   onClick: (e: MouseEvent) => select.onToggle(e.shiftKey),
 });
 
-function Failure({ failure }: { failure: RowSelect["failure"] }) {
+export function Failure({ failure }: { failure: RowFailureText }) {
   if (failure === undefined) return null;
   return (
     <span className="task-row__failure" role="alert" data-testid="row-failure" title={failure.detail || undefined}>
@@ -154,7 +162,8 @@ function Failure({ failure }: { failure: RowSelect["failure"] }) {
 }
 
 /** One item: its checkbox (a note's, thought's or daily note's glyph instead), then title and hints as one button that opens the item; its actions and pin on hover. */
-export function TaskRow({ task, title = task.title, done, hints, reason, source, onToggle, onOpen, open = false, actions = [], pin, excerpt, locked, select }: TaskRowProps) {
+export function TaskRow({ task, title = task.title, done, hints, reason, source, onToggle, onOpen, open = false, actions = [], pin, excerpt, locked, select, menu, menuOpen = false, failure }: TaskRowProps) {
+  const main = useRef<HTMLButtonElement>(null);
   const importance = importanceText(task.importance);
   const recurring = task.repeat !== null;
   const checkable = isTaskType(task.type) && !task.archived;
@@ -200,7 +209,7 @@ export function TaskRow({ task, title = task.title, done, hints, reason, source,
   );
   return (
     <li
-      className={`task-row${done && !recurring ? " task-row--done" : ""}${hasActions ? " task-row--actions" : ""}${task.archived ? " task-row--archived" : ""}${pin?.pinned ? " task-row--pinned" : ""}${select !== undefined ? " task-row--selectable" : ""}${select?.selected ? " task-row--selected" : ""}${open ? " task-row--open" : ""}`}
+      className={`task-row${done && !recurring ? " task-row--done" : ""}${hasActions ? " task-row--actions" : ""}${task.archived ? " task-row--archived" : ""}${pin?.pinned ? " task-row--pinned" : ""}${select !== undefined ? " task-row--selectable" : ""}${select?.selected ? " task-row--selected" : ""}${open ? " task-row--open" : ""}${menuOpen ? " task-row--menu" : ""}`}
       data-testid="task-row"
       data-path={task.path}
       data-done={done}
@@ -210,6 +219,7 @@ export function TaskRow({ task, title = task.title, done, hints, reason, source,
       data-pinned={pin?.pinned ? "true" : undefined}
       data-open={open ? "true" : undefined}
       data-selected={select === undefined ? undefined : String(select.selected)}
+      {...rowMenuHandlers(menu, () => main.current?.focus())}
     >
       {select !== undefined ? (
         <SelectCheck select={select} label={title} />
@@ -237,11 +247,12 @@ export function TaskRow({ task, title = task.title, done, hints, reason, source,
       {select !== undefined ? (
         <div className="task-row__main" data-testid="task-open" title={task.path} {...selectClick(select)}>
           {line}
-          <Failure failure={select.failure} />
+          <Failure failure={failure} />
         </div>
       ) : (
-        <button type="button" className="task-row__main" data-testid="task-open" title={task.path} aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
+        <button ref={main} type="button" className="task-row__main" data-testid="task-open" title={task.path} aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
           {line}
+          <Failure failure={failure} />
         </button>
       )}
       {hasActions ? (
@@ -271,7 +282,8 @@ export function TaskRow({ task, title = task.title, done, hints, reason, source,
 }
 
 /** A file of a Planner type whose frontmatter can't be read: greyed, opens the file to fix it. */
-export function UnreadableRow({ item, onOpen, select }: { item: UnreadableItem; onOpen: () => void; select?: RowSelect | undefined }) {
+export function UnreadableRow({ item, onOpen, select, menu, menuOpen = false, failure }: { item: UnreadableItem; onOpen: () => void; select?: RowSelect | undefined; menu?: RowMenuTrigger | undefined; menuOpen?: boolean; failure?: RowFailureText }) {
+  const main = useRef<HTMLButtonElement>(null);
   const body = (
     <>
       <span className="task-row__title">{item.name}</span>
@@ -282,17 +294,18 @@ export function UnreadableRow({ item, onOpen, select }: { item: UnreadableItem; 
   );
   return (
     <li
-      className={`task-row task-row--unreadable${select !== undefined ? " task-row--selectable" : ""}${select?.selected ? " task-row--selected" : ""}`}
+      className={`task-row task-row--unreadable${select !== undefined ? " task-row--selectable" : ""}${select?.selected ? " task-row--selected" : ""}${menuOpen ? " task-row--menu" : ""}`}
       data-testid="unreadable-row"
       data-path={item.path}
       data-selected={select === undefined ? undefined : String(select.selected)}
+      {...rowMenuHandlers(menu, () => main.current?.focus())}
     >
       {select !== undefined ? (
         <>
           <SelectCheck select={select} label={item.name} />
           <div className="task-row__main" title={`${item.path}\n${item.reason}`} {...selectClick(select)}>
             {body}
-            <Failure failure={select.failure} />
+            <Failure failure={failure} />
           </div>
         </>
       ) : (
@@ -300,8 +313,9 @@ export function UnreadableRow({ item, onOpen, select }: { item: UnreadableItem; 
           <span className="task-check task-check--blank" aria-hidden="true">
             <span className="task-check__box" />
           </span>
-          <button type="button" className="task-row__main" title={`${item.path}\n${item.reason}`} onClick={onOpen}>
+          <button ref={main} type="button" className="task-row__main" title={`${item.path}\n${item.reason}`} onClick={onOpen}>
             {body}
+            <Failure failure={failure} />
           </button>
         </>
       )}
