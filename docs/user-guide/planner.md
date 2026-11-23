@@ -143,6 +143,11 @@ On hover or keyboard focus a row shows its actions at its right end:
 Files whose frontmatter can't be read show as greyed rows "can't read — open to fix" at the end of
 the list; a click opens the file in Pomade's editor.
 
+**The row menu.** Right-click any row — or press Shift+F10 on a focused one — for a menu with
+**Open in tab**, **Pin** / **Unpin**, the row's own action, and **Delete…**. Delete asks first, then
+moves the file to the macOS Trash (Finder ▸ Put Back restores it). It works in every view, in the
+panel and the tab, and on the daily note's card; select mode has no menu.
+
 ## Adding items
 
 ### Quick add (⌘⇧A)
@@ -188,7 +193,9 @@ In the Planner tab, click a row's title (or press Enter on it): the item opens i
 list. One item at a time; another row's click takes the pane over. In a tab narrower than 720 px the
 pane replaces the list, with a back arrow. From the panel a click opens the Planner tab with the
 pane. **⌘-click** a row opens the file in Pomade's editor instead. Unreadable files always open in
-the editor.
+the editor. An editor tab opens in the project you are in — Workspace when you use the Planner
+there — and Pomade stays in it; because the tasks folder lies outside the project, the tab carries
+Pomade's orange "Outside this project" mark.
 
 The pane shows:
 

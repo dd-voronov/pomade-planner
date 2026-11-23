@@ -39,6 +39,15 @@ Every shortcut and mouse modifier of the Planner and the Board, grouped by where
 | click a view tab | switches view |
 | Esc in the panel's ⋯ menu | closes it, focus back on ⋯ |
 
+### Row menu
+
+| Key / mouse | Does |
+|---|---|
+| right-click a row, Shift+F10 on a focused row | opens the row menu |
+| ↑ ↓ | move between the items (Home, End jump) |
+| Enter | picks the item |
+| Esc | closes the menu; the row keeps the focus |
+
 ## Add form
 
 In the floating quick-add form and in place in the Planner tab.

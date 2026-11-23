@@ -45,6 +45,10 @@ asked — Restore undoes it.
 
 ## Delete
 
+The row menu's **Delete…** ([[views]] "Rows") asks the same question for its one row and trashes
+the file through the same `trashFiles` (`src/planner/write.ts`); a failed delete puts its reason on
+the row.
+
 **Delete N…** asks first in the Planner's own modal (`DeleteConfirm`): "Delete 3 files?" (one file:
 by its title), "They go to the macOS Trash — Finder can put them back.", every file's title and
 path, Cancel (focused, so Enter cancels) and **Move to Trash**.

@@ -49,8 +49,8 @@ logic, and each manifest asks for the capabilities and events its own code uses,
 **Item detail:** a Planner item opens in place in the Planner tab — a compact view of its fields and
 its text, with **Open in tab** for the full editor ([[item-in-place]]); a Board ticket opens its md
 file in a normal Pomade editor tab (frontmatter as editable properties, the body as description).
-Every editor tab an app opens is in the project that holds the file ([[host-api-usage]] "Editor
-tabs in their project").
+An editor tab the Planner opens is in the project the Planner is shown in; a Board ticket's is in
+its board's project ([[host-api-usage]] "Editor tabs in their project").
 
 ## 2. Placement
 

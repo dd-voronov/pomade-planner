@@ -39,7 +39,7 @@ theme, and a test harness from pure logic up to a real Pomade.
   the Planner's `test.clock` hook.
 - [[host-api-usage]] — which Pomade and `pomade-kit` features the apps need and how each is used:
   overlay, launch panel, badge, notices, tabs, conditional writes, pickers, bulk delete, project
-  events; editor tabs opened in the project that holds the file.
+  events; which project an editor tab opens in.
 - [[theme]] — Pomade's tokens and theme on every frame, the surface background, and the rule that
   every colour is a token.
 - [[tooltips-and-popovers]] — the one tooltip layer per frame (`data-tip`, 350 ms, kept inside the

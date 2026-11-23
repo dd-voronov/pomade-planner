@@ -1,16 +1,16 @@
 ---
 doc: docs/modules/core/host-api-usage.md
 audience: engineers, product
-holds: which Pomade and `pomade-kit` features the apps need and how each is used: overlay, launch panel, badge, notices, tabs, conditional writes, pickers, bulk delete, project events; editor tabs opened in the project that holds the file
+holds: which Pomade and `pomade-kit` features the apps need and how each is used: overlay, launch panel, badge, notices, tabs, conditional writes, pickers, bulk delete, project events; which project an editor tab opens in
 kind: reference
 ---
 
 # Host API and kit usage — what the apps take from Pomade and pomade-kit
 
-**Module:** `core` · **UI:** — · **Code:** `src/core/host.ts`, `src/core/open-file.ts`,
+**Module:** `core` · **UI:** — · **Code:** `src/core/host.ts`,
 `src/core/views.ts`, the Host API calls across `src/planner/` and `src/board/` · **e2e:**
 `pomade-smoke.spec.ts`, `pomade-two-apps.spec.ts`, `pomade-project-removed.spec.ts` · **Unit:**
-`src/core/open-file.test.ts`, `test/manifest.test.ts` · **Contract:**
+`test/manifest.test.ts` · **Contract:**
 `../Pomade/docs/HOST-API.md` (protocol); usage reference: the `pomade-kit` README
 (`../pomade-kit/README.md`)
 
@@ -74,12 +74,12 @@ The apps require Pomade `main`: the platform with `pomade:T-237`–`T-248`. A ma
 
 ## Editor tabs in their project
 
-Every editor tab an app opens is in the project that holds the file, so Pomade never marks it
-"Outside this project"; Pomade switches to that project, as for any tab it opens.
-
-- Planner: `openFileInItsProject(host, path)` (`src/core/open-file.ts`) lists the projects and
-  opens the file in the deepest project whose folder holds it (`holdingProjectId`), else the
-  Workspace (`__workspace__`); when the projects can't be listed, in the frame's project.
+- Planner: an editor tab opens in the project the Planner is shown in — the active project, the
+  Workspace at Workspace — and Pomade stays there. Every way in calls `tabs.openFile({ path })`
+  with no `projectId`, which Pomade reads as the active project: ⌘-click, **Open in tab**, ⇧⌘↵ in
+  quick add, the **Daily** type, an unreadable file's row. A task of another project shown here
+  opens here too. The tasks folder usually lies outside the project, so the tab carries Pomade's
+  orange "Outside this project" mark.
 - Board: a ticket opens in its board's project (`tabs.openFile` with that `projectId`), from the
   board and from "Needs you".
 

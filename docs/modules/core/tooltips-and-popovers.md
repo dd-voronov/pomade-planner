@@ -43,6 +43,7 @@ scrim that closes it on a click outside, Tab kept inside, Escape closing it from
 frame, and focus returned where it came from (`restoreFocus`). `placePopover(anchor, size, frame)`
 puts it below its anchor when it fits, else above, else on the side with more room with its height
 capped (it scrolls inside); aligned to the anchor's start or end, shifted left at the right edge,
-narrower than a narrow frame. The Board's create form, card popover and triage picker use it
+narrower than a narrow frame. `role` is "dialog" or "menu". The Board's create form, card popover and triage picker and the
+Planner's row menu use it
 ([[editing-drag-create]]), and so do the Planner's "+ Project" mix-in picker and All's filter
 menus (`ViewBars.tsx`, [[views]]).

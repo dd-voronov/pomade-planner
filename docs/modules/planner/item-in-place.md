@@ -31,7 +31,8 @@ editor tab. **Open in tab** gives the full Pomade editor when the item needs it.
 - In a tab narrower than 720px (a container query on the split) the pane takes the lists' place, its
   close button a **Back** arrow at its start ("Back to the list (Esc)").
 - **⌘-click** on a row opens the file in an editor tab and no pane; a file that can't be read
-  always opens the editor tab.
+  always opens the editor tab. An editor tab opens in the project the Planner is shown in, and
+  Pomade stays there ([[host-api-usage]] "Editor tabs in their project").
 
 ## From the panel
 

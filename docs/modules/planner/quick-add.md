@@ -107,7 +107,7 @@ date (`quickAddRoute`, `parseQuickAddRoute`).
   stop would be one of Pomade's own panes.
 - **Enter** adds from any field but Details; **⌘↵** adds from every field, Details included;
   **⇧⌘↵** adds and opens the item: from the form in place its compact view ([[item-in-place]]),
-  from the overlay the file in an editor tab of its project. The form's foot names them.
+  from the overlay the file in an editor tab of the active project. The form's foot names them.
 
 ## Recurring — the repeat editor
 
