@@ -315,20 +315,38 @@ test.describe("the compact view in the tab", () => {
     await expect(a.locator('[data-open="true"]')).toHaveCount(0);
   });
 
-  test("the editor tab opens in the project that holds the file, not the one in front: Workspace for a tasks folder in no project", async ({ page }) => {
+  test("the editor tab opens in the project the Planner is shown in, not the one that holds the file: a tasks folder in no project", async ({ page }) => {
     const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "quiz" });
     const task = "Tasks/QuizLab/2026-11-17-timer.md";
     await writeFile(page, task, "---\ntype: task\ntitle: Add the timer\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-17\n---\n");
     await row(a, "Add the timer").getByTestId("task-open").click({ modifiers: ["Meta"] });
-    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "__workspace__", path: task }]);
+    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "quiz", path: task }]);
+    await expect(a.getByTestId("view-planner-tab")).toHaveAttribute("data-context", "quiz");
   });
 
-  test("…and that project for a tasks folder inside one", async ({ page }) => {
+  test("…and a tasks folder inside another project", async ({ page }) => {
     const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "quiz", tasks: "Projects/Pomade" });
     const task = "Projects/Pomade/QuizLab/2026-11-17-timer.md";
     await writeFile(page, task, "---\ntype: task\ntitle: Add the timer\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-17\n---\n");
     await row(a, "Add the timer").getByTestId("task-open").click({ modifiers: ["Meta"] });
-    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "pomade", path: task }]);
+    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "quiz", path: task }]);
+    await expect(a.getByTestId("view-planner-tab")).toHaveAttribute("data-context", "quiz");
+  });
+
+  test("a task of another project mixed in opens in the project shown, from ⌘-click and from Open in tab", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "pomade" });
+    await a.getByTestId("view-project").click();
+    await a.getByTestId("mix-add").click();
+    await a.getByTestId("picker-filter").pressSequentially("quiz");
+    await a.getByTestId("picker-filter").press("Enter");
+    await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "quiz");
+    await row(a, "Add dark mode").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect.poll(() => openedTabs(page)).toEqual([{ kind: "file", projectId: "pomade", path: "Tasks/QuizLab/2026-11-14-add-dark-mode.md" }]);
+    const pane = await openItem(a, "Add dark mode");
+    await pane.getByTestId("item-open-tab").click();
+    await expect.poll(() => openedTabs(page)).toHaveLength(2);
+    expect((await openedTabs(page)).at(-1)).toEqual({ kind: "file", projectId: "pomade", path: "Tasks/QuizLab/2026-11-14-add-dark-mode.md" });
+    await expect(a.getByTestId("view-planner-tab")).toHaveAttribute("data-context", "pomade");
   });
 
   test("a file that can't be read opens the editor tab straight away", async ({ page }) => {
@@ -596,9 +614,9 @@ test.describe("the panel, too narrow to edit in", () => {
     await expect(a.locator('[data-open="true"]')).toHaveCount(0);
 
     await row(a, "Sound effects").getByTestId("task-open").click({ modifiers: ["Meta"] });
-    // The file is in no project: its editor tab is the Workspace's, and Pomade switches there — the panel follows.
-    await expect.poll(async () => (await openedTabs(page)).at(-1)).toEqual({ kind: "file", projectId: "__workspace__", path: "Tasks/QuizLab/2026-11-12-sound-effects.md" });
-    await expect(a.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "__workspace__");
+    // The editor tab is the panel's project's, though the file is in no project; Pomade stays in the project.
+    await expect.poll(async () => (await openedTabs(page)).at(-1)).toEqual({ kind: "file", projectId: "quiz", path: "Tasks/QuizLab/2026-11-12-sound-effects.md" });
+    await expect(a.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "quiz");
   });
 
   test("the daily note's card does the same", async ({ page }) => {

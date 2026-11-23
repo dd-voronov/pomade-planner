@@ -245,10 +245,11 @@ test.describe("adding in place and in the overlay in a real Pomade", () => {
     const o = overlay();
     await expect(o.getByTestId("qa-title")).toBeFocused();
     expect(await heights()).toEqual({ frame: QUICK_ADD_HEIGHT.task, form: QUICK_ADD_HEIGHT.task });
-    // Beside the panel: the pane area's top corner next to the side column.
-    const column = await page.getByTestId("side-column").boundingBox();
+    // Beside the panel: the pane area (the scrim) starts right of the side panels, and the card sits in its near corner.
+    const pane = await page.getByTestId("app-overlay").boundingBox();
     const card = await page.getByTestId("app-overlay-card").boundingBox();
-    expect(card?.x).toBe((column?.x ?? 0) + (column?.width ?? 0) + 16);
+    expect(card?.x).toBe((pane?.x ?? 0) + 16);
+    expect(card?.y).toBe((pane?.y ?? 0) + 16);
     await shot(page, "t007-pomade-panel-overlay-beside");
     await o.getByTestId("qa-type-recurring").check();
     await expect.poll(heights).toEqual({ frame: QUICK_ADD_HEIGHT.recurring, form: QUICK_ADD_HEIGHT.recurring });

@@ -262,6 +262,22 @@ test.describe("the add form in place, in the tab", () => {
     await expect(a.getByTestId("planner-add")).toBeFocused();
     expect(await openedTabs(page)).toEqual([{ kind: "file", projectId: "__workspace__", path: "Tasks/Daily/2026-11-17.md" }]);
   });
+
+  test("in a project the editor tabs the add flows open — the daily note, the overlay's ⇧⌘↵ — are that project's, and Pomade stays in it", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "pomade" });
+    await openAddForm(a);
+    for (let i = 0; i < 4; i++) await page.keyboard.press("Alt+Tab");
+    await expect(a.getByTestId("qa-type-daily-note")).toBeChecked();
+    await page.keyboard.press("Enter");
+    await expect(a.getByTestId("add-form")).toHaveCount(0);
+    expect(await openedTabs(page)).toEqual([{ kind: "file", projectId: "pomade", path: "Tasks/Daily/2026-11-17.md" }]);
+
+    await page.goto(harness({ surface: "overlay", fixture: "planner", project: "pomade" }));
+    await app(page).getByTestId("qa-title").fill("Post the parcel");
+    await page.keyboard.press("Shift+Meta+Enter");
+    await expect(page.locator("#stage iframe")).toHaveCount(0);
+    expect(await openedTabs(page)).toEqual([{ kind: "file", projectId: "pomade", path: "Tasks/Pomade/2026-11-17-post-the-parcel.md" }]);
+  });
 });
 
 test.describe("the panel adds in the overlay", () => {

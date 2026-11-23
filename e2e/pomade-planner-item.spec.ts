@@ -7,8 +7,8 @@
 // in the panel a click on a note brings up the Planner tab with the note open — through the tab's
 // route, for a tab already open and for the same note asked again — and Open in tab opens
 // Pomade's editor; ⌘-click on a row opens the editor and no view; ⇧⌘↵ in the overlay opens the
-// editor too; from a project's view the editor tab opens in the Workspace that holds the file, with no
-// "Outside this project" mark (T-012).
+// editor too; the editor tab opens in the project the Planner is shown in — from a project's panel
+// or overlay in that project, from the Workspace in the Workspace — and Pomade stays there (T-017).
 
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -231,19 +231,53 @@ test.describe("an item opened in place in a real Pomade", () => {
     await expect(page.getByTestId("app-overlay")).toHaveCount(0);
   });
 
-  test("from a project's view an item's editor tab opens in the Workspace that holds its file, with no “Outside this project” mark", async () => {
+  test("the editor tab opens in the project the Planner is shown in — a project's panel and overlay, then the Workspace's — and Pomade stays there", async () => {
     const ALPHA_TASK = "Alpha/2026-11-16-ship-the-beta.md";
+    const WORK_TASK = "2026-11-16-pack-the-box.md";
     await mkdir(todo("Alpha"), { recursive: true });
     await writeFile(todo(ALPHA_TASK), "---\ntype: task\ntitle: Ship the beta\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-16\n---\n");
-    await page.getByTestId("project-proj-alpha").click();
-    await expect(page.getByTestId("project-proj-alpha")).toHaveAttribute("data-active", "true");
+    await writeFile(todo(WORK_TASK), "---\ntype: task\ntitle: Pack the box\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-16\n---\n");
+    const alpha = page.getByTestId("project-proj-alpha");
+    const workspace = page.getByTestId("project-__workspace__");
+    const editorTab = (name: RegExp) => page.getByTestId("tabstrip").getByRole("tab", { name, selected: true });
+
+    await alpha.click();
+    await expect(alpha).toHaveAttribute("data-active", "true");
     const p = await openPanel();
     await expect(p.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "proj-alpha");
     await view(p, "all");
     await row(p, "Ship the beta").getByTestId("task-open").click({ modifiers: ["Meta"] });
-    const editor = page.getByTestId("tabstrip").getByRole("tab", { name: /2026-11-16-ship-the-beta/, selected: true });
-    await expect(editor).toBeVisible();
-    await expect(page.getByTestId("project-__workspace__")).toHaveAttribute("data-active", "true");
-    await expect(editor.locator('[data-testid^="tab-scope-"]')).toHaveCount(0);
+    await expect(editorTab(/2026-11-16-ship-the-beta/)).toBeVisible();
+    await expect(alpha).toHaveAttribute("data-active", "true");
+    await expect(workspace).not.toHaveAttribute("data-active", "true");
+    await shot(page, "t017-pomade-alpha-editor-tab");
+
+    // The overlay's ⇧⌘↵ lands in the same project.
+    await page.keyboard.press("Meta+Shift+A");
+    const o = page.frameLocator(`[data-testid="${OVERLAY_FRAME}"]`);
+    await expect(o.getByTestId("qa-title")).toBeFocused();
+    await page.keyboard.type("Mail the form");
+    await page.keyboard.press("Shift+Meta+Enter");
+    await expect(editorTab(/2026-11-17-mail-the-form/)).toBeVisible();
+    await expect(page.getByTestId("app-overlay")).toHaveCount(0);
+    await expect(alpha).toHaveAttribute("data-active", "true");
+
+    // From the Workspace the tab is the Workspace's: Alpha's tab strip does not hold it.
+    await workspace.click();
+    await expect(workspace).toHaveAttribute("data-active", "true");
+    await expect(page.getByTestId("tabstrip").getByRole("tab", { name: /2026-11-16-ship-the-beta/ })).toHaveCount(0);
+    const w = await openPanel();
+    await expect(w.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "__workspace__");
+    await view(w, "all");
+    await row(w, "Pack the box").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect(editorTab(/2026-11-16-pack-the-box/)).toBeVisible();
+    await expect(workspace).toHaveAttribute("data-active", "true");
+    await expect(alpha).not.toHaveAttribute("data-active", "true");
+    await shot(page, "t017-pomade-workspace-editor-tab");
+
+    // A task of another project, shown here in All, opens here too.
+    await row(w, "Ship the beta").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect(editorTab(/2026-11-16-ship-the-beta/)).toBeVisible();
+    await expect(workspace).toHaveAttribute("data-active", "true");
   });
 });
