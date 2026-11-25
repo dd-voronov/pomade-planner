@@ -1,7 +1,7 @@
 ---
 doc: docs/DESIGN.md
 audience: engineers, product
-holds: the cross-cutting overview — the two apps' shape and placement, what lives where, and the map of the docs
+holds: the cross-cutting overview — the two apps' shape and placement, what lives where, and the map of the module docs and the user guide
 kind: reference
 ---
 
@@ -76,18 +76,7 @@ its board's project ([[host-api-usage]] "Editor tabs in their project").
 - **`docs/user-guide/`** ([index](user-guide/index.md)) — how to use both apps, from the user's
   side: getting started, the Planner, the Board, files and their format, settings, shortcuts,
   troubleshooting.
-- **`docs/PLAN.md`** — the state of work: recently delivered, in review, in progress, next; one
-  file per ticket in `docs/roadmap/`.
-- **`docs/GLOSSARY.md`** — the apps' own terms; the platform's are in `../Pomade/docs/GLOSSARY.md`.
-- **`docs/SESSION-HANDOFF.md`** — work left hanging between sessions; **`docs/auxiliary/`** — the
-  open user-testing round (`user-testing-checklist-<N>*.md`).
-- **Outside this repo:** the protocol between Pomade and an app is `../Pomade/docs/HOST-API.md`, its
-  usage reference the `pomade-kit` README (`../pomade-kit/README.md`); the platform's rules are
-  `../Pomade/docs/PLATFORM.md`; a need from the platform is a request in
-  `../Pomade/docs/PLATFORM-INTAKE.md`; the design sources are the G2 grill above and
-  `../Pomade/docs/auxiliary/grills/2026-11-09-final-reconciliation-g1-g4.md`.
 - **App data:** the user-chosen tasks folder (asked on first run); each app's settings in its own
   folder, `<workspace>/Apps/pomade-planner/` and `<workspace>/Apps/pomade-board/`.
-- **Stack and gate:** TypeScript and React on `pomade-kit`'s SDK (`github:dd-voronov/pomade-kit`),
-  built by Vite. `npm run lint`, `npm run typecheck`, `npm run build`, `npm run test:unit` (vitest),
-  `npm run e2e` (Playwright: the fake host and a real Pomade, [[test-harness]]).
+- **The repo's own facts** — its plan, names, stack, commands and the docs outside it — are in
+  [REPO](REPO.md).
