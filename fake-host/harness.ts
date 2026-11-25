@@ -10,7 +10,8 @@
 // `2026-11-17T10:00`, the Planner's clock starts at — the app's `test.clock` state), `state` (a
 // JSON object of further app state keys to start with), `mount`
 // (`manual`: the frame is mounted only when a spec calls `window.mountNow()`, after it changed
-// the fake workspace — what the app finds when it opens). The frame is
+// the fake workspace — what the app finds when it opens; `mountNow({ surface, icon, route })` opens
+// another surface on the same fake host, after `window.mounted.close()`). The frame is
 // sized like its Pomade surface: a tab fills the stage, a panel is 240px wide (`panelWidth` to
 // change it). An overlay — `surface=overlay`, or the one the app opens itself (`overlay.open`, the
 // Planner's +) — is mounted by the kit's `mountApp` as Pomade shows it: an
@@ -37,7 +38,7 @@ declare global {
   interface Window {
     fakeHost: FakeHost;
     mounted: MountedApp | undefined;
-    mountNow: () => void;
+    mountNow: (as?: FrameOptions) => void;
   }
 }
 
@@ -147,7 +148,9 @@ window.fakeHost = createFakeHost({
   ...(hostApi === null ? {} : { hostApi: Number(hostApi) }),
   ...(theme === "dark" || theme === "light" ? { theme } : {}),
 });
-window.mountNow = () => {
-  window.mounted = mountApp(window.fakeHost, { ...open, src: app, parent: stage });
+window.mountNow = (as) => {
+  const frame: FrameOptions = as ?? open;
+  stage.dataset.surface = frame.surface ?? "tab";
+  window.mounted = mountApp(window.fakeHost, { ...frame, src: app, parent: stage });
 };
 if (query.get("mount") !== "manual") window.mountNow();

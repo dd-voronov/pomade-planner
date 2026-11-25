@@ -40,8 +40,9 @@ reaches it again.
   under the field.
 - **Daily note template:** a workspace-relative path to a `.md` file (`normalizeTemplatePath`),
   checked to be a readable file when saved (`readTemplate`); typed, or picked with **Choose…** —
-  Pomade's file dialog (`files.pickFile`) under the tasks folder, `.md` files only: a pick fills the
-  field and saves, Cancel changes nothing, a picker that fails says so under the field. **Clear**
+  Pomade's file dialog (`files.pickFile`) over the whole workspace, `.md` files only, opening at the
+  workspace root: a template beside other templates outside the tasks folder is one click. A pick
+  fills the field and saves, Cancel changes nothing, a picker that fails says so under the field. **Clear**
   (and an emptied field) returns to the built-in note. When the saved template can't be used, the
   page says why ([[daily-notes]] "Template").
 - Each change saves at once and says so ("Daily note template saved."); a settings write changes only

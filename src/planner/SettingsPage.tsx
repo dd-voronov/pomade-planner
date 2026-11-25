@@ -146,7 +146,7 @@ export function SettingsPage({ host, settings, reload, onBack }: SettingsPagePro
   const chooseTemplate = () => {
     setSaved(null);
     setTemplateError(null);
-    void host.files.pickFile({ under: tasksRoot ?? "", extensions: ["md"] }).then(
+    void host.files.pickFile({ extensions: ["md"] }).then(
       ({ path }) => {
         if (path === null) return;
         setTemplate(path);

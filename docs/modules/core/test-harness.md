@@ -45,7 +45,7 @@ changes. Pure logic sits next to its code (`src/*/model/*.test.ts`); the apps' H
 | `fixture=planner`, `extra=notes` | the Planner's projects workspace; its notes, thoughts, daily notes and template |
 | `now` | a local time the Planner's clock starts at (the `test.clock` state, [[settings-and-state]] "Test hook") |
 | `state` | a JSON object of further app state keys |
-| `mount=manual` | the frame mounts only on `window.mountNow()`, after a spec changed the fake workspace |
+| `mount=manual` | the frame mounts only on `window.mountNow()`, after a spec changed the fake workspace; `mountNow({ surface, icon, route })` mounts that surface instead, on the same fake host (after `window.mounted.close()`) |
 | `theme` | `light` · `dark`, Pomade's theme at the handshake; `window.fakeHost.setTheme` changes it |
 
 An overlay — `surface=overlay`, or one the app opens itself with `overlay.open` — is mounted as

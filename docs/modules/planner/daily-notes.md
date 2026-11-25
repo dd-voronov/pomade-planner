@@ -43,7 +43,8 @@ doesn't exist.
 
 ## Template
 
-The md file set in settings ("Daily note template", `dailyNoteTemplate`, a workspace-relative path;
+The md file set in settings ("Daily note template", `dailyNoteTemplate`, a workspace-relative path,
+typed or picked from any `.md` file of the workspace with **Choose…**;
 [[settings-and-onboarding]] "The settings page").
 
 `dailyNoteText(day, template)`:

@@ -1,4 +1,4 @@
-// T-010's acceptance in a real Pomade ($POMADE_DIR, e2e/fixtures/pomade.ts) with the app installed
+// T-010's and T-020's acceptance in a real Pomade ($POMADE_DIR, e2e/fixtures/pomade.ts) with the app installed
 // into the fixture's user data: the Planner's Settings choose the daily-note template with Pomade's
 // file picker (`files.pickFile`, its NODE_ENV=test hook `globalThis.__pomadePick`) and save it.
 
@@ -21,6 +21,8 @@ const PANEL = '[data-testid="panel-frame-app-pomade-planner-planner"]';
 const TAB = '[data-testid="app-frame-pomade-planner"]:visible';
 const TODOS = "To-dos";
 const SETTINGS = "Apps/pomade-planner/settings.json";
+/** Beside other templates, outside the tasks folder. */
+const TEMPLATES = "Templates";
 
 interface PickHook {
   answers: (string | null)[];
@@ -63,8 +65,9 @@ test.describe("the daily-note template chosen in a real Pomade", () => {
     fixture = await createPomadeFixture([{ key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n" } }]);
     await mkdir(abs("Apps/pomade-planner"), { recursive: true });
     await writeFile(abs(SETTINGS), `${JSON.stringify({ tasksRoot: TODOS }, null, 2)}\n`);
-    await mkdir(abs(`${TODOS}/Templates`), { recursive: true });
-    await writeFile(abs(`${TODOS}/Templates/Morning.md`), DAILY_TEMPLATE);
+    await mkdir(abs(TODOS), { recursive: true });
+    await mkdir(abs(TEMPLATES), { recursive: true });
+    await writeFile(abs(`${TEMPLATES}/Morning.md`), DAILY_TEMPLATE);
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
     expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
     ({ app, page } = await launchPomade(fixture));
@@ -77,7 +80,7 @@ test.describe("the daily-note template chosen in a real Pomade", () => {
     await fixture.cleanup();
   });
 
-  test("Choose… opens Pomade's file picker in the tasks folder for .md files; the picked path is saved; Cancel changes nothing; Clear returns to none", async () => {
+  test("Choose… opens Pomade's file picker over the whole workspace for .md files; a pick outside the tasks folder is saved; Cancel changes nothing; Clear returns to none", async () => {
     const tab = await openSettings();
     await expect(tab.getByTestId("settings-template")).toHaveValue("");
 
@@ -87,17 +90,17 @@ test.describe("the daily-note template chosen in a real Pomade", () => {
     await expect.poll(async () => (await pickRequests()).length).toBe(1);
     const [request] = await pickRequests();
     expect(request?.extensions).toEqual(["md"]);
-    expect(await realpath(request?.defaultPath ?? "")).toBe(await realpath(abs(TODOS)));
+    expect(await realpath(request?.defaultPath ?? "")).toBe(await realpath(fixture.workspaceRoot));
     await expect(tab.getByTestId("settings-template")).toHaveValue("");
     expect(await settings()).toEqual({ tasksRoot: TODOS });
 
     // A pick: the field fills and the path is saved.
-    await answerPicks([await realpath(abs(`${TODOS}/Templates/Morning.md`))]);
+    await answerPicks([await realpath(abs(`${TEMPLATES}/Morning.md`))]);
     await tab.getByTestId("settings-template-choose").click();
-    await expect(tab.getByTestId("settings-template")).toHaveValue(`${TODOS}/Templates/Morning.md`);
+    await expect(tab.getByTestId("settings-template")).toHaveValue(`${TEMPLATES}/Morning.md`);
     await expect(tab.getByTestId("settings-saved")).toHaveText("Daily note template saved.");
-    expect(await settings()).toEqual({ tasksRoot: TODOS, dailyNoteTemplate: `${TODOS}/Templates/Morning.md` });
-    await shot(page, "t010-pomade-settings-template-chosen");
+    expect(await settings()).toEqual({ tasksRoot: TODOS, dailyNoteTemplate: `${TEMPLATES}/Morning.md` });
+    await shot(page, "t020-pomade-settings-template-chosen");
 
     await tab.getByTestId("settings-template-clear").click();
     await expect(tab.getByTestId("settings-saved")).toHaveText("Daily notes use the built-in template.");

@@ -430,34 +430,34 @@ test.describe("full tab and settings", () => {
     expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ tasksRoot: "Tasks" });
   });
 
-  test("settings: Choose… picks the template in the tasks folder and saves it; Cancel changes nothing; Clear returns to none", async ({ page }) => {
+  test("settings: Choose… offers .md files of the whole workspace and saves the pick; Cancel changes nothing; Clear returns to none", async ({ page }) => {
     await page.goto(harness({ surface: "tab", route: "settings", template: null, manual: true }));
-    await page.evaluate((t) => window.fakeHost.writeFile("Tasks/Templates/Morning.md", t), DAILY_TEMPLATE);
+    await page.evaluate((t) => window.fakeHost.writeFile("Templates/Morning.md", t), DAILY_TEMPLATE);
     await page.evaluate(() => window.mountNow());
     const a = app(page);
     await expect(a.getByTestId("settings-template")).toHaveValue("");
     await expect(a.getByTestId("settings-template-clear")).toHaveCount(0);
-    await shot(page, "t010-fake-settings-template-none");
+    await shot(page, "t020-fake-settings-template-none");
 
-    // Cancel: nothing changes, nothing is written.
+    // Cancel: nothing changes, nothing is written. The picker is bound to no folder — not the tasks folder.
     const before = await fileText(page, SETTINGS);
     await page.evaluate(() => window.fakeHost.answerPick(null));
     await a.getByTestId("settings-template-choose").click();
     await expect.poll(() => page.evaluate(() => window.fakeHost.pickRequests.length)).toBe(1);
-    expect(await page.evaluate(() => window.fakeHost.pickRequests[0])).toEqual({ kind: "file", root: "Tasks", initial: "Tasks", extensions: ["md"] });
+    expect(await page.evaluate(() => window.fakeHost.pickRequests[0])).toEqual({ kind: "file", root: "", initial: "", extensions: ["md"] });
     await expect(a.getByTestId("settings-template")).toHaveValue("");
     await expect(a.getByTestId("settings-saved")).toHaveCount(0);
     expect(await fileText(page, SETTINGS)).toBe(before);
 
-    // A pick fills the field and saves — over what was typed and not yet saved.
+    // A pick outside the tasks folder fills the field and saves — over what was typed and not yet saved.
     await a.getByTestId("settings-template").fill("Templates/Typed.md");
-    await page.evaluate(() => window.fakeHost.answerPick("Tasks/Templates/Morning.md"));
+    await page.evaluate(() => window.fakeHost.answerPick("Templates/Morning.md"));
     await a.getByTestId("settings-template-choose").click();
-    await expect(a.getByTestId("settings-template")).toHaveValue("Tasks/Templates/Morning.md");
+    await expect(a.getByTestId("settings-template")).toHaveValue("Templates/Morning.md");
     await expect(a.getByTestId("settings-saved")).toHaveText("Daily note template saved.");
-    expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ tasksRoot: "Tasks", dailyNoteTemplate: "Tasks/Templates/Morning.md" });
+    expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ tasksRoot: "Tasks", dailyNoteTemplate: "Templates/Morning.md" });
     await expect(a.getByTestId("settings-template-error")).toHaveCount(0);
-    await shot(page, "t010-fake-settings-template-chosen");
+    await shot(page, "t020-fake-settings-template-chosen");
 
     // Clear: no template; the built-in one stands.
     await a.getByTestId("settings-template-clear").click();
@@ -465,6 +465,27 @@ test.describe("full tab and settings", () => {
     await expect(a.getByTestId("settings-template")).toHaveValue("");
     await expect(a.getByTestId("settings-template-clear")).toHaveCount(0);
     expect(JSON.parse(await fileText(page, SETTINGS))).toEqual({ tasksRoot: "Tasks" });
+  });
+
+  test("settings: a template picked outside the tasks folder makes the next daily note", async ({ page }) => {
+    await page.goto(harness({ surface: "tab", route: "settings", template: null }));
+    await page.evaluate((t) => window.fakeHost.writeFile("Templates/Morning.md", t), DAILY_TEMPLATE);
+    const a = app(page);
+    await page.evaluate(() => window.fakeHost.answerPick("Templates/Morning.md"));
+    await a.getByTestId("settings-template-choose").click();
+    await expect(a.getByTestId("settings-saved")).toHaveText("Daily note template saved.");
+    expect(await exists(page, "Tasks/Daily/2026-11-17.md")).toBe(false);
+
+    // The launch frame opens that day: its note is the picked file's text.
+    await page.evaluate(() => {
+      window.mounted?.close();
+      window.mountNow({ surface: "panel", icon: "planner" });
+    });
+    await expect(app(page).getByTestId("view-planner-panel")).toBeVisible();
+    await settled(app(page), "2026-11-17");
+    expect(await fileText(page, "Tasks/Daily/2026-11-17.md")).toBe(fromTemplate("2026-11-17"));
+    await expect(app(page).getByTestId("daily-card-progress")).toHaveText("0/8");
+    await shot(page, "t020-fake-daily-from-picked-template");
   });
 
   test("settings: a file picker that fails says so under the field; a typed path still saves", async ({ page }) => {

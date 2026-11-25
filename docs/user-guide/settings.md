@@ -28,7 +28,7 @@ tab on it). **← Planner** goes back. Saved in `Apps/pomade-planner/settings.js
 |---|---|---|---|
 | **Tasks folder** — **Change…** | `tasksRoot` | none — asked on first run | the folder every item lives in, workspace-relative. Choosing another folder moves no files |
 | **Day starts at** | `dayBoundary` (`H:MM`) | `3:00` | when a planner day starts: ticked tasks leave Today, unfinished ones roll over, recurring items fall due, the daily note is made. Saved on Enter or leaving the field |
-| **Daily note template** — path, **Choose…**, **Clear** | `dailyNoteTemplate` | none — the built-in note | a Markdown file anywhere in the workspace that each day's note starts from. Type a path (`Templates/Daily.md`) and press Enter or leave the field, or **Choose…** a `.md` file in the tasks folder. It must be readable when saved. **Clear** goes back to the built-in note |
+| **Daily note template** — path, **Choose…**, **Clear** | `dailyNoteTemplate` | none — the built-in note | a Markdown file anywhere in the workspace that each day's note starts from. Type a path (`Templates/Daily.md`) and press Enter or leave the field, or **Choose…** a `.md` file from anywhere in the workspace (the dialog opens at the workspace root). It must be readable when saved. **Clear** goes back to the built-in note |
 | *(kept by the app)* | `projectFolders` | `{}` | project id → `{ folder, name, groupPath }`: which sub-folder belongs to which Pomade project. Written when a project's folder is made or renamed; read by the `today` command. Don't edit it by hand |
 
 If the template can't be used later (deleted, unreadable frontmatter), the settings page says why:
