@@ -11,7 +11,9 @@
 // JSON object of further app state keys to start with), `mount`
 // (`manual`: the frame is mounted only when a spec calls `window.mountNow()`, after it changed
 // the fake workspace — what the app finds when it opens; `mountNow({ surface, icon, route })` opens
-// another surface on the same fake host, after `window.mounted.close()`). The frame is
+// another surface on the same fake host, after `window.mounted.close()`; `window.pressShortcut(id)`
+// opens the app's overlay shortcut `id` over whatever frame is mounted, the frame staying, as
+// Pomade's shortcut does). The frame is
 // sized like its Pomade surface: a tab fills the stage, a panel is 240px wide (`panelWidth` to
 // change it). An overlay — `surface=overlay`, or the one the app opens itself (`overlay.open`, the
 // Planner's +) — is mounted by the kit's `mountApp` as Pomade shows it: an
@@ -42,6 +44,7 @@ declare global {
     fakeHost: FakeHost;
     mounted: MountedApp | undefined;
     mountNow: (as?: FrameOptions) => void;
+    pressShortcut: (id: string) => void;
     hostCalls: { method: string; params: unknown }[];
     scopeFolders: (projectId: string) => Promise<string[]>;
   }
@@ -167,5 +170,8 @@ window.mountNow = (as) => {
   const frame: FrameOptions = as ?? open;
   stage.dataset.surface = frame.surface ?? "tab";
   window.mounted = mountApp(window.fakeHost, { ...frame, src: app, parent: stage });
+};
+window.pressShortcut = (id) => {
+  mountApp(window.fakeHost, { surface: "overlay", shortcut: id, src: app, parent: document.body });
 };
 if (query.get("mount") !== "manual") window.mountNow();

@@ -214,6 +214,10 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     const name = "2026-11-10-should-nora-start-piano.md";
     await expect.poll(() => text(name).catch(() => null)).toBe("---\ntype: thought\ntitle: Should Nora start piano?\nstatus: open\ncreated: 2026-11-10\n---\n");
 
+    // Today doesn't list a thought with no day: the panel shows it in Project, marked.
+    await expect(p.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    await expect(row(p, "Should Nora start piano?")).toHaveAttribute("data-added", "");
+    await p.getByTestId("view-today").click();
     await expect(row(p, "Should Nora start piano?")).toHaveCount(0);
     await p.getByTestId("view-all").click();
     await expect(row(p, "Should Nora start piano?")).toHaveAttribute("data-type", "thought");

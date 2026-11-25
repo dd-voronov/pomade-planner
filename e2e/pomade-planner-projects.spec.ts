@@ -157,6 +157,12 @@ test.describe("Planner projects in a real Pomade", () => {
     await expect(page.getByTestId("app-overlay")).toHaveCount(0);
     expect(await readFile(todo("QuizLab (Archive)/2026-11-17-export-the-old-scores.md"), "utf8")).toBe(quickAdded({ title: "Export the old scores", created: "2026-11-17" }));
     await expect.poll(async () => (await map())[ids().old]).toEqual({ folder: "QuizLab (Archive)", name: "QuizLab", groupPath: ["Archive"] });
+    // Neither QuizLab's Today nor its Project lists another project's task with no date: the panel shows it in All.
+    const p = panel();
+    await expect(p.getByTestId("view-all")).toHaveAttribute("aria-selected", "true");
+    await expect(row(p, "Export the old scores")).toHaveAttribute("data-added", "");
+    await p.getByTestId("view-today").click();
+    await expect(p.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
   });
 
   test("at Workspace, Today lists the no-project items and each project's Today items under project headings", async () => {

@@ -28,6 +28,7 @@ Pomade loads an app in an iframe; the surface it is opened on (`host.welcome.sur
 | tab (`tabs.openApp`) | `settings` | Planner tab on its settings page |
 | tab (the morning summary's click) | `today` | Planner tab on the Workspace Today |
 | tab (a click on a row of the Planner panel) | `item?path=<file>` | Planner tab with that item's compact view open |
+| panel (`panel.show` after an add in the overlay) | `added?path=<file>` | Planner panel on the item just added |
 | overlay (shortcut ⌘⇧A; the Planner panel's **+** and Add button) | `quick-add`, with the view's pre-fills (`?do-on=today`, `?type=recurring`) | Quick add |
 
 **Board** (`pomade-board`):

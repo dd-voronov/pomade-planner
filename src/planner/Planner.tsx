@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
 import type { HostClient } from "pomade-kit/sdk";
 import { WORKSPACE_PROJECT_ID, type JsonValue } from "pomade-kit/protocol";
 
@@ -13,7 +13,7 @@ import { isTaskType, PLANNER_TYPES, type Items, type PlannerType, type Task, typ
 import { DAILY_UNPINNED_KEY, dailyNotePinned, isPinned, parsePins, serializePins, splitPinned, togglePin, pinsKey, type Pins } from "./model/pins";
 import { groupLabel } from "./model/picker";
 import { folderForNew, folderKey, folderSources, NO_PROJECT, NONE_SOURCE, sectionsBySource, sourceKey, sourceLabels, type ProjectSource, type Source } from "./model/projects";
-import { countsInProject, inAllFilter, inScope, inToday, isOwn, liveMixins, projectEntries, projectGroupOf, projectRows, revealInAll, viewListing, type Context, type ProjectGroup } from "./model/scope";
+import { countsInProject, inAllFilter, inScope, inToday, isOwn, liveMixins, projectEntries, projectGroupOf, projectRows, revealInAll, viewListing, type Context, type Listing, type ProjectGroup } from "./model/scope";
 import { PLANNER_KEYS, type ParsedPlannerSettings } from "./model/settings";
 import { recurringState, type LogWord } from "./model/recurring";
 import { allTasks, compareTasks, recurringRows, todayRows, type TodayRow } from "./model/today";
@@ -32,6 +32,7 @@ import {
   type SelectableRow,
   type Selection,
 } from "./model/selection";
+import type { Added } from "./AddForm";
 import { AddFoot, useAddInPlace } from "./AddInPlace";
 import { DailyCard } from "./DailyCard";
 import { DeleteConfirm } from "./DeleteConfirm";
@@ -42,6 +43,7 @@ import { PlannerGlyph } from "./PlannerGlyph";
 import { RowMenu, useRowMenu, type RowMenuTrigger } from "./RowMenu";
 import { OPEN_HINT_PANEL, OPEN_HINT_TAB, TaskRow, UnreadableRow, type RowAction, type RowSelect } from "./TaskRow";
 import { usePlannerItems, usePlannerSettings } from "./usePlannerData";
+import type { AddedAsk } from "./useAddedItem";
 import { useAttention } from "./useAttention";
 import { useOpenItem, type ItemAsk } from "./useOpenItem";
 import { useAppState, useDailyNoteCreation } from "./usePlannerState";
@@ -84,12 +86,16 @@ interface LoadedProps {
   todayAsks?: number;
   /** The tab is asked to show an item in its compact view (an item route, the click on a panel row). */
   itemAsk?: ItemAsk | undefined;
+  /** The quick-add overlay added an item: the Planner shows it in its list (the panel at its added route, a tab on `item.added`). */
+  addedAsk?: AddedAsk | undefined;
   /** The user picked a view. */
   onSelectView?: (view: PlannerViewId) => void;
 }
 
 /** The Planner in the side panel or a tab: onboarding until a tasks root is chosen, then Today, Project, Recurring and All for the active context. */
-export function Planner({ host, surface, settingsPage, showSettings = false, onShowSettings, todayAsks = 0, itemAsk, onSelectView }: LoadedProps) {
+export function Planner({ host, surface, settingsPage, showSettings = false, onShowSettings, todayAsks = 0, itemAsk, addedAsk, onSelectView }: LoadedProps) {
+  /** The last `addedAsk` the views took: kept here, so the views coming back (the settings page closed) don't take it again. */
+  const addedTaken = useRef(0);
   const testId = surface === "panel" ? "view-planner-panel" : "view-planner-tab";
   const clock = useClock(host);
   const { state: settingsState, reload: reloadSettings } = usePlannerSettings(host);
@@ -140,6 +146,8 @@ export function Planner({ host, surface, settingsPage, showSettings = false, onS
       onShowSettings={onShowSettings}
       todayAsks={todayAsks}
       itemAsk={itemAsk}
+      addedAsk={addedAsk}
+      addedTaken={addedTaken}
       onSelectView={onSelectView}
     />
   );
@@ -155,10 +163,12 @@ interface TasksRootProps {
   onShowSettings: ((show: boolean) => void) | undefined;
   todayAsks: number;
   itemAsk: ItemAsk | undefined;
+  addedAsk: AddedAsk | undefined;
+  addedTaken: MutableRefObject<number>;
   onSelectView: ((view: PlannerViewId) => void) | undefined;
 }
 
-function TasksRoot({ host, surface, clock, settings, reloadSettings, testId, onShowSettings, todayAsks, itemAsk, onSelectView }: TasksRootProps) {
+function TasksRoot({ host, surface, clock, settings, reloadSettings, testId, onShowSettings, todayAsks, itemAsk, addedAsk, addedTaken, onSelectView }: TasksRootProps) {
   const root = settings.settings.tasksRoot ?? "";
   const { state, reload } = usePlannerItems(host, root, surface === "tab");
   const projects = useProjectList(host);
@@ -198,6 +208,8 @@ function TasksRoot({ host, surface, clock, settings, reloadSettings, testId, onS
       onShowSettings={onShowSettings}
       todayAsks={todayAsks}
       itemAsk={itemAsk}
+      addedAsk={addedAsk}
+      addedTaken={addedTaken}
       onSelectView={onSelectView}
     />
   );
@@ -340,7 +352,7 @@ function PanelMenu({ host, select, button }: { host: HostClient; select: PanelSe
   );
 }
 
-function Views({ host, surface, clock, settings, items, reload, testId, onShowSettings, projects, todayAsks, itemAsk, onSelectView }: ViewsProps) {
+function Views({ host, surface, clock, settings, items, reload, testId, onShowSettings, projects, todayAsks, itemAsk, addedAsk, addedTaken, onSelectView }: ViewsProps) {
   const { tasksRoot, dayBoundary, projectFolders, dailyNoteTemplate } = settings.settings;
   const root = tasksRoot ?? "";
   const day = usePlannerDay(clock, dayBoundary);
@@ -366,6 +378,16 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const item = useOpenItem(host, root, items, active.id, itemAsk, split);
 
   const acks = useAcks();
+  const added = useAddedReveal();
+
+  // An item the overlay added in this context: the folder is read again, then the item shown.
+  const { show: showAdded } = added;
+  useEffect(() => {
+    if (addedAsk === undefined || addedAsk.n === addedTaken.current) return;
+    addedTaken.current = addedAsk.n;
+    if (addedAsk.contextId !== null && addedAsk.contextId !== active.id) return;
+    void reload().then(() => showAdded(addedAsk.path, false));
+  }, [addedAsk, addedTaken, active.id, reload, showAdded]);
 
   // A tick shows at once; the read of a newer version of its file takes over (another file's read leaves it).
   useEffect(
@@ -421,11 +443,13 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     [sourceOf, viewId, dueToday, day, context.kind],
   );
   /** The item just added, once its file is read. */
-  const addedPath = add.state.kind === "added" ? add.state.added.path : null;
-  const addedTask = addedPath === null ? null : (items.tasks.find((t) => t.path === addedPath) ?? null);
+  const addedTask = added.ask === null ? null : (items.tasks.find((t) => t.path === added.ask?.path) ?? null);
   // A group holding the item asked for (the panel's click, an item route) or just added unfolds.
   const revealing = useReveal(
-    [item.open === null ? null : { path: item.open.path, ask: `open:${String(item.open.id)}:${String(item.open.asks)}` }, addedTask === null ? null : { path: addedTask.path, ask: "added" }],
+    [
+      item.open === null ? null : { path: item.open.path, ask: `open:${String(item.open.id)}:${String(item.open.asks)}` },
+      added.ask === null ? null : { path: added.ask.path, ask: `added:${String(added.ask.id)}` },
+    ],
     items,
     groupsOf,
     view?.view ?? null,
@@ -882,6 +906,29 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
 
   /** What an add starts with here ([[quick-add]] "Pre-fills"); the project is the context's on every path. */
   const prefill: QuickAddPrefill = { doOn: view.view === "today" ? "today" : "", kind: view.view === "recurring" ? "recurring" : "task" };
+  /** An add in place: the form closes and the item is shown, focused — unless it opens in its compact view (⇧⌘↵), which takes the focus. */
+  const addedInPlace = async (made: Added, openIt: boolean) => {
+    await reload();
+    add.close(false);
+    added.show(made.path, !openIt);
+    if (openIt) item.show(made.path);
+  };
+  /**
+   * Where the item just added shows ([[quick-add]] "After an add"): this view when it lists it; else
+   * Project or Recurring when they do; else All, its filters widened to pass it (`viewListing`).
+   */
+  const addedListing: Listing | null =
+    addedTask === null
+      ? null
+      : viewListing(addedTask.path, view.view, { today: today.map((r) => r.task.path), project: projectList.map((t) => t.path), recurring: recurringList.map((r) => r.task.path), all: all.map((t) => t.path) });
+  const goToAdded = (listing: Listing) => {
+    if (addedTask === null) return;
+    if (listing.view !== "all") select(listing.view);
+    else {
+      setView(revealInAll(view, sourceOf(addedTask.folder), addedTask.type));
+      onSelectView?.("all");
+    }
+  };
   /** Adding from **+** or the Add button: in place in the tab; from the panel, too narrow for the form, in the overlay beside it, at the form's height. */
   const openAdd = (from: HTMLElement) => {
     setError(null);
@@ -904,14 +951,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       onOpen={openAdd}
       empty={empty}
       quiet={inSelect}
-      listing={
-        addedTask === null
-          ? null
-          : viewListing(addedTask.path, view.view, { today: today.map((r) => r.task.path), project: projectList.map((t) => t.path), recurring: recurringList.map((r) => r.task.path), all: all.map((t) => t.path) })
-      }
-      reload={reload}
-      onOpenItem={item.show}
-      onShow={(id) => (id === "all" && addedTask !== null ? setView(revealInAll(view, sourceOf(addedTask.folder), addedTask.type)) : select(id))}
+      onAdded={addedInPlace}
       onError={setError}
     />
   );
@@ -981,6 +1021,9 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       data-summary-checks={launchFrame ? summaryChecks : undefined}
       onKeyDown={onSelectKeys}
     >
+      {added.ask !== null && addedListing !== null ? (
+        <AddedShown key={added.ask.id} path={added.ask.path} focus={added.ask.focus} listing={addedListing} view={view.view} onGo={goToAdded} onDone={added.done} />
+      ) : null}
       <header className="planner__header">
         <ViewSwitcher view={view.view} counts={counts} onSelect={select} />
         <div className="planner__actions">
@@ -1395,6 +1438,69 @@ function useAcks() {
       drop,
     };
   }, [acks]);
+}
+
+/** The item just added, to show in the list: `focus` — its row takes the keyboard (an add in place); `id` tells one add from the next. */
+interface AddedReveal {
+  path: string;
+  focus: boolean;
+  id: number;
+}
+
+/** The item just added that the views are to show ([[quick-add]] "After an add"), until they have. */
+function useAddedReveal() {
+  const [ask, setAsk] = useState<AddedReveal | null>(null);
+  const ids = useRef(0);
+  const show = useCallback((path: string, focus: boolean) => setAsk({ path, focus, id: ++ids.current }), []);
+  const done = useCallback(() => setAsk(null), []);
+  return { ask, show, done };
+}
+
+interface AddedShownProps {
+  path: string;
+  focus: boolean;
+  /** Where the item shows (`viewListing`), read with its file. */
+  listing: Listing;
+  view: PlannerViewId;
+  /** Go to the view that lists it (All: its filters widened). */
+  onGo: (listing: Listing) => void;
+  onDone: () => void;
+}
+
+/**
+ * Show the item just added, once its file is read: the Planner goes to the view that lists it, its
+ * group unfolded (`useReveal`); its row is scrolled to, takes the focus when asked to, and is
+ * marked for a moment. A view gone to that still doesn't list it gives up.
+ */
+function AddedShown({ path, focus, listing, view, onGo, onDone }: AddedShownProps) {
+  const here = listing.view === view && listing.listed;
+  const went = useRef(false);
+  const latest = useRef({ path, focus, listing, onGo, onDone });
+  useLayoutEffect(() => {
+    latest.current = { path, focus, listing, onGo, onDone };
+  });
+  useEffect(() => {
+    const { path: at, focus: take, listing: where, onGo: go, onDone: finish } = latest.current;
+    if (!here) {
+      if (went.current) finish();
+      else {
+        went.current = true;
+        go(where);
+      }
+      return;
+    }
+    // One mark at a time: a mark still running (its frame was hidden while it ran) gives way.
+    for (const marked of document.querySelectorAll<HTMLElement>(".task-row[data-added]")) delete marked.dataset.added;
+    const row = document.querySelector<HTMLElement>(`.task-row[data-path="${CSS.escape(at)}"]`);
+    if (row) {
+      row.scrollIntoView({ block: "nearest" });
+      if (take) row.querySelector<HTMLElement>(".task-row__main")?.focus();
+      row.dataset.added = "";
+      row.addEventListener("animationend", () => delete row.dataset.added, { once: true });
+    }
+    finish();
+  }, [here, view]);
+  return null;
 }
 
 /** An ask to show an item: its path, and what tells this ask from the next one for the same path. */

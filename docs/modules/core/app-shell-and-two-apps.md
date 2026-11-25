@@ -72,6 +72,7 @@ The view is picked from `welcome.surface` and the route (`plannerView`, `boardVi
 | App | Surface | Route | View |
 |---|---|---|---|
 | Planner | panel | `planner`, `""` | the Planner panel ([[views]]) |
+| Planner | panel | `added?path=<file>` | the panel on the item just added from the overlay, which then goes back to `planner` ([[quick-add]] "After an add") |
 | Planner | tab | `planner`, `""` | the Planner tab |
 | Planner | tab | `settings` | the tab on its settings page ([[settings-and-onboarding]]) |
 | Planner | tab | `today` | the tab on the Workspace Today ([[attention]] "Click") |
@@ -81,8 +82,8 @@ The view is picked from `welcome.surface` and the route (`plannerView`, `boardVi
 | Board | panel | `needs-you` | "Needs you" ([[needs-you]]) |
 
 Anything else — a route of the other app, a backend or command surface — renders "Nothing here"
-naming the route. `quickAddRoute` / `parseQuickAddRoute` and `itemRoute` / `parseItemRoute` build
-and read the parameterised routes.
+naming the route. `quickAddRoute` / `parseQuickAddRoute`, `itemRoute` / `parseItemRoute` and
+`addedRoute` / `parseAddedRoute` build and read the parameterised routes.
 
 ## Invariants
 

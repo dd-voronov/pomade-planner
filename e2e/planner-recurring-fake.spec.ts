@@ -347,7 +347,11 @@ test.describe("quick add", () => {
       "---\ntype: recurring\ntitle: Water the ficus\nstatus: open\ndo-on: 2026-12-11\nrepeat:\n  daily: { every: 10 }\n  start: 2026-12-01\ncreated: 2026-12-02\n---\n",
     );
 
+    // The panel shows each where it is listed: Project.
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    await expect(row(a, "Water the ficus")).toHaveAttribute("data-added", "");
     // Today on Dec 2 holds neither; each shows on its own runs.
+    await a.getByTestId("view-today").click();
     for (const title of ["Pay the cleaner", "Water the ficus"]) await expect(row(a, title)).toHaveCount(0);
     await setClock(a, "2026-12-11T10:00");
     await expect(row(a, "Water the ficus").locator('[data-testid^="hint-"]')).toHaveText(["Due today", "every 10 days, from Dec 1, 2026"]);

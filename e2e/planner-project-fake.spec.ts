@@ -211,7 +211,7 @@ test.describe("inside a project", () => {
     await expect(added.getByTestId("task-open")).toBeFocused();
     await expect(heading(a, "notes")).toHaveAttribute("data-folded", "false");
     await expect(a.locator('[data-testid="task-section"][data-group="notes"] ~ [data-testid="task-row"]').filter({ hasText: "Question bank sources" })).toBeVisible();
-    await expect(a.getByTestId("added-elsewhere")).toHaveCount(0);
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
     await expect(heading(a, "notes").getByTestId("task-section-count")).toHaveText("3");
   });
 });

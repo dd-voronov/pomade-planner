@@ -33,6 +33,7 @@ are met per app. A new need goes to `../Pomade/docs/PLATFORM-INTAKE.md`.
 | `project removed` event | `pomade:T-247` |
 | A project's tasks folder in its scope (`project.addScopeFolder` and its siblings) | `pomade:E-047` |
 | Notice with click action, icon badge | `pomade:E-032` |
+| An app brings its own side panel forward (`panel.show`); `overlay.open` `anchor: "panel"` every time | Pomade `main` (`pomade-kit` v0.19.0) |
 | `pomade-planner today` on `PATH` | `pomade:E-028` |
 | Rule-8 banner when the app writes an open dirty file | `pomade:E-035` |
 | File picker for the daily-note template (`files.pickFile`) | `pomade:T-245` |
@@ -41,8 +42,10 @@ are met per app. A new need goes to `../Pomade/docs/PLATFORM-INTAKE.md`.
 | Recurrence engine | `pomade-kit:E-003` |
 | Date phrases | `pomade-kit:E-004` |
 
-The apps require Pomade 0.3.3 or later (`pomade-kit` v0.18.0): the platform with
-`pomade:T-237`–`T-248` and `pomade:E-047`. A manifest naming `project.removed` does not install on a
+The apps require Pomade 0.3.3 or later and are built on `pomade-kit` v0.19.0; the platform with
+`pomade:T-237`–`T-248` and `pomade:E-047`. `panel.show` and the beside-the-panel overlay every time
+need the Pomade after 0.3.3: on 0.3.3 the panel is not brought forward and the call's refusal is
+logged, the add itself unaffected. A manifest naming `project.removed` does not install on a
 Pomade without it.
 
 ## How each need is used
@@ -50,6 +53,11 @@ Pomade without it.
 - **Quick add** is the Host API's overlay surface: a shortcut with action `overlay`, and
   `overlay.open` (`anchor: "panel"`) from the Planner panel; the form sizes its frame with
   `overlay.resize` ([[quick-add]] "The overlay").
+- **After an overlay add** the overlay publishes the Planner's own event `item.added` — the
+  manifest's `events.publish`, heard by its tabs through `pomade-planner:item.added` in
+  `events.subscribe` — and calls `panel.show({ route: addedRoute(path) })` (no capability) to bring
+  the Planner panel forward on the item; the panel leaves that route with `panel.show({ route:
+  "planner" })` ([[quick-add]] "After an add").
 - **Badge, morning summary, the daily note before the Planner is first opened** come from
   `startOnLaunch` (the Planner panel is the launch panel), `strip.setBadge`, `notices.post` and the
   `pomade.ready` event ([[attention]], [[daily-notes]]). The summary's click is a notice action

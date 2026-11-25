@@ -5,6 +5,7 @@ import { errorText, useActiveProject } from "../core/host";
 import { parseQuickAddRoute, ROUTES } from "../core/views";
 import { useClock } from "./clock";
 import { AddForm } from "./AddForm";
+import { announceAdded } from "./useAddedItem";
 import { usePlannerSettings } from "./usePlannerData";
 import { useProjectList } from "./useProjects";
 
@@ -12,9 +13,10 @@ import { useProjectList } from "./useProjects";
  * The quick-add overlay ([[quick-add]] "One form, two placements"): the frame Pomade opens over the active tab on the
  * Pomade-wide shortcut, whether or not the Planner was ever opened, and on the Planner panel's
  * **+** and Add button (`overlay.open` beside the panel, the view's pre-fills in the route). The
- * form sizes the frame to itself (`useOverlayFit`). Adding closes it
- * (⇧⌘↵ also opens the new file); Escape (forwarded to Pomade) closes it. Focus then returns where
- * it was.
+ * form sizes the frame to itself (`useOverlayFit`). Adding tells the app's other frames which item
+ * it added (`announceAdded`: the Planner tabs follow it, the side panel comes forward on it) and
+ * closes the overlay (⇧⌘↵ also opens the new file); Escape (forwarded to Pomade) closes it. Focus
+ * then returns where it was.
  */
 export function QuickAdd({ host, route }: { host: HostClient; route: string }) {
   const clock = useClock(host);
@@ -69,7 +71,8 @@ export function QuickAdd({ host, route }: { host: HostClient; route: string }) {
         initialKind={prefill.kind}
         initialDoOn={prefill.doOn}
         testId="quick-add-form"
-        onAdded={async ({ path }, open) => {
+        onAdded={async ({ path, kind }, open) => {
+          if (kind !== "daily-note") await announceAdded(host, path, active.id);
           if (open) await host.tabs.openFile({ path }).catch((e: unknown) => console.error(`Couldn't open ${path}: ${errorText(e)}`));
           await close();
         }}

@@ -67,8 +67,11 @@ test.describe("E-002 in a real Pomade", () => {
     // The tab's frame follows the switch to this project a moment later: wait for this project's board, settled.
     await expect(b.locator(`[data-testid="board"][data-project="${fixture.projects[projectKey] ?? ""}"]`).or(b.getByTestId("choose-backlog-state"))).toBeVisible();
     if (area !== undefined) {
-      await b.getByTestId(`area-${area}`).click();
-      await expect(b.getByTestId("board")).toHaveAttribute("data-area", area);
+      // A click sent in a frame Pomade has just shown can be lost: sent until it took.
+      await expect(async () => {
+        await b.getByTestId(`area-${area}`).click();
+        await expect(b.getByTestId("board")).toHaveAttribute("data-area", area, { timeout: 1_000 });
+      }).toPass();
     }
     return b;
   }

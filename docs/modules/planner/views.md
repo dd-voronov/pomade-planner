@@ -152,7 +152,7 @@ rows, folded or not (`rowsByGroup`).
 - **Fold state** is machine-local, per view and context (`planner.folds.<contextId>`,
   [[settings-and-state]]), shared by the panel and the tab.
 - **Revealed.** A group holding the item asked for — the panel's click and an item route, which
-  open it in the tab's compact view — or the item just added unfolds, both levels of it (`groupsOf`
+  open it in the tab's compact view — or the item just added ([[quick-add]] "After an add") unfolds, both levels of it (`groupsOf`
   in `Planner.tsx`: its source's group, and in Project its "Tasks" or "Notes and thoughts"), once per ask
   (`useReveal`): it shows unfolded at once and is stored unfolded; folded again by hand, it
   stays folded.

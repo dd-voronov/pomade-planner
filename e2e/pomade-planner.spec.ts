@@ -169,6 +169,10 @@ test.describe("the Planner in a real Pomade", () => {
 
   test("the swimming task is not in Tuesday's Today, shows on Friday as due today and on Saturday as overdue", async () => {
     const p = await openPanel();
+    // The add brought the panel to Project, which lists the task.
+    await expect(p.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    await expect(row(p, "Renew Nora's swimming class")).toBeVisible();
+    await p.getByTestId("view-today").click();
     await expect(row(p, "Renew Nora's swimming class")).toHaveCount(0);
     await p.getByTestId("view-all").click();
     await expect(row(p, "Renew Nora's swimming class").getByTestId("hint-deadline")).toHaveText("due Fri");

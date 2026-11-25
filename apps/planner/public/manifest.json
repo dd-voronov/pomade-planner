@@ -5,7 +5,7 @@
   "hostApi": 0,
   "icon": "planner.svg",
   "capabilities": ["project.read", "project.write", "files.read", "files.write", "tabs.open"],
-  "events": { "subscribe": ["pomade.ready", "project.created", "project.renamed", "project.removed", "project.updated"] },
+  "events": { "subscribe": ["pomade.ready", "project.created", "project.renamed", "project.removed", "project.updated", "pomade-planner:item.added"], "publish": ["item.added"] },
   "strip": [{ "id": "planner", "title": "Planner", "action": "panel", "route": "planner" }],
   "startOnLaunch": true,
   "shortcuts": [{ "id": "quick-add", "title": "Quick add a task", "key": "Cmd+Shift+A", "action": "overlay", "route": "quick-add" }],

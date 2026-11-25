@@ -193,15 +193,24 @@ panel and the tab, and on the daily note's card; select mode has no menu.
 ### Quick add (⌘⇧A)
 
 ⌘⇧A works from any Pomade tab, even if the Planner was never opened. A small form floats over the
-current tab; the panel's **+** and Add button open the same form beside the panel. Esc closes it and
-focus returns where it was. Where you last dragged the form is where it opens next.
+current tab; the panel's **+** and Add button open the same form beside the panel, every time. Esc
+closes it and focus returns where it was. ⌘⇧A opens the form where you last dragged it.
+
+After an add the Planner shows the new item: the side panel comes forward on the Planner — also when
+it showed the file tree or another panel, or was collapsed — and an open Planner tab follows too,
+each on a view that lists the item, its row briefly marked (below). The keyboard stays where it was.
 
 ### Add in place (Planner tab)
 
 In the Planner tab, **+** and the **Add task** button at the foot of the list (**Add recurring task**
 in Recurring) open the form at the list's foot. After an add the new row is scrolled to, focused and
-briefly marked. If the view doesn't list it (a note with no day, a task with no date added from
-Today), the foot says where it is — "Added — “Lamp for the desk” is in Project." — with **Show**.
+briefly marked; with ⇧⌘↵ its compact view opens beside it.
+
+### Where the new item shows
+
+The Planner stays on the view when it lists the new item. Otherwise it goes to **Project** when
+Project lists it (a note with no day, a task with no date added from Today), else to **All**, its
+filters widened by just the item's project and type. A folded group holding the item unfolds.
 
 ### The form
 

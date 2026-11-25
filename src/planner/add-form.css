@@ -214,30 +214,6 @@
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
-.add-foot__note {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  margin: 0;
-  padding: 3px 3px 3px var(--space-2);
-  border-radius: var(--radius-md);
-  background: var(--accent-soft);
-  color: var(--badge-fg);
-  font-size: var(--fs-sm);
-  text-align: left;
-}
-
-.add-foot__text {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.add-foot__note .btn {
-  flex: none;
-}
-
 /* Under an empty view's text: the button centred, the form in its place. */
 .empty-state__action:has(.add-foot) {
   align-self: stretch;
@@ -249,8 +225,7 @@
   padding: 0;
 }
 
-.add-foot--empty > .qa,
-.add-foot--empty > .add-foot__note {
+.add-foot--empty > .qa {
   align-self: center;
   width: 100%;
   max-width: 480px;

@@ -13,14 +13,15 @@ floating form over the current tab (⌘⇧A, the panel's **+** and Add button) �
 `src/planner/ItemFields.tsx`, `src/planner/RepeatEditor.tsx`, `src/planner/ProjectPicker.tsx`,
 `src/planner/overlay-fit.ts`, `src/planner/add-form.css`, `src/planner/model/item-draft.ts`,
 `src/planner/model/create.ts`, `src/planner/model/repeat-draft.ts`, `src/planner/model/picker.ts`,
-`src/planner/model/scope.ts` (`viewListing`, `revealInAll`), `src/core/views.ts`
-(`quickAddRoute`, `QUICK_ADD_HEIGHT`) · **e2e:** `planner-add-fake.spec.ts`,
+`src/planner/model/scope.ts` (`viewListing`, `revealInAll`), `src/planner/useAddedItem.ts`,
+`src/core/views.ts` (`quickAddRoute`, `QUICK_ADD_HEIGHT`, `addedRoute`) · **e2e:** `planner-add-fake.spec.ts`,
+`pomade-planner-show-added.spec.ts`,
 `planner-fake.spec.ts`, `planner-notes-fake.spec.ts`, `pomade-planner-add.spec.ts`,
 `pomade-planner-trim.spec.ts`, `pomade-planner-recurring.spec.ts` · **Unit:**
 `src/planner/model/item-draft.test.ts`, `src/planner/model/create.test.ts`,
 `src/planner/model/repeat-draft.test.ts`, `src/planner/model/picker.test.ts` · **Contract:**
 `../Pomade/docs/HOST-API.md` §1 `shortcuts` (`action: "overlay"`), §4 `overlay.open` /
-`overlay.resize`
+`overlay.resize`, `panel.show`, `events`
 
 ## What it does
 
@@ -45,9 +46,9 @@ and the keyboard never leaves the form.
   focus to what opened it.
 - **Everywhere else** (`QuickAdd`) the form is a small floating form over the current tab — the Host
   API overlay. The shortcut opens it in the middle of the pane area; the **+** and the Add button
-  of the **side panel**, which is too narrow to hold the form, open it beside the panel
-  (`overlay.open`, `anchor: "panel"`, `quickAddOverlay`); where the user dragged it last wins over
-  both (Pomade's). Esc closes the overlay and focus returns where it was — to the button that opened
+  of the **side panel**, which is too narrow to hold the form, open it beside the panel every time
+  (`overlay.open`, `anchor: "panel"`, `quickAddOverlay`); the shortcut's opens where the user
+  dragged it last (Pomade's). Esc closes the overlay and focus returns where it was — to the button that opened
   it, also when the Planner tab had the focus before. Without a tasks root the overlay says so and
   offers "Open the Planner".
 - **The fields are one component** (`ItemFields`: values in, changes out, no knowledge of files),
@@ -149,12 +150,23 @@ project field (the typed letters become its query).
 
 ## After an add
 
-- **In place** the form closes and the new row is scrolled to, focused and marked for a moment —
-  its group unfolded when it was folded ([[views]] "Groups"); a note or thought added from Project
-  lands under "Notes and thoughts". When the view doesn't list the item on its own terms (a note
-  or a task with no date added from Today, another project's item in Project), the list's foot
-  says where it is — "Added — “Lamp for the desk” is in Project." — with **Show**, which takes
-  there: Project or Recurring when they list it, else All, its
-  filters widened by just the item's project and type when they hide it (`viewListing`,
-  `revealInAll`).
-- **From the overlay** the item shows in the lists through the file watch.
+Whatever was added, from wherever (the day's note aside, which opens in an editor tab), the
+Planner shows it in its list at once (`AddedShown`, `useAddedReveal` in `Planner.tsx`):
+
+- **The view follows the add.** The current view when it lists the item; else Project or
+  Recurring when they do (a note or a task with no date added from Today); else All, its filters
+  widened by just the item's project and type when they hide it (`viewListing`, `revealInAll`).
+  There the item's group unfolds ([[views]] "Groups"), its row is scrolled to and marked for a
+  moment — one mark at a time. A view gone to that still doesn't list it leaves the list as it is.
+- **In place** the form closes once the folder is read again and the row takes the focus; a note
+  or thought added from Project lands under "Notes and thoughts". With ⇧⌘↵ the item's compact view
+  opens and keeps the focus, its row marked beside it.
+- **From the overlay** (⌘⇧A, the panel's **+** and Add button, ⌘↵ and ⇧⌘↵ alike) the overlay
+  tells the app's other frames which item it added (`announceAdded`, `useAddedItem.ts`): it
+  publishes the Planner's own event `item.added` (`{ path, contextId }`), which every Planner tab
+  hears (`useAddedEvents`) and follows when its context is the one the item was added in; and it
+  brings the side panel forward on the Planner at the added route (`panel.show`,
+  `added?path=…`, `addedRoute`) — also when the side panel showed the file tree or another app, or
+  was collapsed. The panel follows the route (`useAddedRoute`) and leaves it for `planner` at once,
+  so the next add — even of the same path — is a route change again (Pomade sends none for the
+  route it last sent). Neither takes the keyboard: focus stays where Pomade returns it.

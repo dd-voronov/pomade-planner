@@ -404,7 +404,7 @@ test.describe("the compact view in the tab", () => {
     await expect(row(a, "Post the parcel")).toHaveAttribute("data-open", "true");
     expect(await openedTabs(page)).toEqual([]);
 
-    // An item the view doesn't list (a note with no day) opens all the same.
+    // An item Today doesn't list (a note with no day) opens all the same, its row marked in Project.
     await a.getByTestId("planner-add").click();
     const form = a.getByTestId("add-form");
     await expect(form.getByTestId("qa-title")).toBeFocused();
@@ -414,7 +414,8 @@ test.describe("the compact view in the tab", () => {
     await page.keyboard.press("Shift+Meta+Enter");
     await expect(pane).toHaveAttribute("data-path", "Tasks/2026-11-17-lamp-for-the-desk.md");
     await expect(pane).toBeFocused();
-    await expect(a.getByTestId("added-elsewhere")).toBeVisible();
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    await expect(row(a, "Lamp for the desk")).toHaveAttribute("data-open", "true");
     expect(await openedTabs(page)).toEqual([]);
   });
 

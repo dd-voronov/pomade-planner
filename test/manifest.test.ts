@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { launchPanelIcon, METHOD_CAPABILITY, parseManifest, resolveFrameTarget, type Manifest, type MethodName } from "pomade-kit/protocol";
 import { describe, expect, it } from "vitest";
 
-import { boardView, plannerView, ROUTES } from "../src/core/views";
+import { addedRoute, boardView, plannerView, ROUTES } from "../src/core/views";
 
 const REPO = fileURLToPath(new URL("../", import.meta.url));
 const pkg = JSON.parse(readFileSync(`${REPO}package.json`, "utf8")) as { version: string };
@@ -47,11 +47,16 @@ function methodsCalled(app: AppName): MethodName[] {
   return [...new Set(names)].filter(isMethod).sort();
 }
 
-/** The events the app's source subscribes to: every platform event name it spells out. */
+/** The events the app's source subscribes to: every platform event name it spells out, and every app event (`<appId>:<event>`). */
 function eventsNamed(app: AppName): string[] {
   const source = sourceOf(app);
   expect(source).toMatch(/\bhost\s*\.\s*events\s*\.\s*subscribe\(/);
-  return [...new Set([...source.matchAll(/"((?:pomade|project)\.[a-zA-Z]+)"/g)].map((m) => m[1] ?? ""))].sort();
+  return [...new Set([...source.matchAll(/"((?:pomade|project)\.[a-zA-Z]+|pomade-[a-z]+:[a-zA-Z.]+)"/g)].map((m) => m[1] ?? ""))].sort();
+}
+
+/** The app's own events its source publishes (`host.events.publish("item.added"`). */
+function eventsPublished(app: AppName): string[] {
+  return [...new Set([...sourceOf(app).matchAll(/\bhost\s*\.\s*events\s*\.\s*publish\(\s*"([^"]+)"/g)].map((m) => m[1] ?? ""))].sort();
 }
 
 describe.each(["planner", "board"] as const)("the %s app's manifest", (app) => {
@@ -73,10 +78,10 @@ describe.each(["planner", "board"] as const)("the %s app's manifest", (app) => {
     expect([...parsed(app).capabilities].sort()).toEqual(needed);
   });
 
-  it("subscribes to exactly the events its source names, and publishes none", () => {
+  it("subscribes to exactly the events its source names, and publishes exactly the ones its source publishes", () => {
     const events = parsed(app).events;
     expect([...(events?.subscribe ?? [])].sort()).toEqual(eventsNamed(app));
-    expect(events?.publish ?? []).toEqual([]);
+    expect([...(events?.publish ?? [])].sort()).toEqual(eventsPublished(app));
   });
 
   it("ships every icon it names, and its page", () => {
@@ -107,6 +112,14 @@ describe("the Planner's manifest", () => {
     expect(m.startOnLaunch).toBe(true);
     expect(launchPanelIcon(m)?.id).toBe("planner");
     expect(m.events?.subscribe).toContain("pomade.ready");
+  });
+
+  it("publishes its own item.added and hears it in its other frames; its panel renders the added route panel.show brings it to", () => {
+    expect(m.events?.publish).toEqual(["item.added"]);
+    expect(m.events?.subscribe).toContain("pomade-planner:item.added");
+    expect(methodsCalled("planner")).toContain("panel.show");
+    expect(METHOD_CAPABILITY["panel.show"]).toBeNull();
+    expect(plannerView("panel", addedRoute("Tasks/a.md"))).toBe("planner-panel");
   });
 
   it("declares the quick-add overlay on Cmd+Shift+A, a chord Pomade itself doesn't use", () => {

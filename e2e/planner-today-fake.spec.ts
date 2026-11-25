@@ -176,7 +176,7 @@ test.describe("adding from Today", () => {
     await expect(added.getByTestId("task-open")).toBeFocused();
     await expect(a.locator('[data-testid="task-section"][data-source="quiz"] ~ [data-testid="task-row"]').filter({ hasText: "Question bank sources" })).toBeVisible();
     expect(await page.evaluate(() => window.fakeHost.readFile("Tasks/QuizLab/2026-11-17-question-bank-sources.md"))).toBe("---\ntype: note\ntitle: Question bank sources\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-17\n---\n");
-    await expect(a.getByTestId("added-elsewhere")).toHaveCount(0);
+    await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
   });
 });
 

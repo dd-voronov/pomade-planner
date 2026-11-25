@@ -1,7 +1,7 @@
 import { OVERLAY_DEFAULT_HEIGHT } from "pomade-kit/protocol";
 import { describe, expect, it } from "vitest";
 
-import { boardView, itemRoute, parseItemRoute, parseQuickAddRoute, plannerView, QUICK_ADD_HEIGHT, quickAddOverlay, quickAddRoute, ROUTES } from "./views";
+import { addedRoute, boardView, itemRoute, parseAddedRoute, parseItemRoute, parseQuickAddRoute, plannerView, QUICK_ADD_HEIGHT, quickAddOverlay, quickAddRoute, ROUTES } from "./views";
 
 describe("plannerView", () => {
   it.each([
@@ -114,5 +114,26 @@ describe("the item route — the tab with an item's compact view open", () => {
     expect(plannerView("tab", "item")).toBe("unknown");
     expect(plannerView("panel", itemRoute("a.md"))).toBe("unknown");
     expect(plannerView("overlay", itemRoute("a.md"))).toBe("unknown");
+  });
+});
+
+describe("the added route — the panel showing an item just added from the overlay", () => {
+  it.each(["Tasks/2026-11-12-gift-ideas.md", "To-dos/Quiz Lab/a&b=c?.md", "Задачи/купить молоко.md", "a.md"])("%j round-trips and is the Planner panel's", (path) => {
+    expect(parseAddedRoute(addedRoute(path))).toBe(path);
+    expect(plannerView("panel", addedRoute(path))).toBe("planner-panel");
+  });
+
+  it("names the path as a query", () => {
+    expect(addedRoute("Tasks/a b.md")).toBe("added?path=Tasks%2Fa+b.md");
+  });
+
+  it.each(["added", "added?", "added?path=", "added?file=a.md", "item?path=a.md", "planner", ""])("%j is none", (route) => {
+    expect(parseAddedRoute(route)).toBeNull();
+  });
+
+  it("only a panel renders it", () => {
+    expect(plannerView("panel", "added")).toBe("unknown");
+    expect(plannerView("tab", addedRoute("a.md"))).toBe("unknown");
+    expect(plannerView("overlay", addedRoute("a.md"))).toBe("unknown");
   });
 });

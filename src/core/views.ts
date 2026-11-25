@@ -19,6 +19,8 @@ export const ROUTES = {
   today: "today",
   /** The Planner tab with an item's compact view open (`itemRoute`). */
   item: "item",
+  /** The Planner panel showing an item just added from the overlay (`addedRoute`). */
+  added: "added",
 } as const;
 
 /** What quick add starts with besides the active project: `do-on` as a date phrase (`today` from a Today view, else empty) and the type (Recurring from the Recurring view, else Task). */
@@ -67,12 +69,22 @@ export function parseItemRoute(route: string): string | null {
   return new URLSearchParams(route.slice(at + 1)).get("path") || null;
 }
 
+/** The panel route that shows the item at `path` (workspace-relative), just added from the overlay, in the panel's list: `added?path=Tasks%2Fa.md`. */
+export const addedRoute = (path: string): string => `${ROUTES.added}?${new URLSearchParams({ path }).toString()}`;
+
+/** The path an added route names; `null` when `route` is not one. */
+export function parseAddedRoute(route: string): string | null {
+  const at = route.indexOf("?");
+  if (at === -1 || route.slice(0, at) !== ROUTES.added) return null;
+  return new URLSearchParams(route.slice(at + 1)).get("path") || null;
+}
+
 export type PlannerViewId = "planner-panel" | "planner-tab" | "quick-add" | "unknown";
 
 /**
  * The Planner's view for a frame. A tab renders the Planner at `planner`, `settings` (its settings
  * page), `today` (the Workspace Today), an item route (that item's compact view) or `""` (the new-tab menu's default view); a panel renders it at
- * `planner` or `""`; an overlay renders the quick-add form at `quick-add` (with its pre-fills, `quickAddRoute`). Anything else is
+ * `planner`, `""` or an added route (the item just added shown in its list); an overlay renders the quick-add form at `quick-add` (with its pre-fills, `quickAddRoute`). Anything else is
  * `unknown`.
  */
 export function plannerView(surface: Surface, route: string): PlannerViewId {
@@ -81,7 +93,7 @@ export function plannerView(surface: Surface, route: string): PlannerViewId {
       if (route === ROUTES.planner || route === ROUTES.settings || route === ROUTES.today || route === "" || parseItemRoute(route) !== null) return "planner-tab";
       return "unknown";
     case "panel":
-      if (route === ROUTES.planner || route === "") return "planner-panel";
+      if (route === ROUTES.planner || route === "" || parseAddedRoute(route) !== null) return "planner-panel";
       return "unknown";
     case "overlay":
       return parseQuickAddRoute(route) !== null ? "quick-add" : "unknown";

@@ -378,8 +378,9 @@ test.describe("quick add: the project field", () => {
     await page.keyboard.press("Enter");
     await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
     expect(await exists(page, "Tasks/Pomade/2026-11-17-ship-the-leaderboard.md")).toBe(true);
-    // QuizLab's Today doesn't list it: it is Pomade's.
-    await expect(row(a, "Ship the leaderboard")).toHaveCount(0);
+    // Today is the whole day inside QuizLab too: the panel stays on it, Pomade's task marked there.
+    await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
+    await expect(row(a, "Ship the leaderboard")).toHaveAttribute("data-added", "");
   });
 });
 

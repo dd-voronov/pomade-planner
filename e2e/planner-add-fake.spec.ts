@@ -1,15 +1,16 @@
-// E-008 on the fake host: adding from the Planner — in the tab the header's + and the list's Add
-// button open the add form in place at the foot of the list (never the overlay), an added row is
-// shown, focused and marked, or the foot says which view lists it; in the panel, too narrow for the
-// form, both open the overlay with the view's pre-fills in its route; Details as the file's body;
-// the type walked with ⌥Tab; Tab kept inside the form; ⌘↵ and ⇧⌘↵. The fixture is dated around
-// Tue 2026-11-17.
+// E-008 and E-013 on the fake host: adding from the Planner — in the tab the header's + and the
+// list's Add button open the add form in place at the foot of the list (never the overlay); in the
+// panel, too narrow for the form, both open the overlay with the view's pre-fills in its route;
+// after an add, in place or in the overlay, the Planner goes to a view that lists the item and
+// shows its row marked (focused after an add in place) — the panel brought forward at it, the tabs
+// told by `item.added`; Details as the file's body; the type walked with ⌥Tab; Tab kept inside the
+// form; ⌘↵ and ⇧⌘↵. The fixture is dated around Tue 2026-11-17.
 
 import { expect, test, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
 import { APP_PORT, HARNESS_PORT } from "../playwright.config";
 import { QUICK_ADD_HEIGHT } from "../src/core/views";
-import { openAddForm, overlay, quickAdded, row, settled, titles } from "./fixtures/planner";
+import { openAddForm, openQuickAdd, overlay, quickAdded, row, settled, titles } from "./fixtures/planner";
 import { shot } from "./fixtures/screens";
 
 const APP = `http://localhost:${APP_PORT}/`;
@@ -201,47 +202,56 @@ test.describe("the add form in place, in the tab", () => {
     await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
   });
 
-  test("an item the view doesn't list: the foot says which view does and Show takes there, the row focused and marked", async ({ page }) => {
-    const a = await openPlanner(page, { surface: "tab" });
+  test("an item the view doesn't list: the Planner goes to Project, which does, unfolds its group, and the row is focused and marked — nothing at the list's foot; ⇧⌘↵ marks it beside its compact view", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", extra: "notes" });
+    await a.getByTestId("view-project").click();
+    await a.locator('[data-testid="task-section"][data-group="none/notes"]').getByTestId("task-section-toggle").click();
+    await expect(a.locator('[data-testid="task-section"][data-group="none/notes"]')).toHaveAttribute("data-folded", "true");
+    await a.getByTestId("view-today").click();
     await openAddForm(a);
     await page.keyboard.type("Lamp for the desk");
     await page.keyboard.press("Alt+Tab");
     await page.keyboard.press("Alt+Tab");
     await expect(a.getByTestId("qa-type-note")).toBeChecked();
-    // A note with no day lives in Project, under "Notes and thoughts".
+    // A note with no day stands in Project, under "Notes and thoughts" — folded until now.
     await a.getByTestId("qa-do-on").fill("");
     await a.getByTestId("qa-title").press("Enter");
     await expect(a.getByTestId("add-form")).toHaveCount(0);
-    await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — “Lamp for the desk” is in Project.Show");
-    await expect(a.getByTestId("added-show")).toBeFocused();
-    await shot(page, "e008-fake-tab-added-elsewhere");
-    expect(await titles(a)).not.toContain("Lamp for the desk");
-    await page.keyboard.press("Enter");
     await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
     const note = row(a, "Lamp for the desk");
     await expect(note.getByTestId("task-open")).toBeFocused();
     await expect(note).toHaveAttribute("data-added", "");
-    await expect(a.getByTestId("added-elsewhere")).toHaveCount(0);
+    await expect(a.locator('[data-testid="task-section"][data-group="none/notes"]')).toHaveAttribute("data-folded", "false");
+    expect(await insideFrame(note)).toBe(true);
+    await shot(page, "e013-fake-tab-added-unfolded");
+    await expect(a.getByTestId("add-foot").locator('[role="status"]')).toHaveCount(0);
+    expect(await page.evaluate(() => (window.fakeHost.state["planner.folds.__workspace__"] as Record<string, string[]>).project)).not.toContain("none/notes");
 
-    // A task with no date added from Today lives in Project.
+    // A task with no date added from Today with ⇧⌘↵: Project, its compact view open and focused, its row marked.
     await a.getByTestId("view-today").click();
     await openAddForm(a);
     await page.keyboard.type("Someday maybe");
     await a.getByTestId("qa-do-on").fill("");
-    await a.getByTestId("qa-do-on").press("Enter");
-    await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — “Someday maybe” is in Project.Show");
-    // The line belongs to the view it was added from.
-    await a.getByTestId("view-recurring").click();
-    await expect(a.getByTestId("added-elsewhere")).toHaveCount(0);
+    await page.keyboard.press("Shift+Meta+Enter");
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    const pane = a.getByTestId("item-pane");
+    await expect(pane).toBeFocused();
+    await expect(pane).toHaveAttribute("data-path", "Tasks/2026-11-17-someday-maybe.md");
+    const task = row(a, "Someday maybe");
+    await expect(task).toHaveAttribute("data-added", "");
+    await expect(task).toHaveAttribute("data-open", "true");
+    await shot(page, "e013-fake-tab-added-open");
+    expect(await openedTabs(page)).toEqual([]);
   });
 
-  test("an item All's filters hide: the foot says so and Show widens the filters just enough", async ({ page }) => {
-    // Inside Pomade, a thought of QuizLab: Project doesn't list it, All's type filter hides it.
+  test("an item neither the view nor Project lists: the Planner goes to All, its filters widened just enough, the row focused and marked", async ({ page }) => {
+    // Inside Pomade, a thought of pomade-kit: Project doesn't list it (not mixed in), All's type filter hides it.
     const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "pomade" });
     await a.getByTestId("view-all").click();
     await a.getByTestId("filter-types").click();
     await a.locator('[data-testid="filter-option"][data-key="task"] input').check();
     await page.keyboard.press("Escape");
+    await a.getByTestId("view-project").click();
     await openAddForm(a);
     await page.keyboard.type("Is it time for a new bike?");
     await a.getByTestId("qa-type-thought").check();
@@ -250,11 +260,13 @@ test.describe("the add form in place, in the tab", () => {
     await a.getByTestId("picker-filter").press("Enter");
     await expect(a.getByTestId("qa-project")).toHaveAttribute("data-project", "kit");
     await a.getByTestId("qa-title").press("Enter");
-    await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — the filters hide “Is it time for a new bike?”.Show");
-    await a.getByTestId("added-show").click();
-    await expect(row(a, "Is it time for a new bike?").getByTestId("task-open")).toBeFocused();
+    await expect(a.getByTestId("view-all")).toHaveAttribute("aria-selected", "true");
+    const thought = row(a, "Is it time for a new bike?");
+    await expect(thought.getByTestId("task-open")).toBeFocused();
+    await expect(thought).toHaveAttribute("data-added", "");
     await expect(a.getByTestId("filter-types")).toHaveAccessibleName("Types: 2 types");
     expect(await page.evaluate(() => (window.fakeHost.state["planner.view.pomade"] as { types: string[] }).types)).toEqual(["task", "thought"]);
+    await shot(page, "e013-fake-tab-added-all");
   });
 
   test("Daily in place opens today's note in an editor tab — made first, the tab itself makes none — and closes the form, focus back on +", async ({ page }) => {
@@ -352,6 +364,94 @@ test.describe("the panel adds in the overlay", () => {
       }
     });
   }
+});
+
+test.describe("after an add in the overlay, the Planner shows the item", () => {
+  const panelShows = (page: Page) => page.evaluate(() => window.fakeHost.panelShows);
+  const published = (page: Page) => page.evaluate(() => window.fakeHost.published);
+
+  test("the panel on Today, a task with no date from its +: the panel goes to Project with the row marked; the focus goes back to + and the route back to planner", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "panel" });
+    await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
+    const o = await openQuickAdd(page, a);
+    await page.keyboard.type("Someday maybe");
+    await o.getByTestId("qa-do-on").fill("");
+    await o.getByTestId("qa-do-on").press("Enter");
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    const added = row(a, "Someday maybe");
+    await expect(added).toHaveAttribute("data-added", "");
+    expect(await insideFrame(added)).toBe(true);
+    await expect(a.getByTestId("planner-add")).toBeFocused();
+    const path = "Tasks/2026-11-17-someday-maybe.md";
+    expect(await published(page)).toEqual([{ name: "item.added", payload: { path, contextId: "__workspace__" } }]);
+    // Brought forward at the item's route, which the panel then leaves: the next add of any path reaches it again.
+    await expect.poll(() => panelShows(page)).toEqual([
+      { icon: "planner", route: `added?path=${encodeURIComponent(path)}` },
+      { icon: "planner", route: "planner" },
+    ]);
+    await shot(page, "e013-fake-panel-added-project");
+
+    // An item the view lists: the panel stays on it, the row marked.
+    await openQuickAdd(page, a);
+    await page.keyboard.type("Oil the bike chain");
+    await page.keyboard.press("Meta+Enter");
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
+    await expect(row(a, "Oil the bike chain")).toHaveAttribute("data-added", "");
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+  });
+
+  for (const width of [240, 160]) {
+    test(`at ${width}px the marked row fits the panel`, async ({ page }) => {
+      const a = await openPlanner(page, { surface: "panel", panelWidth: width, fixture: "planner", extra: "notes" });
+      const o = await openQuickAdd(page, a);
+      await page.keyboard.type("A lamp for the desk by the window");
+      await o.getByTestId("qa-type-note").check();
+      await o.getByTestId("qa-title").press("Enter");
+      const added = row(a, "A lamp for the desk by the window");
+      await expect(added).toHaveAttribute("data-added", "");
+      expect(await insideFrame(added)).toBe(true);
+      expect(await a.locator("html").evaluate((el) => el.scrollWidth - el.clientWidth)).toBe(0);
+      await shot(page, `e013-fake-panel-${width}-added`);
+    });
+  }
+
+  test("the tab on Today, ⌘⇧A: a task with no date — the tab goes to Project with the row marked, the focus not taken; ⇧⌘↵ opens the editor tab and the row is marked too", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab" });
+    await page.evaluate(() => window.pressShortcut("quick-add"));
+    const o = overlay(page);
+    await expect(o.getByTestId("qa-title")).toBeFocused();
+    await page.keyboard.type("Someday maybe");
+    await page.keyboard.press("Enter");
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    const added = row(a, "Someday maybe");
+    await expect(added).toHaveAttribute("data-added", "");
+    await expect(added.getByTestId("task-open")).not.toBeFocused();
+    await shot(page, "e013-fake-tab-overlay-added");
+
+    await page.evaluate(() => window.pressShortcut("quick-add"));
+    await expect(o.getByTestId("qa-title")).toBeFocused();
+    await page.keyboard.type("Post the parcel");
+    await page.keyboard.press("Shift+Meta+Enter");
+    await expect(page.locator('iframe[data-surface="overlay"]')).toHaveCount(0);
+    await expect(row(a, "Post the parcel")).toHaveAttribute("data-added", "");
+    expect(await openedTabs(page)).toEqual([{ kind: "file", projectId: "__workspace__", path: "Tasks/2026-11-17-post-the-parcel.md" }]);
+    await expect(a.getByTestId("item-pane")).toHaveCount(0);
+  });
+
+  test("a tab follows only an item added in its own context", async ({ page }) => {
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "quiz" });
+    await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
+    // A note of QuizLab with no day, as an overlay in another context would announce it: Project would list it.
+    await page.evaluate(() => window.fakeHost.writeFile("Tasks/QuizLab/2026-11-17-a-note.md", "---\ntype: note\ntitle: A note\nstatus: open\ncreated: 2026-11-17\n---\n"));
+    await page.evaluate(() => window.fakeHost.emitEvent("pomade-planner:item.added", { path: "Tasks/QuizLab/2026-11-17-a-note.md", contextId: "pomade" }));
+    await expect(row(a, "A note")).toHaveCount(0);
+    await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
+    await page.evaluate(() => window.fakeHost.emitEvent("pomade-planner:item.added", { path: "Tasks/QuizLab/2026-11-17-a-note.md", contextId: "quiz" }));
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    await expect(row(a, "A note")).toHaveAttribute("data-added", "");
+  });
 });
 
 test.describe("Details", () => {

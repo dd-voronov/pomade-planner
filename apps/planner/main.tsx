@@ -13,7 +13,7 @@ mountApp({
   view(host, route) {
     switch (plannerView(host.welcome.surface, route)) {
       case "planner-panel":
-        return <PlannerPanel host={host} />;
+        return <PlannerPanel host={host} route={route} />;
       case "planner-tab":
         return <PlannerTab host={host} route={route} />;
       case "quick-add":
