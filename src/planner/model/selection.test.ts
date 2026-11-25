@@ -11,6 +11,7 @@ import {
   pruneSelection,
   selectAllState,
   selectedRows,
+  selectOnly,
   toggleAll,
   toggleRow,
   type Selection,
@@ -20,6 +21,14 @@ import {
 const ROWS = ["a", "b", "c", "d", "e"];
 const sel = (paths: string[], anchor: string | null = null): Selection => ({ paths: new Set(paths), anchor });
 const paths = (s: Selection) => [...s.paths].sort();
+
+describe("selectOnly", () => {
+  it("selects the one row and anchors there, so a Shift-click extends from it", () => {
+    const one = selectOnly("b");
+    expect(paths(one)).toEqual(["b"]);
+    expect(paths(toggleRow(one, "d", ROWS, true))).toEqual(["b", "c", "d"]);
+  });
+});
 
 describe("toggleRow", () => {
   it("flips one row and makes it the anchor", () => {

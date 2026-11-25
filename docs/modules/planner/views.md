@@ -186,13 +186,14 @@ rows, folded or not (`rowsByGroup`).
 **Row menu.** A right-click on a row — any view, the panel and the tab, the daily note's card and
 an unreadable file's row — opens the row menu; Shift+F10 or the ContextMenu key opens it for the
 focused row, under the row. It holds **Open in tab**, the pin (**Pin** / **Unpin**; **Unpin for
-today** on the card), the row's own actions (Skip, Resolve / Reopen, Archive / Restore), then, after
+today** on the card), the row's own actions (Skip, Resolve / Reopen, Archive / Restore), **Select…**
+— select mode in that view with the row selected ([[trimming]] "Entering and leaving") — then, after
 a separator, **Delete…** in red. `rowActionIds` and `rowMenuEntries` (`src/planner/model/row-menu.ts`,
 unit `row-menu.test.ts`) decide what a row offers; the row's buttons and the menu (`RowMenu.tsx`,
 the shared `Popover` with `role="menu"`) read the same list. ↑ ↓ move and wrap, Home and End jump,
 Enter picks, Esc closes and returns the focus to the row; the row whose menu is open has an accent
 border. **Delete…** asks [[trimming]] "Delete"'s question for the one file. Select mode has no row
-menu. e2e: `planner-row-menu-fake.spec.ts`, `pomade-planner-trim.spec.ts`.
+menu. e2e: `planner-row-menu-fake.spec.ts`, `planner-select-views-fake.spec.ts`, `pomade-planner-trim.spec.ts`.
 
 ## Pins
 
@@ -208,7 +209,7 @@ today" holds for the whole workspace.
 
 ## Trimming
 
-All's select mode — bulk Archive and Delete — is [[trimming]].
+Select mode — bulk Archive and Delete, in every view — is [[trimming]].
 
 ## View state
 

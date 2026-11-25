@@ -1,4 +1,4 @@
-// E-003's trimming on the fake host ([[trimming]]): All's select mode — clicks,
+// E-003's trimming on the fake host ([[trimming]]): select mode in All — clicks,
 // Shift-click ranges, select all within the filters, the keyboard — the delete confirmation listing
 // the files, `files.delete` with exactly the chosen paths, a file Pomade can't trash left selected
 // with its reason, and bulk Archive for notes. The fixture is the planner workspace with notes
@@ -269,7 +269,7 @@ test.describe("All's select mode", () => {
     expect(await exists(page, "Tasks/2026-11-12-quiz-timer-idea.md")).toBe(false);
   });
 
-  test("the panel: ⋯ holds Select items… on All only, Stop selecting while on; leaving All or the context ends select mode", async ({ page }) => {
+  test("the panel: ⋯ holds Select items… on every view, Stop selecting while on; leaving the view or the context ends select mode", async ({ page }) => {
     const a = await openAll(page);
     await expect(a.getByTestId("select-start")).toHaveCount(0);
     await a.getByTestId("planner-menu-button").click();
@@ -285,8 +285,9 @@ test.describe("All's select mode", () => {
     await startSelect(a);
     await row(a, "Pay the tax").getByTestId("select-row").click();
     await a.getByTestId("view-today").click();
+    await expect(a.getByTestId("select-bar")).toHaveCount(0);
     await a.getByTestId("planner-menu-button").click();
-    await expect(a.getByTestId("planner-menu").getByRole("menuitem")).toHaveText(["Settings…"]);
+    await expect(a.getByTestId("planner-menu").getByRole("menuitem")).toHaveText(["Select items…", "Settings…"]);
     await page.keyboard.press("Escape");
     await expect(a.getByTestId("planner-menu")).toHaveCount(0);
     await expect(a.getByTestId("planner-menu-button")).toBeFocused();
@@ -298,7 +299,7 @@ test.describe("All's select mode", () => {
     await expect(a.getByTestId("select-bar")).toHaveCount(0);
   });
 
-  test("the tab: Select is a header button on All only, pressed while selecting; pressing it again ends select mode", async ({ page }) => {
+  test("the tab: Select is a header button on every view, pressed while selecting; pressing it again ends select mode", async ({ page }) => {
     const a = await openAll(page, { surface: "tab" });
     await a.getByTestId("select-start").click();
     await expect(a.getByTestId("select-start")).toHaveAttribute("aria-pressed", "true");
@@ -306,8 +307,18 @@ test.describe("All's select mode", () => {
     await expect(a.getByTestId("select-bar")).toHaveCount(0);
     await expect(a.getByTestId("select-start")).toHaveAttribute("aria-pressed", "false");
     await expect(a.getByTestId("select-start")).toBeFocused();
-    await a.getByTestId("view-today").click();
-    await expect(a.getByTestId("select-start")).toHaveCount(0);
+    await a.getByTestId("select-start").click();
+    // Recurring has nothing to select in this workspace: off there.
+    for (const [id, enabled] of [
+      ["today", true],
+      ["project", true],
+      ["recurring", false],
+    ] as const) {
+      await a.getByTestId(`view-${id}`).click();
+      await expect(a.getByTestId("select-bar")).toHaveCount(0);
+      await expect(a.getByTestId("select-start")).toHaveAttribute("aria-pressed", "false");
+      await expect(a.getByTestId("select-start")).toBeEnabled({ enabled });
+    }
   });
 
   for (const [name, open] of [

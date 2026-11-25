@@ -7,9 +7,9 @@ import { errorText, useActiveProject } from "../core/host";
 import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
 import { dailyNotePath } from "./model/daily";
-import { foldsKey, groupKey, parseFolds, rowsByGroup, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type Folds, type ListEntry } from "./model/folds";
+import { foldsKey, groupKey, parseFolds, rowsByGroup, serializeFolds, setFolded, unfoldAll, unfoldedEntries, unfoldedRows, type Folds, type ListEntry } from "./model/folds";
 import { allHints, dayHeading, displayTitle, recurringHints, shortDate, todayHints, type Hint } from "./model/labels";
-import { isTaskType, PLANNER_TYPES, type Items, type PlannerType, type Task } from "./model/items";
+import { isTaskType, PLANNER_TYPES, type Items, type PlannerType, type Task, type UnreadableItem } from "./model/items";
 import { DAILY_UNPINNED_KEY, dailyNotePinned, isPinned, parsePins, serializePins, splitPinned, togglePin, pinsKey, type Pins } from "./model/pins";
 import { groupLabel } from "./model/picker";
 import { folderForNew, folderKey, folderSources, NO_PROJECT, NONE_SOURCE, sectionsBySource, sourceKey, sourceLabels, type ProjectSource, type Source } from "./model/projects";
@@ -25,6 +25,7 @@ import {
   pruneSelection,
   selectAllState,
   selectedRows,
+  selectOnly,
   toggleAll,
   toggleRow,
   type RowFailure,
@@ -281,8 +282,8 @@ interface PanelSelect {
   toggle: () => void;
 }
 
-/** The panel's ⋯ menu: All's select mode, and the Planner's settings. `select` is `null` outside All. */
-function PanelMenu({ host, select, button }: { host: HostClient; select: PanelSelect | null; button: RefObject<HTMLButtonElement> }) {
+/** The panel's ⋯ menu: select mode, and the Planner's settings. */
+function PanelMenu({ host, select, button }: { host: HostClient; select: PanelSelect; button: RefObject<HTMLButtonElement> }) {
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -307,21 +308,19 @@ function PanelMenu({ host, select, button }: { host: HostClient; select: PanelSe
         <>
           <div className="menu-scrim" onClick={() => setOpen(false)} />
           <div className="menu menu--compact" role="menu" ref={menu} data-testid="planner-menu">
-            {select ? (
-              <button
-                type="button"
-                role="menuitem"
-                className="menu__item"
-                data-testid="menu-select"
-                disabled={select.disabled}
-                onClick={() => {
-                  setOpen(false);
-                  select.toggle();
-                }}
-              >
-                {select.on ? "Stop selecting" : "Select items…"}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              role="menuitem"
+              className="menu__item"
+              data-testid="menu-select"
+              disabled={select.disabled}
+              onClick={() => {
+                setOpen(false);
+                select.toggle();
+              }}
+            >
+              {select.on ? "Stop selecting" : "Select items…"}
+            </button>
             <button
               type="button"
               role="menuitem"
@@ -360,7 +359,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const [pending, setPending] = useState<Record<string, { done: boolean; mtimeMs: number }>>({});
   const [error, setError] = useState<string | null>(null);
   const folderProblems = useFolderReconciliation(host, root, projectFolders, items.folders, projects);
-  const trim = useTrimming(active.id);
+  const trim = useTrimming(active.id, view?.view ?? null);
   const rowMenu = useRowMenu(active.id);
   const add = useAddInPlace();
   const split = useRef<HTMLDivElement>(null);
@@ -521,7 +520,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const actionsOf = (task: Task, locked = false, row: TodayRow | null = null): RowAction[] =>
     rowActionIds(task, isDone(task), locked).map((id) => ({ id, ...ROW_ACTIONS[id], onClick: () => act(task, id, row) }));
   const select = (id: PlannerViewId) => {
-    if (id !== "all") trim.stop(false);
+    if (id !== view.view) trim.stop(false);
     setView({ ...view, view: id });
     onSelectView?.(id);
   };
@@ -551,31 +550,13 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         (view.view !== "recurring" || u.type === "recurring"),
   );
 
-  /** All's rows top to bottom (pinned, the list, the unreadable files): what select mode chooses from. */
-  const allOrder = splitPinned(all, pinnedHere, (t) => t.path);
-  const selectable: SelectableRow[] =
-    view.view !== "all"
-      ? []
-      : [
-          ...[...allOrder.pinned, ...allOrder.rest].map((t) => ({ path: t.path, title: displayTitle(t, day), type: t.type, archived: t.archived, readable: true })),
-          ...unreadableShown.map((u) => ({ path: u.path, title: u.name, type: u.type, archived: u.archived, readable: false })),
-        ];
-  const shownPaths = selectable.map((r) => r.path);
-  const inSelect = trim.selecting && view.view === "all";
-  const selection = inSelect ? pruneSelection(trim.selection, shownPaths) : EMPTY_SELECTION;
-  // A filter that hides a row, or a file that leaves, drops it from the selection.
-  if (inSelect && selection !== trim.selection) trim.setSelection(selection);
-  const chosen = selectedRows(selectable, selection);
-  const selectOf = (path: string): RowSelect | undefined =>
-    inSelect ? { selected: selection.paths.has(path), onToggle: (range) => trim.setSelection(toggleRow(selection, path, shownPaths, range)) } : undefined;
-  /** Why the last delete (select mode's, or the row menu's) or archive left a row. */
-  const failureOf = (path: string) => (inSelect ? trim.failures.get(path) : rowMenu.failures.get(path));
   /** The row whose menu is open. */
   const menuFor = rowMenu.menu?.path ?? null;
 
   /**
    * A row's menu ([[views]] "Rows"): Open in tab (as ⌘-click), the pin, the row's own `actions`,
-   * then Delete…, which asks select mode's question for the one row. None in select mode.
+   * Select… (select mode with this row selected), then Delete…, which asks select mode's question
+   * for the one row. None in select mode.
    */
   const menuOf = (row: SelectableRow, actions: readonly RowAction[], pin: RowMenuPin, onPin: () => void = () => undefined): RowMenuTrigger | undefined => {
     if (inSelect) return undefined;
@@ -583,6 +564,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       const pick = (entry: RowMenuEntry) => () => {
         if (entry === "open-tab") openFile(row.path);
         else if (entry === "pin" || entry === "unpin" || entry === "unpin-today") onPin();
+        else if (entry === "select") trim.start(row.path);
         else if (entry === "delete") rowMenu.askDelete(row, focusRow);
         else actions.find((a) => a.id === entry)?.onClick();
       };
@@ -590,6 +572,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     };
   };
   const rowOf = (task: Task): SelectableRow => ({ path: task.path, title: displayTitle(task, day), type: task.type, archived: task.archived, readable: true });
+  const unreadableRowOf = (u: UnreadableItem): SelectableRow => ({ path: u.path, title: u.name, type: u.type, archived: u.archived, readable: false });
   /** What a click and a ⌘-click on a row do here — its title's delayed tooltip. */
   const openHint = surface === "tab" ? OPEN_HINT_TAB : OPEN_HINT_PANEL;
   /** A readable row's menu props: its menu with its actions and its view pin, open or not, what a failed delete left, and its open hint. */
@@ -725,6 +708,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         actions={actions}
         pin={pinOf(row.task)}
         excerpt={excerpt(row.task)}
+        select={selectOf(row.task.path)}
         {...menuProps(row.task, actions)}
       />
     );
@@ -760,84 +744,111 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     const source = task === undefined ? null : sourceOf(task.folder);
     return { name: label?.name ?? (source === null ? key : labelOf(source)), qualifier: label?.qualifier ?? undefined, source: key };
   };
-  /** A grouped list's entries, each folded group's rows left out; `headingOf` names each heading and counts it over the group's rows, folded or not. */
-  const renderEntries = <T,>(
-    entries: readonly ListEntry<T>[],
-    render: (row: T) => ReactNode,
-    headingOf: (group: { key: string; level: 1 | 2 }, rows: readonly T[]) => Pick<GroupHeadingProps, "name" | "qualifier" | "source" | "nested" | "count">,
-  ): ReactNode[] => {
-    const rowsOf = rowsByGroup(entries);
-    return unfoldedEntries(entries, folded).map((entry) =>
-      entry.kind === "row" ? (
-        render(entry.row)
-      ) : (
-        <GroupHeading
-          key={`section:${entry.key}`}
-          groupKey={entry.key}
-          level={entry.level}
-          {...headingOf(entry, rowsOf.get(entry.key) ?? [])}
-          folded={folded.has(entry.key)}
-          onFold={(on) => fold(entry.key, on)}
-        />
-      ),
-    );
-  };
+  /** `rows` with no headings. */
+  const flat = <T,>(rows: readonly T[]): Grouped<T> => ({ entries: rows.map((row) => ({ kind: "row", row })), headingOf: (group) => ({ name: group.key, count: 0 }) });
   /** `rows` under a heading per project, each folding; with no row of a project, no headings. */
-  const sectioned = <T,>(rows: readonly T[], taskOf: (row: T) => Task, render: (row: T) => ReactNode, open: (row: T) => boolean = (r) => !isDone(taskOf(r))): ReactNode[] => {
+  const sectioned = <T,>(rows: readonly T[], taskOf: (row: T) => Task, open: (row: T) => boolean = (r) => !isDone(taskOf(r))): Grouped<T> => {
     const sections = sectionsBySource(rows, (r) => sourceOf(taskOf(r).folder));
-    if (sections.every((sec) => sec.source.kind === "none")) return rows.map(render);
-    const entries: ListEntry<T>[] = sections.flatMap((sec) => [{ kind: "group" as const, key: sourceKey(sec.source), level: 1 as const }, ...sec.items.map((row) => ({ kind: "row" as const, row }))]);
-    return renderEntries(entries, render, (group, groupRows) => ({ ...sourceHeading(groupRows[0] === undefined ? undefined : taskOf(groupRows[0]), group.key), count: groupRows.filter(open).length }));
+    if (sections.every((sec) => sec.source.kind === "none")) return flat(rows);
+    return {
+      entries: sections.flatMap((sec) => [{ kind: "group" as const, key: sourceKey(sec.source), level: 1 as const }, ...sec.items.map((row) => ({ kind: "row" as const, row }))]),
+      headingOf: (group, groupRows) => ({ ...sourceHeading(groupRows[0] === undefined ? undefined : taskOf(groupRows[0]), group.key), count: groupRows.filter(open).length }),
+    };
   };
   /**
    * Project's rows in its two groups, "Tasks" and "Notes and thoughts" — at Workspace inside a
    * heading per project. "Tasks" and a project's heading count what the switcher counts
    * (`countsInProject`); "Notes and thoughts" counts its rows.
    */
-  const projectGrouped = (rows: readonly Task[], render: (row: Task) => ReactNode): ReactNode[] => {
+  const projectGrouped = (rows: readonly Task[]): Grouped<Task> => {
     const atWorkspace = context.kind === "workspace";
-    const entries = projectEntries(rows, (t) => projectGroupOf(t, day) ?? "tasks", atWorkspace ? (t) => sourceOf(t.folder) : undefined);
     const counted = (groupRows: readonly Task[]) => groupRows.filter((t) => countsInProject(t, day)).length;
-    return renderEntries(entries, render, (group, groupRows) => {
-      if (group.level === 1) return { ...sourceHeading(groupRows[0], group.key), count: counted(groupRows) };
-      // A level-2 key is its group's, under its source's at Workspace (`projectEntries`).
-      const notes = group.key.endsWith("notes");
-      return { name: PROJECT_GROUP_NAMES[notes ? "notes" : "tasks"], nested: atWorkspace, count: notes ? groupRows.length : counted(groupRows) };
-    });
+    return {
+      entries: projectEntries(rows, (t) => projectGroupOf(t, day) ?? "tasks", atWorkspace ? (t) => sourceOf(t.folder) : undefined),
+      headingOf: (group, groupRows) => {
+        if (group.level === 1) return { ...sourceHeading(groupRows[0], group.key), count: counted(groupRows) };
+        // A level-2 key is its group's, under its source's at Workspace (`projectEntries`).
+        const notes = group.key.endsWith("notes");
+        return { name: PROJECT_GROUP_NAMES[notes ? "notes" : "tasks"], nested: atWorkspace, count: notes ? groupRows.length : counted(groupRows) };
+      },
+    };
   };
 
-  /** The view's rows: the pinned ones (in pin order, above the list) and the rest (`layout`: under project headings where the view has them, else flat). */
-  const pinnedFirst = <T,>(
+  /**
+   * The view's list: the pinned rows (in pin order, above the list) and the rest (`group`: under
+   * project headings where the view has them, else flat). `shown` is every row on screen, top to
+   * bottom — a folded group's rows are not — for select mode; `draw` renders them.
+   */
+  const layOut = <T,>(
     list: readonly T[],
     taskOf: (row: T) => Task,
     render: (row: T, pinned?: boolean) => ReactNode,
-    layout: (rest: readonly T[], one: (row: T) => ReactNode) => ReactNode[] = (rest, one) => (bySource ? sectioned(rest, taskOf, one) : rest.map(one)),
-  ): { pinned: ReactNode[]; rest: ReactNode[] } => {
+    group: (rest: readonly T[]) => Grouped<T> = (rest) => (bySource ? sectioned(rest, taskOf) : flat(rest)),
+  ): { shown: Task[]; draw: () => { pinned: ReactNode[]; rest: ReactNode[] } } => {
     const split = splitPinned(list, pinnedHere, (r) => taskOf(r).path);
-    return { pinned: split.pinned.map((r) => render(r, true)), rest: layout(split.rest, (r) => render(r)) };
+    const { entries, headingOf } = group(split.rest);
+    return {
+      shown: [...split.pinned, ...unfoldedRows(entries, folded)].map(taskOf),
+      draw: () => {
+        const rowsOf = rowsByGroup(entries);
+        const rest = unfoldedEntries(entries, folded).map((entry) =>
+          entry.kind === "row" ? (
+            render(entry.row)
+          ) : (
+            <GroupHeading
+              key={`section:${entry.key}`}
+              groupKey={entry.key}
+              level={entry.level}
+              {...headingOf(entry, rowsOf.get(entry.key) ?? [])}
+              folded={folded.has(entry.key)}
+              onFold={(on) => fold(entry.key, on)}
+            />
+          ),
+        );
+        return { pinned: split.pinned.map((r) => render(r, true)), rest };
+      },
+    };
   };
-  let listed: { pinned: ReactNode[]; rest: ReactNode[] };
-  if (view.view === "today") listed = pinnedFirst(today, (r) => r.task, todayRow);
-  else if (view.view === "project") listed = dueToday ? pinnedFirst(projectToday, (r) => r.task, todayRow) : pinnedFirst(projectList, (t) => t, listRow, projectGrouped);
+  let laidOut: ReturnType<typeof layOut>;
+  if (view.view === "today") laidOut = layOut(today, (r) => r.task, todayRow);
+  else if (view.view === "project") laidOut = dueToday ? layOut(projectToday, (r) => r.task, todayRow) : layOut(projectList, (t) => t, listRow, projectGrouped);
   else if (view.view === "recurring") {
     const recurringView = (r: (typeof recurringList)[number], pinned?: boolean) => recurringRow(r.task, recurringHints(r.task, r.state, day), r.state.phase, null, pinned);
-    listed = pinnedFirst(recurringList, (r) => r.task, recurringView, (rest, one) => (bySource ? sectioned(rest, (r) => r.task, one, (r) => r.state.phase !== "ended") : rest.map(one)));
-  } else listed = pinnedFirst(all, (t) => t, listRow);
-  const rows = listed.rest;
+    laidOut = layOut(recurringList, (r) => r.task, recurringView, (rest) => (bySource ? sectioned(rest, (r) => r.task, (r) => r.state.phase !== "ended") : flat(rest)));
+  } else laidOut = layOut(all, (t) => t, listRow);
   const todayNote = view.view === "today" && !onlyOwn ? (items.tasks.find((t) => t.type === "daily-note" && !t.archived && t.path === dailyNotePath(root, day)) ?? null) : null;
+  /** The daily note's card, pinned above Today's rows. */
+  const cardNote = todayNote !== null && dailyNotePinned(day, unpinned.day) ? todayNote : null;
+
+  /** The view's rows top to bottom (the card, pinned, the list, the unreadable files): what select mode chooses from. */
+  const selectable: SelectableRow[] = [...(cardNote === null ? [] : [rowOf(cardNote)]), ...laidOut.shown.map(rowOf), ...unreadableShown.map(unreadableRowOf)];
+  const shownPaths = selectable.map((r) => r.path);
+  const inSelect = trim.selecting === view.view;
+  const selection = inSelect ? pruneSelection(trim.selection, shownPaths) : EMPTY_SELECTION;
+  // A filter that hides a row, a group folded over it, or a file that leaves, drops it from the selection.
+  if (inSelect && selection !== trim.selection) trim.setSelection(selection);
+  const chosen = selectedRows(selectable, selection);
+  const selectOf = (path: string): RowSelect | undefined =>
+    inSelect ? { selected: selection.paths.has(path), onToggle: (range) => trim.setSelection(toggleRow(selection, path, shownPaths, range)) } : undefined;
+  /** Why the last delete (select mode's, or the row menu's) or archive left a row. */
+  const failureOf = (path: string) => (inSelect ? trim.failures.get(path) : rowMenu.failures.get(path));
+
+  const listed = laidOut.draw();
+  const rows = listed.rest;
   const dailyCard =
-    todayNote !== null && dailyNotePinned(day, unpinned.day) ? (
+    cardNote !== null ? (
       <DailyCard
         key="daily-card"
-        note={todayNote}
+        note={cardNote}
         day={day}
-        open={item.open?.path === todayNote.path}
-        onOpen={(direct) => openItem(todayNote.path, direct)}
+        open={item.open?.path === cardNote.path}
+        onOpen={(direct) => openItem(cardNote.path, direct)}
         onUnpin={() => setUnpinned({ day })}
-        menu={menuOf(rowOf(todayNote), [], "card", () => setUnpinned({ day }))}
-        menuOpen={menuFor === todayNote.path}
-        failure={failureOf(todayNote.path)}
+        menu={menuOf(rowOf(cardNote), [], "card", () => setUnpinned({ day }))}
+        menuOpen={menuFor === cardNote.path}
+        failure={failureOf(cardNote.path)}
         openHint={openHint}
+        select={selectOf(cardNote.path)}
       />
     ) : null;
   const pinnedRows = dailyCard === null ? listed.pinned : [dailyCard, ...listed.pinned];
@@ -847,7 +858,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       item={u}
       onOpen={() => openFile(u.path)}
       select={selectOf(u.path)}
-      menu={menuOf({ path: u.path, title: u.name, type: u.type, archived: u.archived, readable: false }, [], null)}
+      menu={menuOf(unreadableRowOf(u), [], null)}
       menuOpen={menuFor === u.path}
       failure={failureOf(u.path)}
     />
@@ -981,25 +992,23 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
               <button type="button" className="icon-btn" aria-label="Open in tab" data-tip="Open in tab" data-testid="planner-open-tab" onClick={() => void host.tabs.openApp({ route: ROUTES.planner }).catch(() => undefined)}>
                 <OpenInTabGlyph />
               </button>
-              <PanelMenu host={host} button={trim.startButton} select={view.view === "all" ? selectToggle : null} />
+              <PanelMenu host={host} button={trim.startButton} select={selectToggle} />
             </>
           ) : (
             <>
-              {view.view === "all" ? (
-                <button
-                  ref={trim.startButton}
-                  type="button"
-                  className="icon-btn"
-                  aria-label="Select"
-                  aria-pressed={inSelect}
-                  data-tip={inSelect ? "Leave select mode (Esc)" : "Select items to delete or archive"}
-                  data-testid="select-start"
-                  disabled={selectToggle.disabled}
-                  onClick={selectToggle.toggle}
-                >
-                  <SelectGlyph />
-                </button>
-              ) : null}
+              <button
+                ref={trim.startButton}
+                type="button"
+                className="icon-btn"
+                aria-label="Select"
+                aria-pressed={inSelect}
+                data-tip={inSelect ? "Leave select mode (Esc)" : "Select items to delete or archive"}
+                data-testid="select-start"
+                disabled={selectToggle.disabled}
+                onClick={selectToggle.toggle}
+              >
+                <SelectGlyph />
+              </button>
               <button type="button" className="icon-btn" aria-label="Settings" data-tip="Settings" data-testid="planner-settings" onClick={() => onShowSettings?.(true)}>
                 <GearGlyph />
               </button>
@@ -1125,7 +1134,7 @@ interface SelectBarProps {
   onDone: () => void;
 }
 
-/** All's select-mode bar: select all (of what the filters show), the count, Archive (notes only), Delete N…, Done. */
+/** Select mode's bar: select all (of the rows the view shows), the count, Archive (notes only), Delete N…, Done. */
 function SelectBar({ count, all, rows, archive, busy, deleteButton, onToggleAll, onArchive, onDelete, onDone }: SelectBarProps) {
   return (
     <div className="select-bar" role="toolbar" aria-label="Selection" data-testid="select-bar">
@@ -1155,7 +1164,7 @@ function SelectBar({ count, all, rows, archive, busy, deleteButton, onToggleAll,
         <button ref={deleteButton} type="button" className="btn btn--sm btn--ghost btn--danger-text" data-tip="Move the selected files to the Trash (⌫)" data-testid="select-delete" disabled={count === 0 || busy} onClick={onDelete}>
           {count === 0 ? "Delete…" : `Delete ${String(count)}…`}
         </button>
-        <button type="button" className="btn btn--sm btn--ghost" data-tip="Leave select mode (Esc)" data-testid="select-done" onClick={onDone}>
+        <button type="button" className="btn btn--sm btn--ghost select-bar__done" data-tip="Leave select mode (Esc)" data-testid="select-done" onClick={onDone}>
           Done
         </button>
       </span>
@@ -1164,32 +1173,36 @@ function SelectBar({ count, all, rows, archive, busy, deleteButton, onToggleAll,
 }
 
 /**
- * All's select mode ([[trimming]]): on or off, the selection, the rows the last delete or
- * archive left (and why), the confirmation and a write under way. A context switch ends it. Focus
- * goes back to the control that starts it (the tab's Select, the panel's ⋯) when it ends, and to Delete when the confirmation closes with rows left.
+ * Select mode ([[trimming]]): the view it is on (`null`: off), the selection, the rows the last
+ * delete or archive left (and why), the confirmation and a write under way. Switching the view or
+ * the context ends it. Focus goes back to the control that starts it (the tab's Select, the
+ * panel's ⋯) when it ends, to Delete when the confirmation closes with rows left, and to the row's
+ * box when the row menu's Select… starts it.
  */
-function useTrimming(contextId: string) {
-  const [selecting, setSelecting] = useState(false);
+function useTrimming(contextId: string, viewId: PlannerViewId | null) {
+  const [selecting, setSelecting] = useState<PlannerViewId | null>(null);
   const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION);
   const [failures, setFailures] = useState<ReadonlyMap<string, RowFailure>>(new Map());
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [focusTo, setFocusTo] = useState<"start" | "delete" | null>(null);
+  /** Where the focus goes next: the start control, Delete…, or a row's box (by its path). */
+  const [focusTo, setFocusTo] = useState<"start" | "delete" | { row: string } | null>(null);
   const startButton = useRef<HTMLButtonElement>(null);
   const deleteButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (focusTo === null) return;
-    (focusTo === "start" ? startButton : deleteButton).current?.focus();
+    if (focusTo === "start" || focusTo === "delete") (focusTo === "start" ? startButton : deleteButton).current?.focus();
+    else document.querySelector<HTMLInputElement>(`[data-path="${CSS.escape(focusTo.row)}"] [data-testid="select-row"]`)?.focus();
     setFocusTo(null);
   }, [focusTo]);
   useEffect(() => {
-    setSelecting(false);
+    setSelecting(null);
     setSelection(EMPTY_SELECTION);
     setFailures(new Map());
     setConfirming(false);
-  }, [contextId]);
+  }, [contextId, viewId]);
   const stop = (refocus: boolean) => {
-    setSelecting(false);
+    setSelecting(null);
     setSelection(EMPTY_SELECTION);
     setFailures(new Map());
     setConfirming(false);
@@ -1205,10 +1218,12 @@ function useTrimming(contextId: string) {
     setBusy,
     startButton,
     deleteButton,
-    start: () => {
-      setSelecting(true);
-      setSelection(EMPTY_SELECTION);
+    /** Start on the view shown: with nothing selected, or with the row `path` selected (the row menu's Select…) and the focus on its box. */
+    start: (path?: string) => {
+      setSelecting(viewId);
+      setSelection(path === undefined ? EMPTY_SELECTION : selectOnly(path));
       setFailures(new Map());
+      if (path !== undefined) setFocusTo({ row: path });
     },
     stop,
     ask: () => {
@@ -1314,6 +1329,12 @@ function sourceByKey(key: string, projects: readonly { id: string; name: string;
   for (const s of sources.values()) if (s.key === key) return s;
   const p = projects.find((x) => x.id === key);
   return { kind: "project", key, id: p?.id ?? null, name: p?.name ?? key, groupPath: [...(p?.groupPath ?? [])], folder: "" };
+}
+
+/** A list as it stands under its headings: its entries top to bottom, and what each heading says — counted over the group's rows, folded or not. */
+interface Grouped<T> {
+  entries: ListEntry<T>[];
+  headingOf: (group: { key: string; level: 1 | 2 }, rows: readonly T[]) => Pick<GroupHeadingProps, "name" | "qualifier" | "source" | "nested" | "count">;
 }
 
 /** Project's group headings. */

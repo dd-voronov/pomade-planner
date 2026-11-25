@@ -3,6 +3,7 @@
 // (`overlay.open`) over the active tab — a terminal, an editor — with its pre-fills, and Esc gives
 // the focus back to the +; All's select mode deletes two files through `files.delete`, one of them
 // open in an editor with unsaved edits, whose buffer stays while Pomade says the file is gone.
+// E-012: two tasks selected in Today — one from its row menu's Select… — go to the Trash.
 // T-019: a row's menu in the panel closes on a click in an editor tab. T-016: a note deleted from its row's menu in the panel goes to the Trash, and the Planner tab's
 // compact view that held it closes. Deletes go to the real macOS Trash: the files carry this run's unique suffix, and teardown
 // removes exactly those from ~/.Trash.
@@ -45,6 +46,8 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
   const DIRTY = `2026-11-10-trim-dirty-${run}.md`;
   const PLAIN = `2026-11-10-trim-plain-${run}.md`;
   const NOTE = `2026-11-10-trim-note-${run}.md`;
+  const DESK = `2026-11-10-trim-desk-${run}.md`;
+  const BIKE = `2026-11-10-trim-bike-${run}.md`;
   const trashed: string[] = [];
   const abs = (rel: string) => join(fixture.workspaceRoot, rel);
   const todo = (name: string) => abs(`${TODOS}/${name}`);
@@ -92,6 +95,8 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
     await writeFile(todo("QuizLab/2026-11-10-fix-the-timer.md"), task("Fix the timer", "do-on: 2026-11-17\n"));
     await writeFile(todo(DIRTY), task("Old shopping list"));
     await writeFile(todo(PLAIN), task("Old packing list"));
+    await writeFile(todo(DESK), task("Clear the desk", "do-on: 2026-11-17\n"));
+    await writeFile(todo(BIKE), task("Pump the bike tyres", "do-on: 2026-11-16\n"));
     await writeFile(todo(NOTE), "---\ntype: note\ntitle: Trip ideas\nstatus: open\ncreated: 2026-11-10\n---\n\nLisbon in spring.\n");
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });
     expect(out).toContain(`Planner ${APP_VERSION} (pomade-planner)`);
@@ -235,7 +240,7 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
 
     p = await openPanel();
     await row(p, "Trip ideas").click({ button: "right" });
-    await expect(p.getByTestId("row-menu").getByRole("menuitem")).toHaveText(["Open in tab", "Pin", "Archive", "Delete…"]);
+    await expect(p.getByTestId("row-menu").getByRole("menuitem")).toHaveText(["Open in tab", "Pin", "Archive", "Select…", "Delete…"]);
     await shot(page, "t016-pomade-row-menu-panel");
     await p.getByTestId("row-menu-delete").click();
     await expect(p.getByTestId("delete-confirm-title")).toHaveText("Delete “Trip ideas”?");
@@ -251,5 +256,34 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
     expect(await exists(todo(NOTE))).toBe(false);
     expect(await exists(join(TRASH, NOTE))).toBe(true);
     await expect(pane).toHaveCount(0);
+  });
+
+  test("Today: a task's row menu ▸ Select… starts select mode with it; a second task clicked; Delete 2… ▸ Move to Trash sends both to the Trash", async () => {
+    await page.getByTestId("project-__workspace__").click();
+    const p = await openPanel();
+    await view(p, "today");
+    await row(p, "Clear the desk").click({ button: "right" });
+    await p.getByTestId("row-menu-select").click();
+    await expect(p.getByTestId("select-bar")).toBeVisible();
+    await expect(p.getByTestId("select-count")).toHaveText("1 selected");
+    await expect(row(p, "Clear the desk")).toHaveAttribute("data-selected", "true");
+    await row(p, "Pump the bike tyres").getByTestId("task-open").click();
+    await expect(p.getByTestId("select-delete")).toHaveText("Delete 2…");
+    await shot(page, "e012-pomade-today-select");
+    await p.getByTestId("select-delete").click();
+    expect((await p.getByTestId("delete-file").evaluateAll((els) => els.map((el) => el.getAttribute("data-path")))).sort()).toEqual([`${TODOS}/${BIKE}`, `${TODOS}/${DESK}`]);
+    await p.getByTestId("delete-confirm-button").click();
+    trashed.push(DESK, BIKE);
+
+    await expect(p.getByTestId("delete-confirm")).toHaveCount(0);
+    await expect(row(p, "Clear the desk")).toHaveCount(0);
+    await expect(row(p, "Pump the bike tyres")).toHaveCount(0);
+    await expect(p.getByTestId("select-bar")).toHaveCount(0);
+    await expect(p.getByTestId("planner-error")).toHaveCount(0);
+    expect(await exists(todo(DESK))).toBe(false);
+    expect(await exists(todo(BIKE))).toBe(false);
+    expect(await exists(join(TRASH, DESK))).toBe(true);
+    expect(await exists(join(TRASH, BIKE))).toBe(true);
+    await expect(row(p, "Fix the timer")).toBeVisible();
   });
 });

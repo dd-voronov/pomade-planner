@@ -55,8 +55,8 @@ boundary; unfinished planned items roll over.
 | | Panel (Planner icon) | Tab (**Open in tab**, or the new-tab menu) |
 |---|---|---|
 | Views | Today · Project · Recurring · All | the same, with more room |
-| Header | the views, **+** ("New task (⌘⇧A)"), **Open in tab**, **⋯** | the views, **+**, **Select** (All only), **Settings** (⚙) |
-| **⋯** menu | **Select items…** / **Stop selecting** (All only), **Settings…** (opens the tab on its settings page) | — |
+| Header | the views, **+** ("New task (⌘⇧A)"), **Open in tab**, **⋯** | the views, **+**, **Select**, **Settings** (⚙) |
+| **⋯** menu | **Select items…** / **Stop selecting**, **Settings…** (opens the tab on its settings page) | — |
 | **+** and **Add task** | open quick add as a floating form beside the panel | open the form in place, at the list's foot |
 | Click a row | opens the Planner tab with the item's compact view | opens the compact view beside the list |
 | Row excerpts | — | the first one or two lines of each item's text |
@@ -183,8 +183,9 @@ Files whose frontmatter can't be read show as greyed rows "can't read — open t
 the list; a click opens the file in Pomade's editor.
 
 **The row menu.** Right-click any row — or press Shift+F10 on a focused one — for a menu with
-**Open in tab**, **Pin** / **Unpin**, the row's own action, and **Delete…**. Delete asks first, then
-moves the file to the macOS Trash (Finder ▸ Put Back restores it). It works in every view, in the
+**Open in tab**, **Pin** / **Unpin**, the row's own action, **Select…** and **Delete…**. Select…
+starts select mode in that view with the row selected. Delete asks first, then moves the file to
+the macOS Trash (Finder ▸ Put Back restores it). It works in every view, in the
 panel and the tab, and on the daily note's card; select mode has no menu.
 
 ## Adding items
@@ -367,20 +368,23 @@ source's label. Mix-ins are remembered per project.
 
 ## Select mode: delete and archive
 
-On All only: the tab's **Select** button, or the panel's **⋯ → Select items…**. Rows trade their
-checkbox, pin and actions for a selection box. A bar holds select-all, the count, **Archive** (only
-when every selected row is a note not yet archived), **Delete N…** and **Done**.
+In every view — Today, Project, Recurring and All: the tab's **Select** button, the panel's **⋯ →
+Select items…**, or a row's menu ▸ **Select…**, which starts with that row selected. Rows — and on
+Today the daily note's card — trade their checkbox, pin and actions for a selection box. A bar holds
+select-all, the count, **Archive** (only when every selected row is a note not yet archived),
+**Delete N…** and **Done**; in the narrowest panel it takes two lines.
 
 - Click selects; Shift-click selects the range from the last row toggled.
-- Select-all and ⌘A take only what the filters show; a row the filters hide drops out of the
-  selection.
+- Select-all and ⌘A take only the rows the view shows: what All's filters show, and none of a folded
+  group's. A row the filters hide, or a group folded over it, drops out of the selection.
 - **Delete N…** asks first: "Delete 3 files?" (one file: by its title), "They go to the macOS Trash
   — Finder can put them back.", every file's title and path, **Cancel** (focused) and **Move to
   Trash**. A file Pomade refuses stays selected with its reason.
 - **Archive** moves the notes into `_archive/` without asking; **Restore** undoes it.
-- Select mode ends when everything is done, or when the view or context changes.
+- Select mode ends with **Done** or Esc, when everything selected is gone, or when the view or
+  context changes.
 
-Keys: [Keyboard and mouse › Select mode](shortcuts.md#select-mode-all).
+Keys: [Keyboard and mouse › Select mode](shortcuts.md#select-mode).
 
 ## Attention: badge and morning summary
 

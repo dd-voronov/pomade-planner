@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { foldsKey, groupKey, NO_FOLDS, parseFolds, rowsByGroup, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type ListEntry } from "./folds";
+import { foldsKey, groupKey, NO_FOLDS, parseFolds, rowsByGroup, serializeFolds, setFolded, unfoldAll, unfoldedEntries, unfoldedRows, type ListEntry } from "./folds";
 
 describe("fold state", () => {
   it.each([
@@ -59,6 +59,13 @@ describe("unfoldedEntries — two levels", () => {
   it("an inner group folds on its own: its sibling and the next outer group show", () => {
     expect(shown(["quiz/tasks"])).toEqual(["#none", "tax", "#quiz", "#quiz/tasks", "#quiz/notes", "idea", "#pomade", "#pomade/tasks", "ship"]);
     expect(shown(["quiz/notes"])).toEqual(["#none", "tax", "#quiz", "#quiz/tasks", "fix", "#quiz/notes", "#pomade", "#pomade/tasks", "ship"]);
+  });
+
+  it("the rows shown (select mode's select all): none of a folded group's, at either level", () => {
+    expect(unfoldedRows(list, new Set())).toEqual(["tax", "fix", "idea", "ship"]);
+    expect(unfoldedRows(list, new Set(["quiz/notes", "pomade"]))).toEqual(["tax", "fix"]);
+    expect(unfoldedRows(list, new Set(["quiz"]))).toEqual(["tax", "ship"]);
+    expect(unfoldedRows([r("a"), r("b")], new Set(["none"]))).toEqual(["a", "b"]);
   });
 
   it("inner groups without an outer one (a list of level-2 groups alone) fold each on its own", () => {

@@ -1,7 +1,7 @@
-// All's select mode ([[trimming]]): which rows are selected, the confirmation a delete
+// Select mode ([[trimming]]), in every view: which rows are selected, the confirmation a delete
 // shows, and what the Host API's per-file answers mean for the rows. The selection is always a
-// subset of the rows All shows — a filter that hides a row drops it — so a delete never touches a
-// file the user can't see.
+// subset of the rows the view shows — a filter that hides a row, or a group folded over it, drops
+// it — so a delete never touches a file the user can't see.
 
 import type { PlannerType } from "./items";
 
@@ -13,6 +13,9 @@ export interface Selection {
 }
 
 export const EMPTY_SELECTION: Selection = { paths: new Set(), anchor: null };
+
+/** `path` alone selected, and the anchor a Shift-click extends from (the row menu's Select…). */
+export const selectOnly = (path: string): Selection => ({ paths: new Set([path]), anchor: path });
 
 /**
  * Toggle `path` among the `visible` rows (top to bottom). Alone, it flips the row and becomes the
@@ -61,7 +64,7 @@ export function pruneSelection(selection: Selection, visible: readonly string[])
   return { paths: new Set(kept), anchor };
 }
 
-/** A row All shows, as select mode needs it. */
+/** A row the view shows, as select mode needs it. */
 export interface SelectableRow {
   path: string;
   /** The title the row shows (an unreadable file: its name). */
@@ -72,7 +75,7 @@ export interface SelectableRow {
   readable: boolean;
 }
 
-/** The selected rows, in the order All shows them. */
+/** The selected rows, in the order the view shows them. */
 export function selectedRows(rows: readonly SelectableRow[], selection: Selection): SelectableRow[] {
   return rows.filter((r) => selection.paths.has(r.path));
 }

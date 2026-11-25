@@ -1,6 +1,6 @@
 // A row's own actions and its right-click menu ([[views]] "Rows"): which actions a row offers for
 // its type and state, the words they carry, and the menu built from them — Open in tab, the pin,
-// the row's actions, then Delete… set apart and last. The row's buttons and its menu read the same
+// the row's actions, Select…, then Delete… set apart and last. The row's buttons and its menu read the same
 // list, so the menu never offers what the row doesn't.
 
 import type { Task } from "./items";
@@ -32,16 +32,16 @@ export function rowActionIds(task: Pick<Task, "type" | "archived" | "repeat">, d
 }
 
 /** An entry of a row's menu. */
-export type RowMenuEntry = "open-tab" | "pin" | "unpin" | "unpin-today" | RowActionId | "delete";
+export type RowMenuEntry = "open-tab" | "pin" | "unpin" | "unpin-today" | RowActionId | "select" | "delete";
 
 /** The row's pin as the menu offers it: pinned or not on this view, the daily note's card (unpinned for the day), or no pin. */
 export type RowMenuPin = "pinned" | "unpinned" | "card" | null;
 
 const PIN_ENTRY: Record<Exclude<RowMenuPin, null>, RowMenuEntry> = { pinned: "unpin", unpinned: "pin", card: "unpin-today" };
 
-/** A row's menu: Open in tab, its pin, its actions, then Delete… — set apart by a separator before it. */
+/** A row's menu: Open in tab, its pin, its actions, Select… (select mode with this row selected), then Delete… — set apart by a separator before it. */
 export function rowMenuEntries(actions: readonly RowActionId[], pin: RowMenuPin): RowMenuEntry[] {
-  return ["open-tab", ...(pin === null ? [] : [PIN_ENTRY[pin]]), ...actions, "delete"];
+  return ["open-tab", ...(pin === null ? [] : [PIN_ENTRY[pin]]), ...actions, "select", "delete"];
 }
 
 /** Each entry's label: the words the row's own buttons use. */
@@ -55,5 +55,6 @@ export const ROW_MENU_LABELS: Record<RowMenuEntry, string> = {
   reopen: ROW_ACTIONS.reopen.label,
   archive: ROW_ACTIONS.archive.label,
   restore: ROW_ACTIONS.restore.label,
+  select: "Select…",
   delete: "Delete…",
 };

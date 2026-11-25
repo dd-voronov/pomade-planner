@@ -1,5 +1,5 @@
 // T-016's row menu on the fake host ([[views]] "Rows"): a right-click (or Shift+F10) on any Planner
-// row opens Open in tab, the row's pin and its own actions, then Delete… — which asks select mode's
+// row opens Open in tab, the row's pin and its own actions, Select…, then Delete… — which asks select mode's
 // question for the one file and moves it to the Trash through `files.delete`; a failed delete says
 // so on the row. The menu stays inside the frame, ↑ ↓ move, Esc closes it and gives the focus back
 // to the row; select mode has none. Fixture: the planner workspace with notes at Workspace on Tue
@@ -102,7 +102,7 @@ test.describe("a row's menu", () => {
     await watchDeletes(page);
     const ink = row(a, "Buy printer ink");
     await rightClick(ink);
-    await expect(items(a)).toHaveText(["Open in tab", "Pin", "Delete…"]);
+    await expect(items(a)).toHaveText(["Open in tab", "Pin", "Select…", "Delete…"]);
     await expect(menu(a).getByRole("separator")).toHaveCount(1);
     await expect(ink).toHaveClass(/task-row--menu/);
     await expectInside(page, a);
@@ -138,11 +138,11 @@ test.describe("a row's menu", () => {
     await a.getByTestId("view-all").click();
     await a.getByTestId("show-archived").check();
     const cases: [Locator, string[]][] = [
-      [row(a, "Learn a piano piece"), ["Open in tab", "Pin", "Delete…"]],
-      [row(a, "Why do I sleep badly on Sundays?"), ["Open in tab", "Pin", "Resolve", "Delete…"]],
-      [row(a, "Quiz timer idea"), ["Open in tab", "Pin", "Archive", "Delete…"]],
-      [row(a, "Old idea: a podcast"), ["Open in tab", "Pin", "Restore", "Delete…"]],
-      [a.locator('[data-testid="unreadable-row"][data-path="Tasks/2026-11-13-broken.md"]'), ["Open in tab", "Delete…"]],
+      [row(a, "Learn a piano piece"), ["Open in tab", "Pin", "Select…", "Delete…"]],
+      [row(a, "Why do I sleep badly on Sundays?"), ["Open in tab", "Pin", "Resolve", "Select…", "Delete…"]],
+      [row(a, "Quiz timer idea"), ["Open in tab", "Pin", "Archive", "Select…", "Delete…"]],
+      [row(a, "Old idea: a podcast"), ["Open in tab", "Pin", "Restore", "Select…", "Delete…"]],
+      [a.locator('[data-testid="unreadable-row"][data-path="Tasks/2026-11-13-broken.md"]'), ["Open in tab", "Select…", "Delete…"]],
     ];
     for (const [target, expected] of cases) {
       await rightClick(target);
@@ -156,7 +156,7 @@ test.describe("a row's menu", () => {
     await a.getByTestId("row-menu-pin").click();
     await expect(row(a, "Learn a piano piece")).toHaveAttribute("data-pinned", "true");
     await rightClick(row(a, "Learn a piano piece"));
-    await expect(items(a)).toHaveText(["Open in tab", "Unpin", "Delete…"]);
+    await expect(items(a)).toHaveText(["Open in tab", "Unpin", "Select…", "Delete…"]);
     await page.keyboard.press("Escape");
 
     // Resolve and Archive from the menu do what the row's buttons do.
@@ -172,16 +172,16 @@ test.describe("a row's menu", () => {
     const a = await openPlanner(page, { tasks: "Chores", now: "2026-12-02T10:00" });
     const plants = row(a, "Water the plants");
     await rightClick(plants);
-    await expect(items(a)).toHaveText(["Open in tab", "Pin", "Skip", "Delete…"]);
+    await expect(items(a)).toHaveText(["Open in tab", "Pin", "Skip", "Select…", "Delete…"]);
     await a.getByTestId("row-menu-skip").click();
     await expect.poll(() => readFile(page, "Chores/2026-01-01-water-the-plants.md")).toContain("- 2026-12-02 skipped");
   });
 
-  test("the daily note's card: Open in tab, Unpin for today, Delete…", async ({ page }) => {
+  test("the daily note's card: Open in tab, Unpin for today, Select…, Delete…", async ({ page }) => {
     const a = await openPlanner(page);
     const card = a.getByTestId("daily-card");
     await rightClick(card);
-    await expect(items(a)).toHaveText(["Open in tab", "Unpin for today", "Delete…"]);
+    await expect(items(a)).toHaveText(["Open in tab", "Unpin for today", "Select…", "Delete…"]);
     await a.getByTestId("row-menu-unpin-today").click();
     await expect(card).toHaveCount(0);
   });
@@ -196,6 +196,8 @@ test.describe("a row's menu", () => {
     await page.keyboard.press("ArrowDown");
     await expect(a.getByTestId("row-menu-pin")).toBeFocused();
     await shot(page, "t016-fake-row-menu-keyboard-panel");
+    await page.keyboard.press("ArrowDown");
+    await expect(a.getByTestId("row-menu-select")).toBeFocused();
     await page.keyboard.press("ArrowDown");
     await expect(a.getByTestId("row-menu-delete")).toBeFocused();
     await shot(page, "t016-fake-row-menu-delete-focus-panel");

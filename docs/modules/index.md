@@ -68,8 +68,8 @@ without leaving the Planner, and attention that works before it is opened.
 - [[views]] — the panel and the tab, the header and the narrowing switcher, the context and the line
   naming it, what Today, Project, Recurring and All show, Today's project filter, mix-ins, All's
   filters, folding groups, row actions, excerpts and pins.
-- [[trimming]] — All's select mode: selecting within the filters, bulk Archive, and Delete to the
-  macOS Trash after a confirmation, with per-file results.
+- [[trimming]] — select mode in every view: selecting among the rows shown, bulk Archive, and Delete
+  to the macOS Trash after a confirmation, with per-file results.
 - [[item-in-place]] — the compact view beside the lists in the tab: opening from the tab or the
   panel, the fields and Details, saving without a button over the version read, following the file.
 - [[quick-add]] — one add form in place in the tab and in Pomade's overlay elsewhere: entry points,

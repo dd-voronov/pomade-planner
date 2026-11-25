@@ -21,7 +21,7 @@ export interface RowAction {
   onClick: () => void;
 }
 
-/** A row in All's select mode: its selection checkbox in the tick's place; a click anywhere on it toggles, Shift extends from the anchor. */
+/** A row in select mode: its selection checkbox in the tick's place; a click anywhere on it toggles, Shift extends from the anchor. */
 export interface RowSelect {
   selected: boolean;
   /** `range`: Shift was held — select from the anchor to here. */
@@ -54,7 +54,7 @@ interface TaskRowProps {
   excerpt?: string | null | undefined;
   /** The checkbox can't be used (a recurring rule that can't be read, an ended item, a write under way); its title says why. */
   locked?: string | undefined;
-  /** All's select mode: the row selects instead of ticking and opening; no actions, no menu. */
+  /** Select mode: the row selects instead of ticking and opening; no actions, no menu. */
   select?: RowSelect | undefined;
   /** Opens the row's menu (a right-click, Shift+F10); absent: no menu. */
   menu?: RowMenuTrigger | undefined;
@@ -124,7 +124,7 @@ const KIND_GLYPHS: Partial<Record<PlannerType, ReactNode>> = {
 const KIND_NAMES: Partial<Record<PlannerType, string>> = { note: "Note", thought: "Thought", "daily-note": "Daily note" };
 
 /** The selection checkbox: Space toggles, Shift+Space or Shift-click selects the range from the anchor. */
-function SelectCheck({ select, label }: { select: RowSelect; label: string }) {
+export function SelectCheck({ select, label }: { select: RowSelect; label: string }) {
   return (
     <label className="task-check task-check--select">
       <input
@@ -150,12 +150,18 @@ function SelectCheck({ select, label }: { select: RowSelect; label: string }) {
   );
 }
 
-/** A click on a selectable row's body: toggle it, Shift extending the range (no text selected on the way). */
-const selectClick = (select: RowSelect) => ({
+/**
+ * A click on a selectable row's body: toggle it, Shift extending the range (no text selected on
+ * the way); the focus goes to the row's box, so the keys (↑ ↓, Space, Esc) go on from there.
+ */
+export const selectClick = (select: RowSelect) => ({
   onMouseDown: (e: MouseEvent) => {
     if (e.shiftKey) e.preventDefault();
   },
-  onClick: (e: MouseEvent) => select.onToggle(e.shiftKey),
+  onClick: (e: MouseEvent<HTMLElement>) => {
+    select.onToggle(e.shiftKey);
+    e.currentTarget.parentElement?.querySelector<HTMLInputElement>('[data-testid="select-row"]')?.focus({ preventScroll: true });
+  },
 });
 
 export function Failure({ failure }: { failure: RowFailureText }) {

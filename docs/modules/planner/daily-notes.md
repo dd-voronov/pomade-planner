@@ -69,7 +69,8 @@ A card above the list (`DailyCard`) on Today in every context — not while Toda
 narrows it to a project ([[views]] "Context"): title, "Daily note" and its date when it has a title
 of its own, the progress as text and a bar. A click opens it as a row's does ([[item-in-place]];
 with ⌘ or Ctrl, the editor tab); its pin unpins it for that planner day only, in every context
-(`planner.dailyNoteUnpinned`, `dailyNotePinned`).
+(`planner.dailyNoteUnpinned`, `dailyNotePinned`). In select mode it selects as a row does: its box
+in the glyph's place, no pin, no menu ([[trimming]]).
 
 ## Elsewhere
 

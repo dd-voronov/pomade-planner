@@ -48,6 +48,7 @@ Every shortcut and mouse modifier of the Planner and the Board, grouped by where
 | right-click a row, Shift+F10 on a focused row | opens the row menu |
 | ↑ ↓ | move between the items (Home, End jump) |
 | Enter | picks the item |
+| **Select…** | starts select mode with the row selected |
 | Esc | closes the menu; the row keeps the focus |
 
 ## Add form
@@ -92,7 +93,7 @@ Also the **+ Add from…** mix-in picker.
 | Esc (focus in the view), × or the back arrow | closes it; everything typed is saved; focus returns to the row |
 | **Open in tab** | opens the file in Pomade's editor |
 
-## Select mode (All)
+## Select mode
 
 | Key / mouse | Does |
 |---|---|
@@ -101,7 +102,7 @@ Also the **+ Add from…** mix-in picker.
 | Space on a row's box | select / unselect |
 | ⇧Space on a row's box | selects the range |
 | ↑ ↓ | move between rows' boxes |
-| ⌘A | selects every row the filters show |
+| ⌘A | selects every row the view shows (All: what the filters show; none of a folded group's) |
 | Delete or Backspace | **Delete N…** — asks first |
 | Esc | leaves select mode |
 

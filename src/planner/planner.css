@@ -636,7 +636,7 @@
   padding: 0 var(--space-2) var(--space-2) var(--space-3);
 }
 
-/* ── All's select mode ([[trimming]]): the bar under the filters, rows that select ── */
+/* ── Select mode ([[trimming]]): the bar under the view's bars, rows that select ── */
 
 .select-bar {
   display: flex;
@@ -694,6 +694,23 @@
 
 .task-row--selectable .task-row__main {
   cursor: default;
+}
+
+/* The daily note's card selects as a row does: its box in the glyph's place, no unpin button. */
+.daily-card--selectable {
+  user-select: none;
+}
+
+.daily-card--selectable .daily-card__main {
+  padding-left: 0;
+  padding-right: var(--space-2);
+  cursor: default;
+}
+
+.daily-card--selected,
+.daily-card--selected:hover {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .task-row--selected,
@@ -1924,6 +1941,31 @@
 /* The narrowest panel (160px): a tighter label column, selects that shrink, the project field
    without its visible label (still named for a screen reader). */
 @media (max-width: 220px) {
+  /* Select mode's bar in two lines: the count and Done, then Archive and Delete N… at the right. */
+  .select-bar__actions {
+    display: contents;
+  }
+
+  .select-bar__done {
+    order: -1;
+  }
+
+  .select-bar__all {
+    order: -2;
+  }
+
+  .select-bar__actions > :first-child {
+    margin-left: auto;
+  }
+
+  .select-bar {
+    column-gap: 4px;
+  }
+
+  .select-bar .btn--sm {
+    padding: 0 6px;
+  }
+
   /* The daily card keeps its title and count; the unpin button shows on hover or focus. */
   .daily-card__glyph,
   .daily-card__bar {

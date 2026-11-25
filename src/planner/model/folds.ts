@@ -69,6 +69,9 @@ export function unfoldedEntries<R>(entries: readonly ListEntry<R>[], folded: Rea
   return shown;
 }
 
+/** The rows a list shows with `folded` folded, top to bottom: what select mode's select all and a Shift-range take. */
+export const unfoldedRows = <R>(entries: readonly ListEntry<R>[], folded: ReadonlySet<string>): R[] => unfoldedEntries(entries, folded).flatMap((e) => (e.kind === "row" ? [e.row] : []));
+
 /** The rows under each group of `entries`, by key, in list order: a level-1 group's include its inner groups' rows. */
 export function rowsByGroup<R>(entries: readonly ListEntry<R>[]): Map<string, R[]> {
   const rows = new Map<string, R[]>();
