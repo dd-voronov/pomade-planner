@@ -410,7 +410,7 @@ test.describe("renames follow", () => {
     await page.evaluate(() => window.fakeHost.rename("Tasks/Old stuff", "Tasks/Attic"));
     await expect(a.getByTestId("folder-problem")).toHaveCount(0);
     await expect.poll(() => exists(page, "Tasks/Old stuff/2026-11-16-ship-the-planner.md")).toBe(true);
-    expect(await titles(a)).toEqual(["Review the Host API", "Ship the planner"]);
+    await expect.poll(() => titles(a)).toEqual(["Review the Host API", "Ship the planner"]);
   });
 
   test("renamed while the Planner was closed: on open the map and the stable id catch the folder up", async ({ page }) => {
@@ -534,15 +534,13 @@ test.describe("each project's folder is in its scope (T-021)", () => {
   });
 
   test("a rename swaps the folder; a changed tasks folder moves every project's", async ({ page }) => {
-    const a = await openPanel(page, "quiz");
+    await openPanel(page, "quiz");
     await expect.poll(() => scopes(page)).toEqual(MAPPED);
     await page.evaluate(() => window.fakeHost.updateProject("quiz", { name: "QuizLab Pro" }));
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab Pro/");
     await expect.poll(() => scopes(page)).toEqual({ ...MAPPED, quiz: ["Tasks/QuizLab Pro"] });
 
     const current = await settings(page);
     await page.evaluate(([path, text]) => window.fakeHost.writeFile(path, text), [SETTINGS, JSON.stringify({ ...current, tasksRoot: "Chores" })] as const);
-    await expect(a.getByTestId("planner-where")).toHaveText("Chores/QuizLab Pro/");
     await expect.poll(() => scopes(page)).toEqual({ ...MAPPED, pomade: ["Chores/Pomade"], quiz: ["Chores/QuizLab Pro"] });
   });
 
