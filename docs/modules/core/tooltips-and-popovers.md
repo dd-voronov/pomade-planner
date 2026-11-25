@@ -40,7 +40,9 @@ where there is one ("New task (⌘⇧A)").
 
 `Popover` is a small dialog anchored to an element's rect or a point (a right-click): a transparent
 scrim that closes it on a click outside, Tab kept inside, Escape closing it from anywhere in the
-frame, and focus returned where it came from (`restoreFocus`). `placePopover(anchor, size, frame)`
+frame, and focus returned where it came from (`restoreFocus`). A click in another frame, the
+editor or another app never reaches the scrim, so the frame losing the focus (the window's `blur`)
+closes it too — and then the focus stays where the user sent it, not taken back. `placePopover(anchor, size, frame)`
 puts it below its anchor when it fits, else above, else on the side with more room with its height
 capped (it scrolls inside); aligned to the anchor's start or end, shifted left at the right edge,
 narrower than a narrow frame. `role` is "dialog" or "menu". The Board's create form, card popover and triage picker and the

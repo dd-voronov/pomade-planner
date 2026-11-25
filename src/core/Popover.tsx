@@ -12,7 +12,7 @@ interface PopoverProps {
   label: string;
   testId: string;
   className?: string;
-  /** Close it: Escape, a click outside, or the caller's own buttons. */
+  /** Close it: Escape, a click outside, the frame losing the focus, or the caller's own buttons. */
   onClose: () => void;
   /** Where focus goes when it closes (the card, the column's +, the row). */
   restoreFocus: () => void;
@@ -24,13 +24,15 @@ const FOCUSABLE = 'input:not([disabled]), button:not([disabled]), [tabindex]:not
 /**
  * A small dialog or menu anchored to a card, a row or a column header, after Pomade's anchored
  * popovers: a transparent scrim that closes it on a click outside, the panel placed inside the frame
- * (`placePopover`), Tab kept inside, Escape closing it, and focus back where it came from.
+ * (`placePopover`), Tab kept inside, Escape closing it, and focus back where it came from — except
+ * when it closes because the frame lost the focus (the window's `blur`), which leaves the focus alone.
  */
 export function Popover({ anchor, align = "start", role = "dialog", label, testId, className, onClose, restoreFocus, children }: PopoverProps) {
   const panel = useRef<HTMLDivElement>(null);
   const [place, setPlace] = useState<Placement | null>(null);
   const restore = useRef(restoreFocus);
   const close = useRef(onClose);
+  const takeFocusBack = useRef(true);
   useLayoutEffect(() => {
     restore.current = restoreFocus;
     close.current = onClose;
@@ -64,8 +66,24 @@ export function Popover({ anchor, align = "start", role = "dialog", label, testI
     };
   }, [anchor, align]);
 
+  // The frame losing the focus to another frame, another app or the editor closes it — those
+  // clicks never reach this frame's scrim — and the focus stays where the user sent it.
+  useEffect(() => {
+    const onBlur = () => {
+      takeFocusBack.current = false;
+      close.current();
+    };
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, []);
+
   // Give focus back when it closes.
-  useLayoutEffect(() => () => restore.current(), []);
+  useLayoutEffect(
+    () => () => {
+      if (takeFocusBack.current) restore.current();
+    },
+    [],
+  );
 
   // Focus the first field once it is placed (a hidden panel can't take focus).
   const placed = place !== null;

@@ -278,6 +278,17 @@ test.describe("card popover", () => {
     expect(await page.evaluate(() => window.fakeHost.openedTabs.length)).toBe(0);
   });
 
+  test("a click in another frame — the host page around the app's frame — closes the popover and leaves the focus where it went", async ({ page }) => {
+    const app = await openBoard(page, "delta");
+    await card(app, "P-012").click({ button: "right" });
+    await expect(app.getByTestId("card-popover")).toBeVisible();
+    await page.getByTestId("harness-nav").click({ position: { x: 2, y: 2 } });
+    await expect(app.getByTestId("card-popover")).toHaveCount(0);
+    expect(await focusedTestId(app)).not.toBe(await card(app, "P-012").getAttribute("data-testid"));
+    await expect(card(app, "P-012")).not.toBeFocused();
+    expect(await page.evaluate(() => window.fakeHost.openedTabs.length)).toBe(0);
+  });
+
   test("the popover edits the file as it is now: a change made while it is open is kept", async ({ page }) => {
     const app = await openBoard(page, "delta");
     const path = pathOf(DELTA, "P-012");

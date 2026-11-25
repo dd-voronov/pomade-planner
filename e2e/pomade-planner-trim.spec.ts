@@ -3,7 +3,7 @@
 // (`overlay.open`) over the active tab — a terminal, an editor — with its pre-fills, and Esc gives
 // the focus back to the +; All's select mode deletes two files through `files.delete`, one of them
 // open in an editor with unsaved edits, whose buffer stays while Pomade says the file is gone.
-// T-016: a note deleted from its row's menu in the panel goes to the Trash, and the Planner tab's
+// T-019: a row's menu in the panel closes on a click in an editor tab. T-016: a note deleted from its row's menu in the panel goes to the Trash, and the Planner tab's
 // compact view that held it closes. Deletes go to the real macOS Trash: the files carry this run's unique suffix, and teardown
 // removes exactly those from ~/.Trash.
 
@@ -212,6 +212,17 @@ test.describe("quick add from + and bulk delete in a real Pomade", () => {
     expect(buffer.startsWith("MINE ---")).toBe(true);
     await expect(vis('[data-testid="doc-save"]')).toHaveAttribute("data-saved", "false");
     await shot(page, "e003-pomade-deleted-file-in-editor");
+  });
+
+  test("a row's menu in the panel closes on a click in an editor tab — a frame the panel's never sees — and the focus stays in the editor", async () => {
+    const p = await openPanel();
+    await view(p, "all");
+    await row(p, "Pay the tax").click({ button: "right" });
+    await expect(p.getByTestId("row-menu")).toBeVisible();
+    await vis('[data-testid="raw-editor"] .cm-content').click();
+    await expect(p.getByTestId("row-menu")).toHaveCount(0);
+    await expect(vis('[data-testid="raw-editor"] .cm-content')).toBeFocused();
+    await shot(page, "t019-pomade-row-menu-closed-by-editor-click");
   });
 
   test("a note deleted from its row's menu in the panel goes to the Trash and leaves All; open in the Planner tab's compact view, the view closes", async () => {

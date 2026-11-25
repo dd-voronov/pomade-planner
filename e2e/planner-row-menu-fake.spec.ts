@@ -235,6 +235,25 @@ test.describe("a row's menu", () => {
     await expect(gift.getByTestId("row-failure")).toHaveCount(0);
   });
 
+  test("a click in another frame — the host page around the app's frame — closes the menu and leaves the focus where it went", async ({ page }) => {
+    const a = await openPlanner(page);
+    const ink = row(a, "Buy printer ink");
+    await rightClick(ink);
+    await expect(menu(a)).toBeVisible();
+    await page.getByTestId("harness-nav").click({ position: { x: 2, y: 2 } });
+    await expect(menu(a)).toHaveCount(0);
+    await expect(ink).not.toHaveClass(/task-row--menu/);
+    expect(await focusedTestId(a)).not.toBe("task-open");
+    expect(await a.locator(":root").evaluate(() => document.hasFocus())).toBe(false);
+
+    // The menu opens again in the frame, and Escape still gives the focus to the row.
+    await rightClick(ink);
+    await expect(menu(a)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(menu(a)).toHaveCount(0);
+    await expect(ink.getByTestId("task-open")).toBeFocused();
+  });
+
   test("select mode: a right-click opens no menu", async ({ page }) => {
     const a = await openPlanner(page);
     await a.getByTestId("view-all").click();
