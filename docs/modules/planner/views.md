@@ -102,7 +102,13 @@ every `project.changed` — a tab restored at launch included (`useActiveProject
   (the move back), a thought's **Resolve** (`status: resolved`, `done-on`; field-only, only over the
   version the view read) and, once resolved, **Reopen**.
 - **Opening:** a click on a row's title or Enter on a focused row opens the item in place
-  ([[item-in-place]]).
+  ([[item-in-place]]); with ⌘ (or Ctrl) held, in the editor tab. The title says so in a delayed
+  tooltip (`data-tip-slow`, 1 s; [[tooltips-and-popovers]] "Tooltips"): "Click: open in the
+  Planner tab · ⌘-click: open the file in the editor" in the panel, "Click: open here ·
+  ⌘-click: open the file in the editor" in the tab (`OPEN_HINT_PANEL`, `OPEN_HINT_TAB`). The daily
+  note's card carries it too. There is none while the row's menu is open or in select mode, and a
+  row shows no file path on hover (the path is in the item's pane). An unreadable file's row
+  shows its path and the reason in the Planner's tooltip.
 - **Adding:** the **+** in the header and an **Add** button at the foot of every list, under the
   empty view's text when there are no rows ([[quick-add]]).
 - **Description excerpt** (the full tab only): the first one or two prose lines of the body

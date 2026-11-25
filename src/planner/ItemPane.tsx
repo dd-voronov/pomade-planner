@@ -295,7 +295,7 @@ export function ItemPane({ host, clock, boundary, day, root, task, asks, pin, re
 
   const checkable = (item.type === "task" || recurring) && !item.archived;
   const tickBox = checkable ? (
-    <label className={`task-check item-pane__check${locked !== undefined ? " task-check--locked" : ""}`} title={locked}>
+    <label className={`task-check item-pane__check${locked !== undefined ? " task-check--locked" : ""}`} data-tip={locked}>
       <input
         type="checkbox"
         checked={recurring ? false : done}

@@ -159,7 +159,7 @@ function Details({ value, onChange }: { value: string; onChange: (v: string) => 
       value={value}
       placeholder="Details"
       aria-label="Details"
-      title="Details — the file's text under its fields, markdown as typed"
+      data-tip="Details — the file's text under its fields, markdown as typed"
       autoComplete="off"
       onChange={(e) => onChange(e.target.value)}
     />
@@ -312,7 +312,7 @@ export function ItemFields({ draft, onChange, check, groups, chosen, picking, on
               data-testid="qa-project"
               data-project={draft.project ?? ""}
               aria-haspopup="listbox"
-              title="Change the project: type its name, or press ↓"
+              data-tip="Change the project: type its name, or press ↓"
               onClick={() => onPicking({ query: "" })}
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown" || e.key === " ") {
@@ -342,7 +342,7 @@ export function ItemFields({ draft, onChange, check, groups, chosen, picking, on
             </button>
             <div className="qa-kind" role="radiogroup" aria-label="Type" data-testid="qa-type">
               {ITEM_KINDS.map((k) => (
-                <label key={k} className={`qa-kind__option${kind === k ? " qa-kind__option--on" : ""}`} title={KIND_META[k].title}>
+                <label key={k} className={`qa-kind__option${kind === k ? " qa-kind__option--on" : ""}`} data-tip={KIND_META[k].title}>
                   <input type="radio" name={`${id}-type`} value={k} checked={kind === k} aria-label={KIND_META[k].label} data-testid={`qa-type-${k}`} onChange={() => set({ kind: k })} />
                   <svg className="qa-kind__glyph" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                     {KIND_META[k].glyph}

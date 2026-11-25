@@ -6,6 +6,10 @@ import { isTaskType, type PlannerType, type Task, type UnreadableItem } from "./
 import type { RowActionId } from "./model/row-menu";
 import { rowMenuHandlers, type RowMenuTrigger } from "./RowMenu";
 
+/** A row title's delayed tooltip: what a click and a ⌘-click open, in the panel and in the tab. */
+export const OPEN_HINT_PANEL = "Click: open in the Planner tab · ⌘-click: open the file in the editor";
+export const OPEN_HINT_TAB = "Click: open here · ⌘-click: open the file in the editor";
+
 /** A row's action, shown over its right end on hover or keyboard focus ("Skip", "Archive", "Resolve"). */
 export interface RowAction {
   id: RowActionId;
@@ -57,6 +61,8 @@ interface TaskRowProps {
   /** The row's menu is open. */
   menuOpen?: boolean | undefined;
   failure?: RowFailureText;
+  /** The delayed tooltip of the title (`OPEN_HINT_PANEL` or `OPEN_HINT_TAB`); none while the row's menu is open or the row selects. */
+  openHint?: string | undefined;
 }
 
 function CheckGlyph() {
@@ -162,7 +168,7 @@ export function Failure({ failure }: { failure: RowFailureText }) {
 }
 
 /** One item: its checkbox (a note's, thought's or daily note's glyph instead), then title and hints as one button that opens the item; its actions and pin on hover. */
-export function TaskRow({ task, title = task.title, done, hints, reason, source, onToggle, onOpen, open = false, actions = [], pin, excerpt, locked, select, menu, menuOpen = false, failure }: TaskRowProps) {
+export function TaskRow({ task, title = task.title, done, hints, reason, source, onToggle, onOpen, open = false, actions = [], pin, excerpt, locked, select, menu, menuOpen = false, failure, openHint }: TaskRowProps) {
   const main = useRef<HTMLButtonElement>(null);
   const importance = importanceText(task.importance);
   const recurring = task.repeat !== null;
@@ -224,7 +230,7 @@ export function TaskRow({ task, title = task.title, done, hints, reason, source,
       {select !== undefined ? (
         <SelectCheck select={select} label={title} />
       ) : checkable ? (
-      <label className={`task-check${locked !== undefined ? " task-check--locked" : ""}`} title={locked}>
+      <label className={`task-check${locked !== undefined ? " task-check--locked" : ""}`} data-tip={locked}>
         <input
           type="checkbox"
           checked={done}
@@ -250,7 +256,7 @@ export function TaskRow({ task, title = task.title, done, hints, reason, source,
           <Failure failure={failure} />
         </div>
       ) : (
-        <button ref={main} type="button" className="task-row__main" data-testid="task-open" title={task.path} aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
+        <button ref={main} type="button" className="task-row__main" data-testid="task-open" data-tip={menuOpen ? undefined : openHint} data-tip-slow="" aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
           {line}
           <Failure failure={failure} />
         </button>
@@ -313,7 +319,7 @@ export function UnreadableRow({ item, onOpen, select, menu, menuOpen = false, fa
           <span className="task-check task-check--blank" aria-hidden="true">
             <span className="task-check__box" />
           </span>
-          <button ref={main} type="button" className="task-row__main" title={`${item.path}\n${item.reason}`} onClick={onOpen}>
+          <button ref={main} type="button" className="task-row__main" data-tip={`${item.path} — ${item.reason}`} onClick={onOpen}>
             {body}
             <Failure failure={failure} />
           </button>

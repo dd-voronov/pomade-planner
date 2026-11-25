@@ -21,20 +21,31 @@ leave its iframe, so both apps draw their own, always inside the frame and style
 
 Every icon-only button of either app (the Planner's and the Board's headers, rows, cards, columns,
 toasts), a row's actions, and a view shown as its glyph carry a tip: the name, with the shortcut
-where there is one ("New task (⌘⇧A)").
+where there is one ("New task (⌘⇧A)"). So does every other Planner control that explains itself
+— the add form's and the compact view's Details, the project field, the type switch's options, a
+locked tick's reason, the repeat editor's fields, the mix-in chips and the select bar — and the
+Planner's controls keep no `title` attribute: the system's grey tooltip stays only on text that
+is cut short (a long title, a path, a rule in words). A row's title says what a click and a
+⌘-click do ([[views]] "Rows").
 
 - **One layer per frame.** `Tips` is mounted once beside the app (`mountApp`) and reads a
   control's `data-tip`. A control whose name is on screen (`data-tip-label` inside it, wider than
   1px — a view tab still showing its word) shows no tip.
 - **Timing.** The tip shows after the pointer rests on the control for 350 ms (`TIP_DELAY_MS`) — at
   once when a tip is already showing — and at once on keyboard focus. A press, Escape, the pointer
-  or the focus leaving, and the control going away or scrolling out of the frame hide it.
+  or the focus leaving, and the control going away or scrolling out of the frame hide it. A focus
+  that follows a press (a click into a text field) shows nothing, so a tip never covers the text
+  being typed; Tab or any key makes focus show tips again. A control marked `data-tip-slow`
+  (a row's title) always waits `SLOW_TIP_DELAY_MS`, 1 s, on hover and on focus alike, whether or
+  not another tip is showing.
+- **Labels.** A tip may sit on a `label` (a radio option, a tick): hover anywhere on it shows it,
+  keyboard focus on the input inside it shows it, and the description attaches to that input.
 - **Placement** (`placeTip`): centred under the control, slid off the frame's left and right edges
   (8px margin), above the control when there is no room below — on neither side, the side with more
   room — in whole pixels; it wraps inside the frame's width and follows its control through a
   scroll.
 - **Accessibility.** A tip that says more than the control's accessible name is its description
-  while it shows.
+  while it shows (the input's, when the tip is on its label).
 
 ## Popovers
 

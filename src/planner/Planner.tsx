@@ -37,7 +37,7 @@ import { ItemPane, ItemSplit } from "./ItemPane";
 import { OpenInTabGlyph } from "./OpenInTabGlyph";
 import { PlannerGlyph } from "./PlannerGlyph";
 import { RowMenu, useRowMenu, type RowMenuTrigger } from "./RowMenu";
-import { TaskRow, UnreadableRow, type RowAction, type RowSelect } from "./TaskRow";
+import { OPEN_HINT_PANEL, OPEN_HINT_TAB, TaskRow, UnreadableRow, type RowAction, type RowSelect } from "./TaskRow";
 import { usePlannerItems, usePlannerSettings } from "./usePlannerData";
 import { useAttention } from "./useAttention";
 import { useOpenItem, type ItemAsk } from "./useOpenItem";
@@ -539,10 +539,13 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     };
   };
   const rowOf = (task: Task): SelectableRow => ({ path: task.path, title: displayTitle(task, day), type: task.type, archived: task.archived, readable: true });
-  /** A readable row's menu props: its menu with its actions and its view pin, open or not, and what a failed delete left. */
+  /** What a click and a ⌘-click on a row do here — its title's delayed tooltip. */
+  const openHint = surface === "tab" ? OPEN_HINT_TAB : OPEN_HINT_PANEL;
+  /** A readable row's menu props: its menu with its actions and its view pin, open or not, what a failed delete left, and its open hint. */
   const menuProps = (task: Task, actions: readonly RowAction[]) => {
     const pin = pinOf(task);
     return {
+      openHint,
       menu: menuOf(rowOf(task), actions, pin.pinned ? "pinned" : "unpinned", pin.onToggle),
       menuOpen: menuFor === task.path,
       failure: failureOf(task.path),
@@ -740,6 +743,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
         menu={menuOf(rowOf(todayNote), [], "card", () => setUnpinned({ day }))}
         menuOpen={menuFor === todayNote.path}
         failure={failureOf(todayNote.path)}
+        openHint={openHint}
       />
     ) : null;
   const pinnedRows = dailyCard === null ? listed.pinned : [dailyCard, ...listed.pinned];
@@ -1027,7 +1031,7 @@ interface SelectBarProps {
 function SelectBar({ count, all, rows, archive, busy, deleteButton, onToggleAll, onArchive, onDelete, onDone }: SelectBarProps) {
   return (
     <div className="select-bar" role="toolbar" aria-label="Selection" data-testid="select-bar">
-      <label className="select-bar__all" title="Select every row shown (⌘A)">
+      <label className="select-bar__all" data-tip="Select every row shown (⌘A)">
         <input
           type="checkbox"
           data-testid="select-all"
@@ -1046,14 +1050,14 @@ function SelectBar({ count, all, rows, archive, busy, deleteButton, onToggleAll,
       </label>
       <span className="select-bar__actions">
         {archive ? (
-          <button type="button" className="btn btn--sm btn--ghost" title="Move the selected notes into _archive/ — All shows them with “Show archived”" data-testid="select-archive" disabled={busy} onClick={onArchive}>
+          <button type="button" className="btn btn--sm btn--ghost" data-tip="Move the selected notes into _archive/ — All shows them with “Show archived”" data-testid="select-archive" disabled={busy} onClick={onArchive}>
             Archive
           </button>
         ) : null}
-        <button ref={deleteButton} type="button" className="btn btn--sm btn--ghost btn--danger-text" title="Move the selected files to the Trash (⌫)" data-testid="select-delete" disabled={count === 0 || busy} onClick={onDelete}>
+        <button ref={deleteButton} type="button" className="btn btn--sm btn--ghost btn--danger-text" data-tip="Move the selected files to the Trash (⌫)" data-testid="select-delete" disabled={count === 0 || busy} onClick={onDelete}>
           {count === 0 ? "Delete…" : `Delete ${String(count)}…`}
         </button>
-        <button type="button" className="btn btn--sm btn--ghost" title="Leave select mode (Esc)" data-testid="select-done" onClick={onDone}>
+        <button type="button" className="btn btn--sm btn--ghost" data-tip="Leave select mode (Esc)" data-testid="select-done" onClick={onDone}>
           Done
         </button>
       </span>

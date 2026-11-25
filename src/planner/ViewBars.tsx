@@ -65,7 +65,7 @@ export function MixBar({ ownId, noProject, mixed, groups, projects, onToggleNoPr
         type="button"
         className={`chip${noProject ? " chip--on" : ""}`}
         aria-pressed={noProject}
-        title={noProject ? "Stop mixing in the no-project items" : "Mix in the items that belong to no project"}
+        data-tip={noProject ? "Stop mixing in the no-project items" : "Mix in the items that belong to no project"}
         data-testid="mix-no-project"
         onClick={onToggleNoProject}
       >
@@ -77,7 +77,7 @@ export function MixBar({ ownId, noProject, mixed, groups, projects, onToggleNoPr
         ) : null}
       </button>
       {mixed.map((m) => (
-        <button key={m.key} type="button" className="chip chip--on" data-testid="mix-chip" data-source={m.key} aria-label={`Stop mixing in ${m.label}`} title={`Stop mixing in ${m.label}`} onClick={() => onRemove(m.key)}>
+        <button key={m.key} type="button" className="chip chip--on" data-testid="mix-chip" data-source={m.key} aria-label={`Stop mixing in ${m.label}`} data-tip={`Stop mixing in ${m.label}`} onClick={() => onRemove(m.key)}>
           <span className="chip__label">{m.label}</span>
           <span className="chip__x">
             <Cross />

@@ -16,6 +16,8 @@ interface DailyCardProps {
   menu?: RowMenuTrigger | undefined;
   menuOpen?: boolean;
   failure?: RowFailureText;
+  /** The delayed tooltip of the card's body (what a click and a ⌘-click open); none while its menu is open. */
+  openHint?: string | undefined;
 }
 
 /**
@@ -23,7 +25,7 @@ interface DailyCardProps {
  * checklist progress ("5/8") as text and a bar; a click opens it as a row's does (`direct`: with ⌘
  * or Ctrl held); the pin button unpins it for the rest of the planner day; a right-click opens its menu.
  */
-export function DailyCard({ note, day, open, onOpen, onUnpin, menu, menuOpen = false, failure }: DailyCardProps) {
+export function DailyCard({ note, day, open, onOpen, onUnpin, menu, menuOpen = false, failure, openHint }: DailyCardProps) {
   const main = useRef<HTMLButtonElement>(null);
   const title = displayTitle(note, day);
   const progress = progressText(note.progress);
@@ -37,7 +39,7 @@ export function DailyCard({ note, day, open, onOpen, onUnpin, menu, menuOpen = f
       data-open={open ? "true" : undefined}
       {...rowMenuHandlers(menu, () => main.current?.focus())}
     >
-      <button ref={main} type="button" className="daily-card__main" data-testid="daily-card-open" title={note.path} aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
+      <button ref={main} type="button" className="daily-card__main" data-testid="daily-card-open" data-tip={menuOpen ? undefined : openHint} data-tip-slow="" aria-current={open ? "true" : undefined} onClick={(e) => onOpen(e.metaKey || e.ctrlKey)}>
         <span className="daily-card__glyph" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
             <rect x="1.8" y="2.4" width="8.4" height="8" rx="1.4" stroke="currentColor" strokeWidth="1" />

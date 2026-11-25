@@ -70,7 +70,7 @@ export function RepeatEditor({ draft, onChange, result, anchor }: RepeatEditorPr
                 autoComplete="off"
                 spellCheck={false}
                 placeholder={defaultOn(draft.unit, anchor)}
-                title={draft.unit === "month" ? "Days of the month: 5 · 1, 15 · last · first mon" : "Weekdays: mon · mon, thu"}
+                data-tip={draft.unit === "month" ? "Days of the month: 5 · 1, 15 · last · first mon" : "Weekdays: mon · mon, thu"}
                 value={draft.on}
                 aria-invalid={bad("on")}
                 onChange={(e) => set({ on: e.target.value })}
@@ -91,7 +91,7 @@ export function RepeatEditor({ draft, onChange, result, anchor }: RepeatEditorPr
             inputMode="numeric"
             autoComplete="off"
             placeholder="0"
-            title="Days early it shows in Today"
+            data-tip="Days early it shows in Today"
             value={draft.lead}
             aria-invalid={bad("lead")}
             onChange={(e) => set({ lead: e.target.value })}

@@ -5,10 +5,15 @@ import { placeTip, type TipPlacement } from "./place";
 /** How long the pointer rests on a control before its tip shows; keyboard focus shows it at once. */
 export const TIP_DELAY_MS = 350;
 
+/** The wait of a control marked `data-tip-slow` (a hint that is only there for who lingers, like a row's click and ⌘-click). */
+export const SLOW_TIP_DELAY_MS = 1000;
+
 interface Tip {
   el: HTMLElement;
   text: string;
 }
+
+const isSlow = (el: HTMLElement): boolean => el.hasAttribute("data-tip-slow");
 
 /**
  * The control under `node` that has a tip to show now: the nearest `data-tip` element, unless the
@@ -28,8 +33,9 @@ function tipOf(node: EventTarget | null): Tip | null {
  * `data-tip="New task (⌘⇧A)"`; the tip shows after the pointer rests on it — at once when a tip is
  * already showing — and on keyboard focus, placed inside the frame (`placeTip`) and following its
  * control through a scroll. A press, Escape, the pointer or the focus leaving, and the control
- * going away or scrolling out of the frame all hide it. While it shows, a tip that says more than
- * the control's accessible name is its description.
+ * going away or scrolling out of the frame all hide it. A control marked `data-tip-slow` always
+ * waits `SLOW_TIP_DELAY_MS`, on hover and on focus alike. While it shows, a tip that says more than
+ * the control's accessible name is the description of the control it names (a label's input).
  */
 export function Tips() {
   const id = useId();
@@ -57,10 +63,10 @@ export function Tips() {
       if (next?.el === hovered) return;
       hovered = next?.el ?? null;
       pressed = false;
-      if (next === null || shown.current !== null) show(next);
+      if (next === null || (shown.current !== null && !isSlow(next.el))) show(next);
       else {
-        clearTimeout(timer);
-        timer = setTimeout(() => show(tipOf(next.el)), TIP_DELAY_MS);
+        show(null);
+        timer = setTimeout(() => show(tipOf(next.el)), isSlow(next.el) ? SLOW_TIP_DELAY_MS : TIP_DELAY_MS);
       }
     };
     const onLeave = () => {
@@ -73,11 +79,17 @@ export function Tips() {
     };
     const onFocus = (e: FocusEvent) => {
       const next = tipOf(e.target);
-      if (next !== null && next.el.matches(":focus-visible")) show(next);
+      if (pressed || next === null || !(e.target instanceof Element) || !e.target.matches(":focus-visible")) return;
+      if (!isSlow(next.el)) show(next);
+      else {
+        show(null);
+        timer = setTimeout(() => show(tipOf(next.el)), SLOW_TIP_DELAY_MS);
+      }
     };
     const onBlur = () => show(hovered !== null && !pressed ? tipOf(hovered) : null);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onPress();
+      else pressed = false;
     };
     const onMove = () => setMoved((n) => n + 1);
     document.addEventListener("mouseover", onOver);
@@ -130,9 +142,11 @@ export function Tips() {
   }, [tip, moved]);
 
   useEffect(() => {
-    if (tip === null || tip.text === tip.el.getAttribute("aria-label") || tip.el.hasAttribute("aria-describedby")) return;
-    tip.el.setAttribute("aria-describedby", id);
-    return () => tip.el.removeAttribute("aria-describedby");
+    if (tip === null) return;
+    const named = tip.el instanceof HTMLLabelElement ? (tip.el.control ?? tip.el) : tip.el;
+    if (tip.text === named.getAttribute("aria-label") || named.hasAttribute("aria-describedby")) return;
+    named.setAttribute("aria-describedby", id);
+    return () => named.removeAttribute("aria-describedby");
   }, [tip, id]);
 
   if (tip === null) return null;
