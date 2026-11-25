@@ -12,7 +12,7 @@ kind: reference
 `src/core/App.tsx`, `src/core/connection.ts`, `src/core/views.ts`, `src/core/EmptyState.tsx`,
 `vite.config.ts`, `vite.cli.config.ts`, `scripts/build.mjs`, `scripts/dev.mjs`,
 `scripts/install-app.mjs`, `scripts/pomade-dir.mjs` · **e2e:** `fake-host.spec.ts`,
-`pomade-smoke.spec.ts`, `pomade-two-apps.spec.ts` · **Unit:** `test/manifest.test.ts`,
+`pomade-smoke.spec.ts`, `pomade-two-apps.spec.ts`, `pomade-planner-show-added.spec.ts` · **Unit:** `test/manifest.test.ts`,
 `src/core/views.test.ts` · **Contract:** `../Pomade/docs/HOST-API.md` §1 (manifest), §2
 (install, dev link), §3 (`welcome`, routes)
 
@@ -52,10 +52,12 @@ Neither app calls the other, reads the other's settings or state, or needs it in
 `apps/<app>/public/manifest.json`, copied into the build as it is. The rows of [[DESIGN]] §1 come
 from here: id and name, the strip icon (Planner: `action: "panel"`; Board: `action: "both"`,
 `route: "board"`, `panelRoute: "needs-you"`), the Planner's `startOnLaunch`, its ⌘⇧A shortcut
-(`action: "overlay"`, `route: "quick-add"`) and its `commands` entry, the capabilities and the
-subscribed events. `test/manifest.test.ts` checks each manifest with the kit's `parseManifest` and
-holds that its capabilities and events are exactly what the app's own source (`apps/<app>`,
-`src/<app>`, `src/core`) uses, and that every strip and shortcut route has a view.
+(`action: "overlay"`, `route: "quick-add"`) and its `commands` entry, the capabilities, the
+subscribed events and the Planner's published event `item.added` ([[host-api-usage]] "Capabilities
+and events per app"). `test/manifest.test.ts` checks each manifest with the kit's `parseManifest`
+and holds that its capabilities, subscribed events and published events are exactly what the app's
+own source (`apps/<app>`, `src/<app>`, `src/core`) uses, that the Planner's only `project.write`
+calls are its scope folders, and that every strip and shortcut route has a view.
 
 ## Handshake and views
 

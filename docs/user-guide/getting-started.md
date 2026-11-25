@@ -7,7 +7,7 @@ kind: reference
 
 # Getting started
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 ## Install
 

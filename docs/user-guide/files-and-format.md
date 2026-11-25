@@ -7,7 +7,7 @@ kind: reference
 
 # Files and format
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 Every Planner item and every Board ticket is one Markdown file with YAML frontmatter. The file is
 the truth: edit it anywhere — Pomade's editor, Obsidian, a script, an agent — and the apps show the

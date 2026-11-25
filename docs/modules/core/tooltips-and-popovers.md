@@ -1,14 +1,15 @@
 ---
 doc: docs/modules/core/tooltips-and-popovers.md
 audience: engineers, product
-holds: the one tooltip layer per frame (`data-tip`, 350 ms, kept inside the frame) and the anchored popover both apps use
+holds: the one tooltip layer per frame (`data-tip`, 350 ms, `data-tip-slow` 1 s, kept inside the frame) and the anchored popover both apps use, with what closes it
 kind: reference
 ---
 
 # Tooltips and popovers — placed inside the frame
 
 **Module:** `core` · **UI:** every icon-only control of both apps; the Board's create form, card
-popover and triage picker; the Planner's mix-in picker and All's filter menus · **Code:** `src/core/Tips.tsx`, `src/core/tips.css`,
+popover, triage picker and reporter form; the Planner's row menu, mix-in picker and All's filter
+menus · **Code:** `src/core/Tips.tsx`, `src/core/tips.css`,
 `src/core/Popover.tsx`, `src/core/place.ts` · **e2e:** `tips-fake.spec.ts`, `pomade-tips.spec.ts`,
 `board-manage-fake.spec.ts` · **Unit:** `src/core/place.test.ts`
 
@@ -33,11 +34,13 @@ is cut short (a long title, a path, a rule in words). A row's title says what a 
   1px — a view tab still showing its word) shows no tip.
 - **Timing.** The tip shows after the pointer rests on the control for 350 ms (`TIP_DELAY_MS`) — at
   once when a tip is already showing — and at once on keyboard focus. A press, Escape, the pointer
-  or the focus leaving, and the control going away or scrolling out of the frame hide it. A focus
+  or the focus leaving, the window losing the focus, and the control going away or scrolling out of
+  the frame hide it. A press
+  puts the tip of the control pressed away until the pointer comes to another control. A focus
   that follows a press (a click into a text field) shows nothing, so a tip never covers the text
-  being typed; Tab or any key makes focus show tips again. A control marked `data-tip-slow`
-  (a row's title) always waits `SLOW_TIP_DELAY_MS`, 1 s, on hover and on focus alike, whether or
-  not another tip is showing.
+  being typed; Tab or any key makes focus show tips again. A control marked `data-tip-slow` (a
+  row's title, the daily-note card's) always waits `SLOW_TIP_DELAY_MS`, 1 s, on hover and on focus
+  alike, whether or not another tip is showing; a row's title carries no tip while its menu is open.
 - **Labels.** A tip may sit on a `label` (a radio option, a tick): hover anywhere on it shows it,
   keyboard focus on the input inside it shows it, and the description attaches to that input.
 - **Placement** (`placeTip`): centred under the control, slid off the frame's left and right edges
@@ -49,14 +52,18 @@ is cut short (a long title, a path, a rule in words). A row's title says what a 
 
 ## Popovers
 
-`Popover` is a small dialog anchored to an element's rect or a point (a right-click): a transparent
-scrim that closes it on a click outside, Tab kept inside, Escape closing it from anywhere in the
-frame, and focus returned where it came from (`restoreFocus`). A click in another frame, the
-editor or another app never reaches the scrim, so the frame losing the focus (the window's `blur`)
-closes it too — and then the focus stays where the user sent it, not taken back. `placePopover(anchor, size, frame)`
-puts it below its anchor when it fits, else above, else on the side with more room with its height
-capped (it scrolls inside); aligned to the anchor's start or end, shifted left at the right edge,
-narrower than a narrow frame. `role` is "dialog" or "menu". The Board's create form, card popover and triage picker and the
-Planner's row menu use it
-([[editing-drag-create]]), and so do the Planner's "+ Add from…" mix-in picker and All's filter
-menus (`ViewBars.tsx`, [[views]]).
+`Popover` is a small dialog anchored to an element's rect or a point (a right-click). It closes on
+a click or right-click on its transparent scrim, on Escape from anywhere in the frame, and when the
+frame loses the focus (the window's `blur`: a click in another frame, the editor or another app
+never reaches the scrim). Tab stays inside it. Focus returns where it came from (`restoreFocus`)
+on every close but the `blur` one, which leaves the focus where the user sent it. It focuses the
+element marked `data-autofocus`, else the first focusable one.
+
+`placePopover(anchor, size, frame)` puts it below its anchor when it fits, else above, else on the
+side with more room with its height capped (it scrolls inside); aligned to the anchor's start or
+end, shifted left at the right edge, narrower than a narrow frame. `role` is "dialog" or "menu".
+
+Users: the Board's create form, card popover, triage picker and reporter form
+([[editing-drag-create]]); the Planner's row menu, "+ Add from…" mix-in picker and All's filter
+menus (`ViewBars.tsx`, [[views]]). The Board tab's ⋯ menu is not one: it has its own scrim and Escape
+handling and does not close with the window's `blur`.

@@ -1,7 +1,7 @@
 ---
 doc: docs/modules/planner/attention.md
 audience: engineers, product
-holds: the Planner icon's badge (overdue + due today) and the once-a-day morning summary, both run by the hidden launch frame; the summary's click to the Workspace Today
+holds: the Planner icon's badge (overdue + due today) and the once-a-day morning summary, both run by the hidden launch frame; the summary's click to Today at Workspace
 kind: reference
 ---
 
@@ -36,7 +36,8 @@ kinds:
 - **due today** — a task's deadline today; a recurring item due today;
 - **soon** — a recurring item inside its lead time.
 
-A task only planned for today (`do-on`, no deadline) or rolled over is not due; a ticked one is out.
+A task only planned for today (`do-on`, no deadline) or rolled over is not due, nor is a note or
+thought planned for today (reason `planned`); a ticked one is out.
 
 ## Badge
 
@@ -63,7 +64,8 @@ due — soon included — one notification (`summaryOf`):
 
 ## Click
 
-The notice's action is `openApp` at route `today` in the Workspace: the Planner tab, Today selected.
+The notice's action is `openApp` at route `today` in the Workspace: the Planner tab at Workspace,
+Today selected.
 A notification's action can open only the app's tab, not its panel, so the click lands on the tab.
 The tab selects Today once the Workspace is active, and picking another view there takes the tab
 back to route `planner`, so the next click selects Today again (`PlannerTab`).

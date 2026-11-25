@@ -7,7 +7,7 @@ kind: reference
 
 # Keyboard and mouse
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 Every shortcut and mouse modifier of the Planner and the Board, grouped by where it works.
 
@@ -22,10 +22,12 @@ Every shortcut and mouse modifier of the Planner and the Board, grouped by where
 | Key / mouse | Does |
 |---|---|
 | rest the pointer 350 ms on an icon button, or focus it | shows its tooltip (at once when another tip is already showing) |
+| rest the pointer 1 s on a row's title, or focus it | shows what a click and a ⌘-click on the row do |
 | Esc, a press, the pointer or focus leaving | hides the tooltip |
 | Tab / ⇧Tab inside a popover or form | stays inside it |
 | Esc in a popover or menu | closes it; focus returns to what opened it |
 | click outside a popover | closes it |
+| another frame, the editor or another app taking the focus | closes an open popover (the row menu, filters, pickers, the Board's card popover); the focus stays where you sent it |
 
 ## Planner — lists
 
@@ -102,8 +104,8 @@ Also the **+ Add from…** mix-in picker.
 | Space on a row's box | select / unselect |
 | ⇧Space on a row's box | selects the range |
 | ↑ ↓ | move between rows' boxes |
-| ⌘A | selects every row the view shows (All: what the filters show; none of a folded group's) |
-| Delete or Backspace | **Delete N…** — asks first |
+| ⌘A (or Ctrl+A) | selects every row the view shows (All: what the filters show; none of a folded group's) |
+| Delete or Backspace | **Delete N…** — asks first (with something selected) |
 | Esc | leaves select mode |
 
 ### Delete confirmation

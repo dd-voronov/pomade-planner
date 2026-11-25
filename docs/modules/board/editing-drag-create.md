@@ -56,8 +56,9 @@ setting "Move done epics and tasks to `done/`" (the tab's ⋯ "Board settings" m
 
 A signal dropped on `triaged` without a `problem:` first asks "Which problem is it evidence for?"
 (`TriagePicker`, the parent list under the Triaged header). A pick writes `status`, `problem` and
-`updated`; **Skip — triage without one** writes `status` and `updated` only; **Cancel**, Escape or a
-click outside cancels the drop and writes nothing. A signal that has a problem is triaged without
+`updated`; **Skip — triage without one** writes `status` and `updated` only; **Cancel**, Escape, a
+click outside or the frame losing the focus (a click in another frame, the editor or another app)
+cancels the drop and writes nothing. A signal that has a problem is triaged without
 asking.
 
 ## Card popover
@@ -67,7 +68,8 @@ Right-click (also the context-menu key or Shift+F10 on a focused card) opens a p
 task, `problem:` for a signal; a problem has none). Each pick is written at once (`planEdit`) — a
 field-only write of that key and `updated`, under the same "never over a newer file" check as a
 drop; "No epic" / "No problem" removes the key. The popover stays open for the next change; Escape
-or a click outside closes it and focus returns to the card.
+or a click outside closes it and focus returns to the card; the frame losing the focus closes it
+too, and focus stays where the user sent it.
 
 ## Parent list
 
@@ -84,7 +86,8 @@ picker ↑ ↓ highlight and Enter or a click picks.
 column takes both; fixed elsewhere), title (required), parent (optional), priority (P0–P3, default
 P2), and on Signals `source` (optional; empty, no `source:` is written). **Cancel** and **Create
 <kind>** ("Creating…" while it writes). Enter submits from any field; Tab stays inside the form;
-Escape closes it and returns focus to the **+**.
+Escape or a click outside closes it and returns focus to the **+**; the frame losing the focus
+closes it, focus left where the user sent it.
 
 - **ID** (`nextId`): the highest `<prefix>-NNN` among the folder's and `done/`'s files — by file name,
   any extension, and by the frontmatter `id:` — plus one, zero-padded to 3 (`T-999` → `T-1000`);
@@ -113,7 +116,8 @@ spaces, like d.voronov." otherwise, nothing written). **Save** or Enter writes `
 `Apps/pomade-board/settings.json` (`saveSettingsFile`, every other key kept; the file is created
 when missing, a broken one is never overwritten and the form says why); an emptied field removes
 the key, so the default applies. Escape, **Cancel** or a click outside closes it and focus returns
-to the ⋯. It is workspace-wide, like `backlogPathPattern` ([[settings-and-state]]).
+to the ⋯; the frame losing the focus closes it, focus left where the user sent it. It is
+workspace-wide, like `backlogPathPattern` ([[settings-and-state]]).
 
 ## Placement
 

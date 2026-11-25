@@ -1,7 +1,7 @@
 ---
 doc: docs/modules/core/host-api-usage.md
 audience: engineers, product
-holds: which Pomade and `pomade-kit` features the apps need and how each is used: overlay, launch panel, badge, notices, tabs, conditional writes, pickers, bulk delete, project events; which project an editor tab opens in
+holds: which Pomade and `pomade-kit` features the apps need and how each is used: each manifest's capabilities and events, overlay, launch panel, `panel.show`, the Planner's own event, badge, notices, tabs, conditional writes, pickers, bulk delete, scope folders, project events; which project an editor tab opens in
 kind: reference
 ---
 
@@ -9,7 +9,9 @@ kind: reference
 
 **Module:** `core` · **UI:** — · **Code:** `src/core/host.ts`,
 `src/core/views.ts`, the Host API calls across `src/planner/` and `src/board/` · **e2e:**
-`pomade-smoke.spec.ts`, `pomade-two-apps.spec.ts`, `pomade-project-removed.spec.ts` · **Unit:**
+`pomade-smoke.spec.ts`, `pomade-two-apps.spec.ts`, `pomade-project-removed.spec.ts`,
+`pomade-planner-show-added.spec.ts`, `pomade-planner-template.spec.ts`,
+`planner-projects-fake.spec.ts` (scope folders) · **Unit:**
 `test/manifest.test.ts` · **Contract:**
 `../Pomade/docs/HOST-API.md` (protocol); usage reference: the `pomade-kit` README
 (`../pomade-kit/README.md`)
@@ -33,7 +35,7 @@ are met per app. A new need goes to `../Pomade/docs/PLATFORM-INTAKE.md`.
 | `project removed` event | `pomade:T-247` |
 | A project's tasks folder in its scope (`project.addScopeFolder` and its siblings) | `pomade:E-047` |
 | Notice with click action, icon badge | `pomade:E-032` |
-| An app brings its own side panel forward (`panel.show`); `overlay.open` `anchor: "panel"` every time | Pomade `main` (`pomade-kit` v0.19.0) |
+| An app brings its own side panel forward (`panel.show`); `overlay.open` `anchor: "panel"` every time | `pomade:T-325` (Pomade `main`; `pomade-kit` v0.19.0) |
 | `pomade-planner today` on `PATH` | `pomade:E-028` |
 | Rule-8 banner when the app writes an open dirty file | `pomade:E-035` |
 | File picker for the daily-note template (`files.pickFile`) | `pomade:T-245` |
@@ -48,21 +50,38 @@ need the Pomade after 0.3.3: on 0.3.3 the panel is not brought forward and the c
 logged, the add itself unaffected. A manifest naming `project.removed` does not install on a
 Pomade without it.
 
+## Capabilities and events per app
+
+Each manifest asks for exactly what its app's source uses (`test/manifest.test.ts`).
+
+| | Planner | Board |
+|---|---|---|
+| Capabilities | `project.read`, `project.write`, `files.read`, `files.write`, `tabs.open` | the same five |
+| What `project.write` is for | `project.addScopeFolder` / `removeScopeFolder` only | `project.setSettings` (the per-project backlog settings) |
+| Events subscribed | `pomade.ready`, `project.created`, `project.renamed`, `project.removed`, `project.updated`, `pomade-planner:item.added` | `project.created`, `project.renamed`, `project.removed`, `project.updated` |
+| Events published | `item.added` | none |
+
+Calls that need no capability: `state.*`, `tabs.openApp`, `overlay.open` / `resize` / `close`,
+`panel.show`, `strip.setBadge`, `notices.post`, `events.subscribe` / `publish`. `tabs.open` is for
+`tabs.openFile`; `files.pickFolder` and `files.pickFile` ask `files.read`;
+`project.getScopeFolders` asks `project.read`.
+
 ## How each need is used
 
 - **Quick add** is the Host API's overlay surface: a shortcut with action `overlay`, and
   `overlay.open` (`anchor: "panel"`) from the Planner panel; the form sizes its frame with
   `overlay.resize` ([[quick-add]] "The overlay").
-- **After an overlay add** the overlay publishes the Planner's own event `item.added` — the
-  manifest's `events.publish`, heard by its tabs through `pomade-planner:item.added` in
-  `events.subscribe` — and calls `panel.show({ route: addedRoute(path) })` (no capability) to bring
+- **After an overlay add** (every type but **Daily**) the overlay publishes the Planner's own event `item.added` with
+  `{ path, contextId }` — the manifest's `events.publish`, heard by its tabs through
+  `pomade-planner:item.added` in `events.subscribe` — and calls `panel.show({ route: addedRoute(path) })` (no capability) to bring
   the Planner panel forward on the item; the panel leaves that route with `panel.show({ route:
   "planner" })` ([[quick-add]] "After an add").
 - **Badge, morning summary, the daily note before the Planner is first opened** come from
   `startOnLaunch` (the Planner panel is the launch panel), `strip.setBadge`, `notices.post` and the
   `pomade.ready` event ([[attention]], [[daily-notes]]). The summary's click is a notice action
   `openApp` at route `today` in the Workspace.
-- **View state** lives in the Host API's `state` store ([[settings-and-state]]).
+- **View state** lives in the Host API's `state` store ([[settings-and-state]]); a frame follows
+  another frame's change through `state.onChange`.
 - **Tabs.** An app opens its own tab at a route with `tabs.openApp`, never the other app's — the
   Planner panel's rows at an item's route, which an open tab receives as `route.changed`
   ([[item-in-place]] "From the panel"); the Board's Workspace chooser at `board` in a project.
@@ -71,8 +90,10 @@ Pomade without it.
   `repeat:` key's own lines (`formatSchedule`). An action's first write to an item or a ticket is
   conditional on the mtime read (`ifMtime`, refused as `changed-on-disk`) ([[file-model]] "Never
   over a newer file").
-- **Pickers.** `files.pickFolder` (the tasks root, a project's backlog folder) and
-  `files.pickFile` (the daily-note template).
+- **Pickers.** `files.pickFolder`: the Planner's tasks root (the dialog starts at the folder
+  set), the Board's backlog folder (bounded by the project, starting at its root). `files.pickFile`
+  with `extensions: ["md"]` and no `under`: the daily-note template, chosen from the whole
+  workspace ([[settings-and-onboarding]]).
 - **Bulk delete.** `files.delete`, at most `FILES_DELETE_MAX_PATHS` (1000) paths a call
   ([[trimming]]).
 - **Scope folders.** The Planner keeps each project's folder in the tasks root in that project's

@@ -27,12 +27,13 @@ outcome (`../Pomade/docs/auxiliary/grills/2026-11-09-g2-planner.md`), the platfo
 |---|---|---|
 | **App id, name** | `pomade-planner`, "Planner" | `pomade-board`, "Board" |
 | **UI** | a web app (iframe on `pomade-app://pomade-planner/`): the Planner panel, the Planner tab, the quick-add form | a web app (iframe on `pomade-app://pomade-board/`): the Board tab, the "Needs you" panel |
-| **Strip icon** | **Planner** — fills the side panel with the Planner; badge = overdue + due today (red when anything is overdue). Its panel starts hidden at Pomade's launch (`startOnLaunch`, the app's launch panel) — the one frame that sets the badge, posts the morning summary and makes the day's daily note ([[attention]], [[daily-notes]]) | **Board** — opens or focuses the active project's Board tab **and** fills the side panel with "Needs you" ([[needs-you]]) |
+| **Strip icon** | **Planner** — fills the side panel with the Planner (an add in the overlay brings the panel forward on the new item); badge = overdue + due today (red when anything is overdue). Its panel starts hidden at Pomade's launch (`startOnLaunch`, the app's launch panel) — the one frame that sets the badge, posts the morning summary and makes the day's daily note ([[attention]], [[daily-notes]]) | **Board** — opens or focuses the active project's Board tab **and** fills the side panel with "Needs you" ([[needs-you]]) |
 | **New-tab menu** (the default view, route `""`) | the Planner tab | the Board tab |
 | **Shortcut** | ⌘⇧A, quick add ([[quick-add]]) | none |
 | **Backend** | none | none |
 | **Commands** | `pomade-planner today` ([[today-command]]) | none |
 | **Capabilities** | `project.read`, `project.write` (each project's scope folder, [[projects]]), `files.read`, `files.write`, `tabs.open` | the same; `project.write` for its per-project settings |
+| **Events** ([[host-api-usage]]) | subscribes to Pomade ready and the project events, and to its own `item.added`; publishes `item.added` (after an add in the overlay) | subscribes to the project events |
 | **Data** ([[settings-and-state]]) | `Apps/pomade-planner/`, the tasks folder | `Apps/pomade-board/`, each project's backlog folder |
 
 **One codebase, two builds.** Each app is a folder under `apps/` — its page, its entry and its
@@ -42,8 +43,8 @@ into the Board, and `src/core/` (the shell, the Host API helpers, the base style
 installable as it is. A frame renders only its own app's views. Neither app calls the other, reads
 the other's settings or state, or needs it installed ([[app-shell-and-two-apps]]).
 
-**On the platform only.** Each app uses only the Host API (`pomade-kit` SDK) and `pomade-kit`'s pure
-logic, and each manifest asks for the capabilities and events its own code uses, no more
+**On the platform only.** Each app uses only the Host API (`pomade-kit` SDK, pinned at v0.19.0) and
+`pomade-kit`'s pure logic, and each manifest asks for the capabilities and events its own code uses, no more
 ([[host-api-usage]]). Both wear Pomade's theme and draw every colour from its tokens ([[theme]]).
 
 **Item detail:** a Planner item opens in place in the Planner tab — a compact view of its fields and

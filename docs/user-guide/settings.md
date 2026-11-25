@@ -7,7 +7,7 @@ kind: reference
 
 # Settings and data
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 Each app keeps its own data and reads no other's. Three places:
 

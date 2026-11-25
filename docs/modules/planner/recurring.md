@@ -70,7 +70,8 @@ other words written by hand are kept and shown.
   passed: one row, `missed` = `do-on` plus every occurrence after it up to today), `ended`.
   `lead-days: 0` = only on the day; `lead-days` ≥ the period = always visible.
 - **Ended:** `end` has passed, or there is no next occurrence (`do-on` past `end`, a `once` done).
-  An ended item is out of Today, in Recurring with "Ended", its checkbox and Skip off.
+  An ended item is out of Today, in Project's "Tasks" and Recurring with "Ended", its checkbox and
+  Skip off.
 - **Done by hand.** A recurring item set to `status: done` by hand is done like a task: out of
   Today, Project and Recurring, in All with "Show done".
 

@@ -10,15 +10,17 @@ kind: reference
 **Module:** `planner` · **UI:** the Planner panel (the Planner strip icon) and the Planner tab ·
 **Code:** `src/planner/Planner.tsx`, `src/planner/PlannerPanel.tsx`, `src/planner/PlannerTab.tsx`,
 `src/planner/TaskRow.tsx`, `src/planner/ViewBars.tsx`, `src/planner/DailyCard.tsx`,
-`src/planner/GroupHeading.tsx`, `src/planner/model/scope.ts`, `src/planner/model/today.ts`,
+`src/planner/GroupHeading.tsx`, `src/planner/RowMenu.tsx`, `src/planner/model/row-menu.ts`,
+`src/planner/model/scope.ts`, `src/planner/model/today.ts`,
 `src/planner/model/labels.ts`, `src/planner/model/pins.ts`, `src/planner/model/folds.ts`,
 `src/planner/model/view-state.ts`, `src/planner/model/body.ts` (excerpt), `src/core/switcher.css`,
 `src/planner/planner.css` · **e2e:** `planner-fake.spec.ts`, `planner-today-fake.spec.ts`,
-`planner-projects-fake.spec.ts`, `planner-project-fake.spec.ts`, `planner-notes-fake.spec.ts`, `tips-fake.spec.ts`,
+`planner-projects-fake.spec.ts`, `planner-project-fake.spec.ts`, `planner-notes-fake.spec.ts`,
+`planner-row-menu-fake.spec.ts`, `planner-select-views-fake.spec.ts`, `tips-fake.spec.ts`,
 `pomade-planner.spec.ts`, `pomade-planner-projects.spec.ts`, `pomade-tips.spec.ts` · **Unit:**
 `src/planner/model/scope.test.ts`, `src/planner/model/pins.test.ts`,
 `src/planner/model/folds.test.ts`, `src/planner/model/view-state.test.ts`,
-`src/planner/model/labels.test.ts`
+`src/planner/model/labels.test.ts`, `src/planner/model/row-menu.test.ts`
 
 ## What it does
 
@@ -31,11 +33,17 @@ files.
 
 ## Header
 
-- **Panel:** the views, **+**, **Open in tab**, **⋯** (on All "Select items…" — "Stop selecting"
-  while on — then "Settings…", which opens the tab at route `settings`).
-- **Tab:** the views, **+**, on All the **Select** button, and **Settings** — the gear of Pomade's
-  own Settings row (the same character at the same size).
+- **Panel:** the views, **+** ("New task (⌘⇧A)"), **Open in tab**, **⋯** ("Select items…" —
+  "Stop selecting" while on; disabled while the view shows no row — then "Settings…", which opens
+  the tab at route `settings`).
+- **Tab:** the views, **+**, the **Select** button (pressed while select mode is on; disabled while
+  the view shows no row) and **Settings** — the gear of Pomade's own Settings row (the same
+  character at the same size).
+- Select mode is on every view ([[trimming]]).
 - Every icon-only control carries a tooltip ([[tooltips-and-popovers]]).
+- **The subheader** under them holds the planner day ("Tue, Nov 17"; its tooltip names the day
+  boundary) in Today, Project and Recurring — in All "Show done" and "Show archived" stand there
+  — and, at its end, the context's name.
 
 ## Switcher
 
@@ -50,7 +58,7 @@ The active Pomade project, or Workspace (the Workspace item in Pomade's sidebar)
 every `project.changed` — a tab restored at launch included (`useActiveProject`,
 [[host-api-usage]]).
 
-**The line under the header** names the context, not a path: the project's label ("QuizLab", with
+**The context's name** (the subheader's end, `planner-context`) names the context, not a path: the project's label ("QuizLab", with
 its qualifier when two projects share the name — [[projects]] "Sources and labels") in Project,
 Recurring and All inside a project, and in Today while its project filter is on; "All projects" in
 Today and in every view at Workspace. The folder's path (`To-dos/QuizLab/`, or the tasks root's) is
@@ -65,8 +73,9 @@ its tooltip.
 
 `scope.ts` holds these rules: `isOwn`, `inToday` (Today and its project filter), `inScope` (Project
 and Recurring), `inAllFilter` (All), `projectGroupOf` and `projectRows` (Project's groups),
-`projectEntries` (Project's headings), `countsInProject` (Project's count), and `liveMixins`
-(mix-ins of sources no longer there dropped).
+`projectEntries` (Project's headings), `countsInProject` (Project's count), `liveMixins`
+(mix-ins of sources no longer there dropped), and `viewListing` and `revealInAll` (where an added
+item shows, [[quick-add]] "After an add").
 
 - **Grouping:** headings per project, in the order and with the labels of [[projects]] "Sources
   and labels", each with its open count — Today's in every context (unless narrowed to the
@@ -103,7 +112,7 @@ and Recurring), `inAllFilter` (All), `projectGroupOf` and `projectRows` (Project
 ## The views
 
 - **Today** is one list for the whole workspace and reads the same in every context. It names the
-  planner day in its header ("Tue, Nov 17"); its rows and their reasons come from the Today module
+  planner day in its subheader ("Tue, Nov 17"); its rows and their reasons come from the Today module
   ([[days-and-today]]): each row shows its reason (Overdue, Due today, "planned N days ago", "Due
   in 3 days", "Missed 2×"), its deadline when that isn't the reason, its importance (`!3`), and a
   recurring item's rule in the kit's words. A note or thought planned for the day stands among its
@@ -140,7 +149,8 @@ and Recurring), `inAllFilter` (All), `projectGroupOf` and `projectRows` (Project
 Every heading of a list folds (`GroupHeading`, `folds.ts`), in the panel and in the tab: Today's
 project headings, Project's "Tasks" and "Notes and thoughts" (at Workspace inside each project's
 heading), and Recurring's project headings at Workspace. A heading's count is over its group's
-rows, folded or not (`rowsByGroup`).
+rows, folded or not (`rowsByGroup`): the open ones, and in Project what `countsInProject` counts
+("Notes and thoughts": its rows).
 
 - A chevron stands before the heading's name; a click on the heading, or Enter or Space on it,
   folds and unfolds it; on a focused heading ← folds and → unfolds. Its tooltip, after a second:
@@ -175,8 +185,9 @@ rows, folded or not (`rowsByGroup`).
   row shows no file path on hover (the path is in the item's pane). An unreadable file's row
   shows its path and the reason in the Planner's tooltip.
 - **Adding:** the **+** in the header and an **Add** button at the foot of every list, under the
-  empty view's text when there are no rows ([[quick-add]]); from Today the item starts with the
-  context's project and `do-on` today.
+  empty view's text when there are no rows ([[quick-add]]); the item starts with the context's
+  project, `do-on` today from Today and type Recurring from Recurring ([[quick-add]] "Pre-fills").
+  An added item is followed in its view ([[quick-add]] "After an add").
 - **Description excerpt** (the full tab only): the first one or two prose lines of the body
   (headings, rules, code and a recurring item's `## Log` skipped), markdown stripped, list items
   joined with " · ", cut near 160 characters (`excerptOf`, `EXCERPT_MAX`). Texts are read through

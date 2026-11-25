@@ -75,7 +75,8 @@ frames doing it at once agree.
 ## Scope folders
 
 Each pass ends by making every listed project's Planner scope folders (Host API
-`project.addScopeFolder`, `pomade:E-047`) exactly its folder in the tasks root
+`project.getScopeFolders` / `addScopeFolder` / `removeScopeFolder`, `pomade:E-047`; manifest
+capabilities `project.read` and `project.write`) exactly its folder in the tasks root
 (`planScopeFolders`, `syncScopeFolders`): `<tasks root>/<folder>` for a mapped project, none for an
 unmapped one. So Pomade counts a project's items as the project's — no "Outside this project" mark
 on its editor tabs ([[host-api-usage]] "Editor tabs in their project").

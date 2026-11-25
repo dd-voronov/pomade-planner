@@ -9,7 +9,8 @@ kind: reference
 
 **Module:** `planner` · **UI:** the Today view; every list's order · **Code:**
 `src/planner/model/today.ts`, `src/planner/clock.ts`, `src/planner/model/labels.ts`,
-`src/planner/model/tick.ts` · **e2e:** `planner-fake.spec.ts`, `pomade-planner.spec.ts` ·
+`src/planner/model/tick.ts` · **e2e:** `planner-fake.spec.ts`, `planner-today-fake.spec.ts`,
+`planner-notes-fake.spec.ts`, `pomade-planner.spec.ts` ·
 **Unit:** `src/planner/model/today.test.ts` (Europe/Madrid, across DST),
 `src/planner/model/labels.test.ts`
 
@@ -58,8 +59,7 @@ anything archived (`isScheduled`, `isPlannedNote`). `todayRows(tasks, day)`:
 
 **Reason** — each Today row carries the first that applies (`reasonOn`): `overdue`, `due-today`,
 `planned` (`do-on` today), `rolled-over` (`do-on` earlier, with `plannedDaysAgo`). A note's or
-thought's is always `planned`. A recurring
-item's reason comes from its schedule alone, never its `deadline`: `lead-time` before `do-on`,
+thought's is always `planned`. A recurring item's reason comes from its schedule alone, never its `deadline`: `lead-time` before `do-on`,
 `recurring-due` on and after it.
 
 ## Ticking
@@ -67,8 +67,8 @@ item's reason comes from its schedule alone, never its `deadline`: `lead-time` b
 Ticking sets `status: done` and `done-on` (field-only, [[storage-and-item-types]] "Writing an
 item"); the file stays where it is. The item stays crossed out, with the reason it had, until the
 next day boundary (`isVisibleOn`: open, or `done-on` = the planner day) — undo by unticking — then
-leaves Today and Project. A thought resolved on its planned day does the same in Today. A recurring item is never crossed out: done advances it
-([[recurring]] "The row").
+leaves Today and Project. A thought resolved on its planned day does the same in Today. A recurring
+item is never crossed out: done advances it ([[recurring]] "The row").
 
 ## Order inside every list
 

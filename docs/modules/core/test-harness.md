@@ -45,15 +45,16 @@ changes. Pure logic sits next to its code (`src/*/model/*.test.ts`); the apps' H
 | `fixture=planner`, `extra=notes` | the Planner's projects workspace; its notes, thoughts, daily notes and template |
 | `now` | a local time the Planner's clock starts at (the `test.clock` state, [[settings-and-state]] "Test hook") |
 | `state` | a JSON object of further app state keys |
-| `mount=manual` | the frame mounts only on `window.mountNow()`, after a spec changed the fake workspace; `mountNow({ surface, icon, route })` mounts that surface instead, on the same fake host (after `window.mounted.close()`) |
+| `mount=manual` | the frame mounts only on `window.mountNow()`, after a spec changed the fake workspace; `mountNow(frame)` mounts that frame (`{ surface, icon, route, shortcut }`) instead of the one the query names, on the same fake host (after `window.mounted.close()`) |
 | `theme` | `light` · `dark`, Pomade's theme at the handshake; `window.fakeHost.setTheme` changes it |
 
 An overlay — `surface=overlay`, or one the app opens itself with `overlay.open` — is mounted as
 Pomade shows it: an `iframe[data-surface="overlay"]` over a scrim, 420 wide and as high as the app
 asks; Escape, `overlay.close` or a click on the scrim removes it and gives focus back. The nav bar
 holds presets for every surface. `window.fakeHost` and `window.mounted` are there for specs and the
-console; `window.hostCalls` lists every Host API call the app's frames made (to count writes),
-`window.scopeFolders(projectId)` reads the app's scope folders of a project, and
+console; `window.hostCalls` lists every Host API call any of the app's frames made, as `{ method, params }`
+in order (to count writes and see which were made); `window.scopeFolders(projectId)` reads the
+app's scope folders of a project (the fake host keeps them private); and
 `window.pressShortcut(id)` opens the app's overlay shortcut `id` over the mounted frame, which
 stays — as Pomade's shortcut does, so a spec sees the frame follow what the overlay did.
 
@@ -72,6 +73,10 @@ with `NODE_ENV=test`, `POMADE_WORKSPACE`, `POMADE_USER_DATA` and `POMADE_HOME` i
 the apps dev-linked (`POMADE_DEV_APPS`) or installed. The checkout is only read: it must hold a
 build (`out/main/index.js`) and its Electron; otherwise the specs fail and say so. The Planner's
 clock is seeded into `<userData>/app-state/pomade-planner/state.json` before the first launch.
+
+`queuePickerAnswers(app, answers)` (`e2e/fixtures/pomade.ts`) answers Pomade's folder and file
+pickers through its `NODE_ENV=test` hook `__pomadePick` (absolute paths, `null` = cancel) and
+`__pomadePick.requests` holds what the app asked (`defaultPath`, `extensions`).
 
 `frameShown(page)` (`e2e/fixtures/frames.ts`) waits 5 animation frames of Pomade's window after a
 frame is shown: an out-of-process iframe takes input only after the window has drawn it, and a

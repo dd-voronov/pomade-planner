@@ -7,7 +7,7 @@ kind: reference
 
 # Troubleshooting and limits
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 ## Planner
 

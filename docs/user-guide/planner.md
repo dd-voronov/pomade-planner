@@ -7,7 +7,7 @@ kind: reference
 
 # Planner
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 The Planner keeps every item as one Markdown file in your tasks folder. It shows them in four views
 for the active Pomade project (or Workspace), in the side panel and in a tab. Every change on disk —
@@ -38,9 +38,8 @@ from Pomade's editor, Obsidian, Finder, git or an agent — shows within about a
 
 Open notes and thoughts stand in Project, under **Notes and thoughts**, and in All; one with a
 **Do on** also stands in Today on that day — and only that day: it never rolls over. They are never
-in Recurring, and a Deadline or Importance set on them by hand is ignored. Daily notes live in All, and today's also as a card on top of
-Today.
-Changing an item's `type:` in its file keeps the file and its text; the views show it as the new
+in Recurring, and a Deadline or Importance set on them by hand is ignored. Daily notes live in All,
+and today's also as a card on top of Today. Changing an item's `type:` in its file keeps the file and its text; the views show it as the new
 type with the next read.
 
 **Dates.** *Do on* is the day you plan to do it; *Deadline* is the day it is due. Both optional.
@@ -66,11 +65,12 @@ glyphs, then one joined strip — and never drops a view. Every icon button has 
 pointer on it, or focus it with the keyboard.
 
 **Context.** The views follow the active Pomade project; clicking **Workspace** in Pomade's sidebar
-shows the Workspace. The line under the header names the day ("Tue, Nov 17") and the context: the
-project ("QuizLab"; "QuizLab (Archive)" when two projects share the name) in Project, Recurring and
-All inside a project, and in Today while **Only QuizLab** is on; "All projects" in Today and in every
-view at Workspace. Rest the pointer on it for the folder's path (`To-dos/QuizLab/`). The selected
-view is remembered per project.
+shows the Workspace. The line under the header shows the day ("Tue, Nov 17"; in All, **Show done**
+and **Show archived** instead) and, at its end, the context: the project ("QuizLab"; "QuizLab
+(Archive)" when two projects share the name) in Project, Recurring and All inside a project, and in
+Today while **Only QuizLab** is on; "All projects" in Today and in every view at Workspace. Rest
+the pointer on it for the folder's path (`To-dos/QuizLab/`). The selected view is remembered per
+project.
 
 ## The views
 
@@ -197,8 +197,9 @@ current tab; the panel's **+** and Add button open the same form beside the pane
 closes it and focus returns where it was. ⌘⇧A opens the form where you last dragged it.
 
 After an add the Planner shows the new item: the side panel comes forward on the Planner — also when
-it showed the file tree or another panel, or was collapsed — and an open Planner tab follows too,
-each on a view that lists the item, its row briefly marked (below). The keyboard stays where it was.
+it showed the file tree or another panel, or was collapsed — and an open Planner tab on the project
+the item was added in follows too, each on a view that lists the item, its row briefly marked
+(below). The keyboard stays where it was.
 
 ### Add in place (Planner tab)
 
@@ -241,8 +242,9 @@ Enter, Enter files it into QuizLab.
 In the Planner tab, click a row's title (or press Enter on it): the item opens in a pane beside the
 list. One item at a time; another row's click takes the pane over. In a tab narrower than 720 px the
 pane replaces the list, with a back arrow. From the panel a click opens the Planner tab with the
-pane. **⌘-click** a row opens the file in Pomade's editor instead. Unreadable files always open in
-the editor. An editor tab opens in the project you are in — Workspace when you use the Planner
+pane. **⌘-click** a row opens the file in Pomade's editor instead; rest the pointer on a row's
+title for a second and its tooltip says so ("Click: open here · ⌘-click: open the file in the
+editor"). Unreadable files always open in the editor. An editor tab opens in the project you are in — Workspace when you use the Planner
 there — and Pomade stays in it. A project's folder in the tasks folder counts as part of that
 project, so its own items open without a mark; a no-project item, or another project's item opened
 here, carries Pomade's orange "Outside this project" mark.
@@ -371,9 +373,10 @@ with one name: the later one's folder gets its group, `QuizLab (Archive)`.
 - `Daily/`, `_archive/` and hidden folders are never a project's.
 
 **Mix-ins** (inside a project, in Project and Recurring): **+ Add from…** opens the project picker
-— **No project** first for the workspace-level items, then the groups and their projects. Each
-source added is a chip; click it (×) to remove. Mixed-in rows join the list and carry their
-source's label. Mix-ins are remembered per project.
+— **No project** first for the workspace-level items, then the groups and every project not mixed in
+yet. Each source added is a chip; click it (×) to remove. **+ Add from…** goes while nothing is
+left to add. Mixed-in rows join the list and carry their source's label. Mix-ins are remembered
+per project.
 
 ## Select mode: delete and archive
 
@@ -420,7 +423,7 @@ is due (soon included).
 - Body: overdue, then due-today items — "Overdue: Pay the tax · Due today: Buy printer ink, Upload
   invoices"; a recurring item that missed several runs reads "Bins (missed 3×)". Up to 3 names, then
   "+N more".
-- Click: the Planner tab opens on the Workspace Today.
+- Click: the Planner tab opens at Workspace with Today selected.
 - At most one per day. Nothing is posted later that day, and nothing when the boundary passes while
   Pomade stays open — the next start posts. A start before the boundary (01:30) still counts as
   yesterday.

@@ -7,7 +7,7 @@ kind: reference
 
 # Board
 
-[← User guide](user-guide.md)
+[← User guide](index.md)
 
 The Board is a kanban over a project's backlog folder: each ticket is one Markdown file whose
 frontmatter carries `kind:` and `status:`. The Board icon opens (or focuses) the active project's

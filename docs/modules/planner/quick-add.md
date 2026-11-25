@@ -19,7 +19,8 @@ floating form over the current tab (⌘⇧A, the panel's **+** and Add button) �
 `planner-fake.spec.ts`, `planner-notes-fake.spec.ts`, `pomade-planner-add.spec.ts`,
 `pomade-planner-trim.spec.ts`, `pomade-planner-recurring.spec.ts` · **Unit:**
 `src/planner/model/item-draft.test.ts`, `src/planner/model/create.test.ts`,
-`src/planner/model/repeat-draft.test.ts`, `src/planner/model/picker.test.ts` · **Contract:**
+`src/planner/model/repeat-draft.test.ts`, `src/planner/model/picker.test.ts`,
+`src/planner/model/scope.test.ts`, `src/core/views.test.ts` · **Contract:**
 `../Pomade/docs/HOST-API.md` §1 `shortcuts` (`action: "overlay"`), §4 `overlay.open` /
 `overlay.resize`, `panel.show`, `events`
 
