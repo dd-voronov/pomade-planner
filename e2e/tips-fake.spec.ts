@@ -8,7 +8,7 @@
 import { expect, test, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
 import { APP_PORT, BOARD_URL, HARNESS_PORT } from "../playwright.config";
-import { row } from "./fixtures/planner";
+import { addFrom, row } from "./fixtures/planner";
 import { shot } from "./fixtures/screens";
 
 const APP = `http://localhost:${APP_PORT}/`;
@@ -379,14 +379,17 @@ test.describe("the controls' hints are the Planner's tooltip (T-018)", () => {
     expect(await titled(a)).toEqual([]);
   });
 
-  test("the mix-in chips of a project are tooltips too; no list, bar or form of the Planner keeps a title on a control", async ({ page }) => {
+  test("Project's chips in a project are tooltips too; no list, bar or form of the Planner keeps a title on a control", async ({ page }) => {
     await page.goto(plannerOn("panel", { project: null }));
     const a = app(page);
     await expect(a.locator('main[data-daily]:not([data-daily="pending"])')).toHaveCount(1);
     await a.getByTestId("view-project").click();
-    await a.getByTestId("mix-no-project").click();
     await pointerAway(page);
-    await hoverShows(a, a.getByTestId("mix-no-project"), "Stop mixing in the no-project items");
+    await hoverShows(a, a.getByTestId("due-today"), "Show Pomade's Today items alone");
+    await hoverShows(a, a.getByTestId("mix-add"), "Mix in another project's items, or the items of no project");
+    await addFrom(a, "No project");
+    await pointerAway(page);
+    await hoverShows(a, a.getByTestId("mix-chip"), "Stop mixing in No project");
     for (const view of ["today", "project", "recurring", "all"]) {
       await a.getByTestId(`view-${view}`).click();
       expect(await titled(a), view).toEqual([]);

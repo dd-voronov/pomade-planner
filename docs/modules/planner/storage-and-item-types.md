@@ -78,7 +78,8 @@ One tasks root, chosen on first run — onboarding asks; there is no silent defa
 - **Changing `type`** is a one-field edit: the file, description and history stay; the new type's
   fields appear in the editor, and the views show the item as its new type with the next read.
 - **Notes, thoughts and daily notes** have no checkbox (a glyph of their type in its place) and are
-  never in Project or Recurring (`isTaskType`, `isScheduled`). A note or thought with a `do-on`
+  never in Recurring (`isTaskType`, `isScheduled`); Project lists the open notes and thoughts under
+  "Notes and thoughts" and never a daily note ([[views]] "The views"). A note or thought with a `do-on`
   stands in Today on that day only ([[days-and-today]] "What Today contains"); a `deadline` or
   `importance` set on one by hand, and any date on a daily note, are ignored there.
 - **Checkboxes inside a body** are plain markdown with no planner logic (a daily note's count as

@@ -26,11 +26,12 @@ kind: reference
 | "“QuizLab” can't take To-dos/QuizLab/ — a folder with that name is already there. …" | a renamed project's new folder name is taken | rename or move one of the two folders; the rename then catches up by itself |
 | settings: "Can't use Templates/Daily.md: …" | the daily-note template is missing or its frontmatter can't be read | fix or re-choose it; new notes use the built-in one meanwhile |
 | "Couldn't make today's daily note: …" | the note couldn't be written | act on the reason; quick add → **Daily** makes it on demand |
-| a note added from Today isn't listed | its Do on was emptied: a note or thought without one lives in All | **Show** on the "Added — … is in All." line, or open All; give it a Do on to see it in Today |
+| a note added from Today isn't listed | its Do on was emptied: a note or thought without one stands in Project and All, not in Today | **Show** on the "Added — … is in Project." line, or open Project; give it a Do on to see it in Today |
 | Today shows other projects' items inside a project | Today is the whole day everywhere | **Only *project*** under the date narrows it |
 | a heading shows a count but no rows | the group is folded | click the heading, or → on it |
 | no daily notes in All | All shows daily notes only when ticked | **Types → Daily notes** |
-| no **+ Project** chip | every other project is mixed in already, or there is none | — |
+| no **+ Add from…** chip | No project and every other project are mixed in already | — |
+| Project inside a project shows only a few rows, no headings | **Due today** is on | click **Due today** (×) |
 
 **No daily note today.** It is made at Pomade's first start of a day (or when the boundary passes
 while Pomade runs) by the Planner, which Pomade loads hidden at start. None is made when the Planner

@@ -1,7 +1,7 @@
 ---
 doc: docs/modules/planner/views.md
 audience: engineers, product
-holds: the panel and the tab, the header and the narrowing switcher, the context and the line naming it, what Today, Project, Recurring and All show, Today's project filter, mix-ins, All's filters, folding groups, row actions, excerpts and pins
+holds: the panel and the tab, the header and the narrowing switcher, the context and the line naming it, what Today, Project, Recurring and All show, Today's project filter, Project's two groups and "Due today", mix-ins, All's filters, folding groups, row actions, excerpts and pins
 kind: reference
 ---
 
@@ -14,7 +14,7 @@ kind: reference
 `src/planner/model/labels.ts`, `src/planner/model/pins.ts`, `src/planner/model/folds.ts`,
 `src/planner/model/view-state.ts`, `src/planner/model/body.ts` (excerpt), `src/core/switcher.css`,
 `src/planner/planner.css` · **e2e:** `planner-fake.spec.ts`, `planner-today-fake.spec.ts`,
-`planner-projects-fake.spec.ts`, `planner-notes-fake.spec.ts`, `tips-fake.spec.ts`,
+`planner-projects-fake.spec.ts`, `planner-project-fake.spec.ts`, `planner-notes-fake.spec.ts`, `tips-fake.spec.ts`,
 `pomade-planner.spec.ts`, `pomade-planner-projects.spec.ts`, `pomade-tips.spec.ts` · **Unit:**
 `src/planner/model/scope.test.ts`, `src/planner/model/pins.test.ts`,
 `src/planner/model/folds.test.ts`, `src/planner/model/view-state.test.ts`,
@@ -59,27 +59,42 @@ its tooltip.
 | View | At Workspace | Inside project A |
 |---|---|---|
 | **Today** | the whole day: pinned items, the daily note's card, no-project items, every project's Today items grouped by project | the same whole day; the project filter "Only A" narrows it to A's items |
-| **Project** | every project's open tasks, grouped by project | all of A's open tasks (and the ones ticked today) + mixed-in sources |
+| **Project** | every project's open items, grouped by project, each in its two groups | all of A's open items in two groups, "Tasks" and "Notes and thoughts" + mixed-in sources; "Due today" narrows it to their Today rows |
 | **Recurring** | every recurring item, grouped by project | A's recurring items + mixed-in sources |
 | **All** | every item of every type and project; filters: project, type, status ("Show done", "Show archived") | same — All always spans everything |
 
 `scope.ts` holds these rules: `isOwn`, `inToday` (Today and its project filter), `inScope` (Project
-and Recurring), `inAllFilter` (All), `projectRows`, and `liveMixins` (mix-ins of sources no longer
-there dropped).
+and Recurring), `inAllFilter` (All), `projectGroupOf` and `projectRows` (Project's groups),
+`projectEntries` (Project's headings), `countsInProject` (Project's count), and `liveMixins`
+(mix-ins of sources no longer there dropped).
 
 - **Grouping:** headings per project, in the order and with the labels of [[projects]] "Sources
   and labels", each with its open count — Today's in every context (unless narrowed to the
   project), Project's and Recurring's at Workspace. A list with no row of a project has none.
+  Project's own two groups stand inside each project's heading at Workspace, and alone inside a
+  project ("The views").
 - **Today's project filter** inside a project: one chip under the date, "Only QuizLab"
   (`OnlyProjectBar`). On (the chip filled, with its ×), Today lists the project's items alone — its
   pinned rows, its rows, its unreadable files — with no daily note's card and no heading. Off by
   default, remembered per project (`PlannerView.onlyProject`); at Workspace there is none. The
   Today count on the switcher is the whole day's in every context, the filter on or off.
-- **Mix-in chips** in a project's Project and Recurring, remembered per project: "+ No-project
-  items" toggles the workspace-level items in — on, the chip reads "No project ×"; "+ Project"
-  picks another project with the two-step picker ([[quick-add]] "Project picker"); each mixed-in
-  project is a chip × removes. Mixed-in rows join the list in its order and carry their source's
-  label; in All every row that isn't the context's own carries it. Today has no mix-ins.
+- **Project's chips** inside a project (`MixBar`, `DueTodayChip`): **Due today** first, then each
+  mixed-in source, then **+ Add from…**. Recurring has the same bar without "Due today". At
+  Workspace there are none.
+- **Due today** (Project inside a project): on (the chip filled, with its ×), the list is the
+  Today module's rows of Project's sources — the project's and its mix-ins' — with their reasons
+  ([[days-and-today]]), flat, with no group heading; the unreadable files stay after them. Off by
+  default, remembered per project (`PlannerView.dueToday`). The Project count on the switcher is
+  the same, on or off.
+- **Mix-ins** in a project's Project and Recurring, remembered per project
+  (`PlannerView.mixins`, source keys in the order added; `none` = the no-project items): **+ Add
+  from…** opens the two-step picker ([[quick-add]] "Project picker") with "No project" first and
+  every project not mixed in yet, the project itself aside — nothing checked; the chip goes while
+  nothing is left to add. Each source added is a chip × removes ("No project ×", "QuizLab ×").
+  Mixed-in rows join the list in its order and carry their source's label; in All every row that
+  isn't the context's own carries it. Today has no mix-ins. A view saved with the no-project items
+  as a flag of their own (`mixNoProject`) beside the mixed-in projects (`mixProjects`) reads as the
+  same sources, the no-project items first (`parsePlannerView`).
 - **All's filters:** projects (a searchable checklist: No project, every project in sidebar order,
   folders no project owns) and types. A filter with nothing ticked passes every project or type —
   except daily notes, which All lists only when "Daily notes" is ticked in the type filter, so years
@@ -95,8 +110,16 @@ there dropped).
   group's tasks in list order, with its type's glyph, its own hints ("added Nov 12") and its row
   actions. The daily note's card stands above the list ([[daily-notes]]), unless the project
   filter is on.
-- **Project** lists tasks and recurring items: every open task and the ones ticked today; a
-  recurring item only while it is in Today.
+- **Project** is the project's whole planner — every open item of every type — in two groups,
+  each with its count and each folding: **Tasks** — the open tasks, the ones ticked today (crossed
+  out until the boundary) and every recurring item, between its runs and once ended too, each with
+  where it stands as in Recurring — then **Notes and thoughts** — the open notes and thoughts
+  (`projectGroupOf`, `projectRows`). A group with no row has no heading. Inside a project the two
+  are level-2 groups keyed `tasks` and `notes`; at Workspace each project's heading holds them,
+  indented (`<source>/tasks`, `<source>/notes`; `projectEntries`). Done tasks, resolved thoughts,
+  archived items and daily notes are All's. Its count — on the switcher, on "Tasks" and on a
+  project's heading — is the open tasks and the recurring items due (in Today); notes and thoughts
+  don't count, and "Notes and thoughts" counts its rows (`countsInProject`).
 - **Recurring** lists the context's recurring items by next occurrence (ended ones, and rules
   without a date, last; `recurringRows`): where each stands (its Today label, or "Ended"), the rule
   in words, the next date, the newest log entry ("done Nov 2"). Its count leaves the ended ones out.
@@ -105,16 +128,19 @@ there dropped).
   — the done tasks and resolved thoughts, then — with "Show archived" — the archived items, dashed.
   Its count is the open items, daily notes and archived ones aside.
 - Files that can't be read show as greyed rows ("can't read — open to fix") at the end of every
-  view's list ([[file-model]] "Unreadable is visible"): in Today and Project the context's
-  unreadable tasks and recurring items (not archived) — Today's of the whole workspace, or with its
-  project filter the project's — in Recurring its recurring ones, in All every
-  one its filters, "Show archived" and "Daily notes" pass. A click opens the file in an editor tab.
+  view's list ([[file-model]] "Unreadable is visible"): in Today the unreadable tasks and recurring
+  items (not archived) of the whole workspace, or with its project filter the project's; in Project
+  its sources' unreadable tasks, recurring items, notes and thoughts, after both groups ("Due
+  today" on: its tasks and recurring items); in Recurring its recurring ones; in All every one its
+  filters, "Show archived" and "Daily notes" pass. A click opens the file in an editor tab.
 - Every list runs in the Today module's order ([[days-and-today]] "Order inside every list").
 
 ## Groups
 
 Every heading of a list folds (`GroupHeading`, `folds.ts`), in the panel and in the tab: Today's
-project headings, and Project's and Recurring's at Workspace.
+project headings, Project's "Tasks" and "Notes and thoughts" (at Workspace inside each project's
+heading), and Recurring's project headings at Workspace. A heading's count is over its group's
+rows, folded or not (`rowsByGroup`).
 
 - A chevron stands before the heading's name; a click on the heading, or Enter or Space on it,
   folds and unfolds it; on a focused heading ← folds and → unfolds. Its tooltip, after a second:
@@ -126,7 +152,8 @@ project headings, and Project's and Recurring's at Workspace.
 - **Fold state** is machine-local, per view and context (`planner.folds.<contextId>`,
   [[settings-and-state]]), shared by the panel and the tab.
 - **Revealed.** A group holding the item asked for — the panel's click and an item route, which
-  open it in the tab's compact view — or the item just added unfolds, once per ask
+  open it in the tab's compact view — or the item just added unfolds, both levels of it (`groupsOf`
+  in `Planner.tsx`: its source's group, and in Project its "Tasks" or "Notes and thoughts"), once per ask
   (`useReveal`): it shows unfolded at once and is stored unfolded; folded again by hand, it
   stays folded.
 
@@ -185,7 +212,7 @@ All's select mode — bulk Archive and Delete — is [[trimming]].
 
 ## View state
 
-The selected view, Today's project filter, mix-ins, filters, "Show done", "Show archived"
+The selected view, Today's project filter, Project's "Due today", mix-ins, filters, "Show done", "Show archived"
 (`planner.view.<contextId>`), pins, folded groups (`planner.folds.<contextId>`), and the daily
 note's unpinned day are machine-local app state ([[settings-and-state]]). The
 tab's routes `today` and `settings` are released back to `planner` when the user leaves them, so

@@ -120,7 +120,7 @@ test.describe("one Today", () => {
 
     await a.getByTestId("view-project").click();
     await expect(a.getByTestId("today-bar")).toHaveCount(0);
-    await expect(a.getByTestId("mix-no-project")).toBeVisible();
+    await expect(a.getByTestId("mix-add")).toBeVisible();
     await expect(a.getByTestId("planner-context")).toHaveText("QuizLab");
   });
 

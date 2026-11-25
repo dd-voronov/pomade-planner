@@ -36,9 +36,9 @@ from Pomade's editor, Obsidian, Finder, git or an agent — shows within about a
 | **Thought** | something to think about later | a cloud glyph, an optional Do on | **Resolve**: `status: resolved`, `done-on` |
 | **Daily note** | the note of one day | a calendar glyph, checklist progress ("5/8") | — |
 
-Notes and thoughts live in All; one with a **Do on** also stands in Today on that day — and only
-that day: it never rolls over. They are never in Project or Recurring, and a Deadline or Importance
-set on them by hand is ignored. Daily notes live in All, and today's also as a card on top of
+Open notes and thoughts stand in Project, under **Notes and thoughts**, and in All; one with a
+**Do on** also stands in Today on that day — and only that day: it never rolls over. They are never
+in Recurring, and a Deadline or Importance set on them by hand is ignored. Daily notes live in All, and today's also as a card on top of
 Today.
 Changing an item's `type:` in its file keeps the file and its text; the views show it as the new
 type with the next read.
@@ -77,12 +77,13 @@ view is remembered per project.
 | View | At Workspace | Inside a project |
 |---|---|---|
 | **Today** | the whole day: pinned items, today's daily note as a card, workspace-level items, then every project's Today items under project headings | the same whole day; **Only *project*** narrows it to the project's items |
-| **Project** | every project's open tasks, under project headings | the project's open tasks (and ones ticked today) + mixed-in sources |
+| **Project** | every project's open items, under project headings, each with its **Tasks** and **Notes and thoughts** | the project's open items in **Tasks** and **Notes and thoughts** + mixed-in sources; **Due today** narrows it to their Today items |
 | **Recurring** | every recurring item, under project headings | the project's recurring items + mixed-in sources |
 | **All** | every item of every type and project, with filters | the same — All always spans everything |
 
-Each view's tab shows its open count (Recurring: ended items left out; All: open items only, daily
-notes and archived items aside).
+Each view's tab shows its open count (Project: open tasks and recurring items due, notes and
+thoughts aside; Recurring: ended items left out; All: open items only, daily notes and archived
+items aside).
 
 **Order** inside every list: deadline, then Do on, then importance (highest first), then created; an
 unset value sorts after every set one; then title.
@@ -91,7 +92,8 @@ unset value sorts after every set one; then title.
 with the same name carry their group: "QuizLab (Archive)".
 
 **Folding.** Click a heading — or press Enter or Space on it — to fold it: its rows go, its count
-stays. ← folds and → unfolds a focused heading. What is folded is remembered per view and per
+stays. In Project at Workspace headings nest two deep: a folded project hides both its groups, and
+inside an open one **Tasks** and **Notes and thoughts** fold on their own. ← folds and → unfolds a focused heading. What is folded is remembered per view and per
 project on this Mac. A folded group opens by itself for the item you ask for — a click on a panel
 row, an item you just added.
 
@@ -128,8 +130,23 @@ resolved there stays crossed out until the boundary.
 
 ### Project
 
-Open tasks and recurring items; a recurring item only while it is in Today. Tasks ticked today stay,
-crossed out, until the boundary.
+The project's whole planner, in two groups, each with its count:
+
+- **Tasks** — the open tasks (ticked ones stay, crossed out, until the boundary) and every recurring
+  item, each with where it stands ("Due today", "next Dec 1", "Ended"). Its count is the open tasks
+  and the recurring items due.
+- **Notes and thoughts** — the open notes and thoughts. Its count is its rows.
+
+A group with nothing in it has no heading. Files that can't be read stand after both groups. Done
+tasks, resolved thoughts, archived items and daily notes are in All. At Workspace every project has
+its heading, with the two groups indented inside it.
+
+**Due today.** Inside a project the first chip, **Due today**, narrows Project to what is in Today —
+the same rows and labels as Today shows, of the project and its mix-ins. Click it again (×) for
+everything. It is off by default and remembered per project.
+
+Adding from Project starts on **Task**; a note or thought added there stands under **Notes and
+thoughts**.
 
 ### Recurring
 
@@ -183,7 +200,7 @@ focus returns where it was. Where you last dragged the form is where it opens ne
 In the Planner tab, **+** and the **Add task** button at the foot of the list (**Add recurring task**
 in Recurring) open the form at the list's foot. After an add the new row is scrolled to, focused and
 briefly marked. If the view doesn't list it (a note with no day, a task with no date added from
-Today), the foot says where it is — "Added — “Lamp for the desk” is in All." — with **Show**.
+Today), the foot says where it is — "Added — “Lamp for the desk” is in Project." — with **Show**.
 
 ### The form
 
@@ -343,10 +360,10 @@ with one name: the later one's folder gets its group, `QuizLab (Archive)`.
 - **Sub-folders no project owns** show under their own name ("folder only" in All's filter).
 - `Daily/`, `_archive/` and hidden folders are never a project's.
 
-**Mix-ins** (inside a project, in Project and Recurring): **+ No-project items** adds the
-workspace-level items; **+ Project** adds another project through the picker. Each mixed-in source
-is a chip; click it (×) to remove. Mixed-in rows carry their source's label. Mix-ins are remembered
-per project.
+**Mix-ins** (inside a project, in Project and Recurring): **+ Add from…** opens the project picker
+— **No project** first for the workspace-level items, then the groups and their projects. Each
+source added is a chip; click it (×) to remove. Mixed-in rows join the list and carry their
+source's label. Mix-ins are remembered per project.
 
 ## Select mode: delete and archive
 

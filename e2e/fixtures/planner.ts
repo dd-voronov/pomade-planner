@@ -50,6 +50,18 @@ export async function openAddForm(app: FrameLocator): Promise<Locator> {
 
 export const row = (app: FrameLocator, title: string): Locator => app.locator('[data-testid="task-row"]').filter({ has: app.getByTestId("task-title").getByText(title, { exact: true }) });
 
+/** Mix a source into a project's Project or Recurring: "+ Add from…", then "No project" or a project found by typing its name. */
+export async function addFrom(app: FrameLocator, name: string): Promise<void> {
+  await app.getByTestId("mix-add").click();
+  await expect(app.getByTestId("project-picker")).toBeVisible();
+  if (name === "No project") await app.getByTestId("picker-option").filter({ hasText: "No project" }).click();
+  else {
+    await app.getByTestId("picker-filter").pressSequentially(name);
+    await app.getByTestId("picker-filter").press("Enter");
+  }
+  await expect(app.getByTestId("project-picker")).toHaveCount(0);
+}
+
 /** The titles of the visible list's rows, top to bottom. */
 export function titles(app: FrameLocator): Promise<string[]> {
   return app.locator('[data-testid="task-row"] [data-testid="task-title"]').allTextContents();

@@ -7,13 +7,13 @@ import { errorText, useActiveProject } from "../core/host";
 import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
 import { dailyNotePath } from "./model/daily";
-import { foldsKey, parseFolds, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type Folds, type ListEntry } from "./model/folds";
+import { foldsKey, groupKey, parseFolds, rowsByGroup, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type Folds, type ListEntry } from "./model/folds";
 import { allHints, dayHeading, displayTitle, recurringHints, shortDate, todayHints, type Hint } from "./model/labels";
 import { isTaskType, PLANNER_TYPES, type Items, type PlannerType, type Task } from "./model/items";
 import { DAILY_UNPINNED_KEY, dailyNotePinned, isPinned, parsePins, serializePins, splitPinned, togglePin, pinsKey, type Pins } from "./model/pins";
 import { groupLabel } from "./model/picker";
 import { folderForNew, folderKey, folderSources, NO_PROJECT, NONE_SOURCE, sectionsBySource, sourceKey, sourceLabels, type ProjectSource, type Source } from "./model/projects";
-import { inAllFilter, inScope, inToday, isOwn, liveMixins, projectRows, revealInAll, viewListing, type Context } from "./model/scope";
+import { countsInProject, inAllFilter, inScope, inToday, isOwn, liveMixins, projectEntries, projectGroupOf, projectRows, revealInAll, viewListing, type Context, type ProjectGroup } from "./model/scope";
 import { PLANNER_KEYS, type ParsedPlannerSettings } from "./model/settings";
 import { recurringState, type LogWord } from "./model/recurring";
 import { allTasks, compareTasks, recurringRows, todayRows, type TodayRow } from "./model/today";
@@ -34,7 +34,7 @@ import {
 import { AddFoot, useAddInPlace } from "./AddInPlace";
 import { DailyCard } from "./DailyCard";
 import { DeleteConfirm } from "./DeleteConfirm";
-import { GroupHeading } from "./GroupHeading";
+import { GroupHeading, type GroupHeadingProps } from "./GroupHeading";
 import { ItemPane, ItemSplit } from "./ItemPane";
 import { OpenInTabGlyph } from "./OpenInTabGlyph";
 import { PlannerGlyph } from "./PlannerGlyph";
@@ -45,7 +45,7 @@ import { useAttention } from "./useAttention";
 import { useOpenItem, type ItemAsk } from "./useOpenItem";
 import { useAppState, useDailyNoteCreation } from "./usePlannerState";
 import { useFolderReconciliation, useProjectList, type ProjectList } from "./useProjects";
-import { FilterMenu, MixBar, OnlyProjectBar, type FilterOption } from "./ViewBars";
+import { DueTodayChip, FilterMenu, MixBar, OnlyProjectBar, type FilterOption } from "./ViewBars";
 import { archiveItem, completeRecurring, resolveThought, restoreItem, saveSettings, tickTask, trashFiles, WriteError } from "./write";
 
 export type PlannerSurface = "panel" | "tab";
@@ -405,8 +405,22 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   );
   const labelOf = (source: Source): string => labels.get(sourceKey(source))?.text ?? (source.kind === "none" ? "No project" : source.name);
 
-  /** The keys of the groups an item stands in, outermost first (`folds.ts`): its source's. */
-  const groupsOf = useCallback((task: Task): string[] => [sourceKey(sourceOf(task.folder))], [sourceOf]);
+  /** Project lists the project's Today items alone: "Due today" is on, inside a project. */
+  const dueToday = context.kind === "project" && view?.dueToday === true;
+  const viewId = view?.view ?? null;
+  /**
+   * The keys of the groups an item stands in on the view, outermost first (`folds.ts`): its
+   * source's; in Project its group's ("tasks", "notes") — at Workspace under its source's.
+   */
+  const groupsOf = useCallback(
+    (task: Task): string[] => {
+      const source = sourceKey(sourceOf(task.folder));
+      const group = viewId === "project" && !dueToday ? projectGroupOf(task, day) : null;
+      if (group === null) return [source];
+      return context.kind === "workspace" ? [source, groupKey([source, group])] : [group];
+    },
+    [sourceOf, viewId, dueToday, day, context.kind],
+  );
   /** The item just added, once its file is read. */
   const addedPath = add.state.kind === "added" ? add.state.added.path : null;
   const addedTask = addedPath === null ? null : (items.tasks.find((t) => t.path === addedPath) ?? null);
@@ -511,24 +525,28 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     setView({ ...view, view: id });
     onSelectView?.(id);
   };
-  const mixins = { mixNoProject: view.mixNoProject, mixProjects: liveMixins(context, view, knownKeys) };
+  const mixins = { mixins: liveMixins(context, view, knownKeys) };
   const scoped = shown.filter((t) => inScope(context, mixins, sourceOf(t.folder)));
   /** Today narrowed to the project's own items: the project filter is on, inside a project. */
   const onlyOwn = context.kind === "project" && view.onlyProject;
   const wholeDay = withAcks(todayRows(shown, day), acks.list(), (a) => a.row, (r) => r.task);
   const today = onlyOwn ? wholeDay.filter((r) => inToday(context, view, sourceOf(r.task.folder))) : wholeDay;
-  const projectList = withAcks(projectRows(scoped, day), acks.list(), (a) => (a.row === null ? null : a.task), (t) => t);
+  const projectGroups = projectRows(scoped, day);
+  /** Project with "Due today" on: the Today module's rows of its scope. */
+  const projectToday = dueToday ? withAcks(todayRows(scoped, day), acks.list(), (a) => a.row, (r) => r.task) : [];
+  /** What Project lists, top to bottom (its pinned rows aside). */
+  const projectList: Task[] = dueToday ? projectToday.map((r) => r.task) : [...projectGroups.tasks, ...projectGroups.notes];
   const recurringList = recurringRows(scoped, day);
   const filtered = shown.filter((t) => inAllFilter(view, sourceOf(t.folder), t.type));
   const showDaily = view.types.includes("daily-note");
   const all = allTasks(filtered, { showDone: view.showDone, showArchived: view.showArchived, showDaily });
   /** The list stands under project headings: Today unless narrowed to the project, Project and Recurring at Workspace. */
-  const grouped = view.view === "today" ? !onlyOwn : context.kind === "workspace" && view.view !== "all";
+  const bySource = view.view === "today" ? !onlyOwn : context.kind === "workspace" && view.view !== "all";
   const unreadableShown = items.unreadable.filter((u) =>
     view.view === "all"
       ? inAllFilter(view, sourceOf(u.folder), u.type) && (view.showArchived || !u.archived) && (showDaily || u.type !== "daily-note")
       : !u.archived &&
-        isTaskType(u.type) &&
+        (view.view === "project" && !dueToday ? u.type !== "daily-note" : isTaskType(u.type)) &&
         (view.view === "today" ? inToday(context, view, sourceOf(u.folder)) : inScope(context, mixins, sourceOf(u.folder))) &&
         (view.view !== "recurring" || u.type === "recurring"),
   );
@@ -652,7 +670,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   /** A row's source label: shown when the row isn't the context's own — under a project heading only on a pinned row, which stands above the headings. */
   const rowSource = (task: Task, pinned = false): string | undefined => {
     const source = sourceOf(task.folder);
-    return (grouped && !(pinned && source.kind === "project")) || isOwn(labelContext, source) ? undefined : labelOf(source);
+    return (bySource && !(pinned && source.kind === "project")) || isOwn(labelContext, source) ? undefined : labelOf(source);
   };
   const excerpt = surface === "tab" ? (task: Task) => task.excerpt : () => null;
   /** A recurring item's row: done advances it (never unticks), Skip on hover; locked while its rule can't be read, once ended, and while a write is under way. */
@@ -736,44 +754,74 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   /** The view's folded groups, those holding the item asked for or just added aside. */
   const folded = new Set(folds[view.view].filter((k) => !revealing.has(k)));
   const fold = (key: string, on: boolean) => setFolds(setFolded(folds, view.view, key, on));
-  /** `rows` under a heading per project, each folding; with no row of a project, no headings. */
-  const sectioned = <T,>(rows: readonly T[], taskOf: (row: T) => Task, render: (row: T) => ReactNode, open: (row: T) => boolean = (r) => !isDone(taskOf(r))): ReactNode[] => {
-    const sections = sectionsBySource(rows, (r) => sourceOf(taskOf(r).folder));
-    if (sections.every((sec) => sec.source.kind === "none")) return rows.map(render);
-    const byKey = new Map(sections.map((sec) => [sourceKey(sec.source), sec]));
-    const entries: ListEntry<T>[] = sections.flatMap((sec) => [{ kind: "group" as const, key: sourceKey(sec.source), level: 1 as const }, ...sec.items.map((row) => ({ kind: "row" as const, row }))]);
-    return unfoldedEntries(entries, folded).map((entry) => {
-      if (entry.kind === "row") return render(entry.row);
-      const sec = byKey.get(entry.key);
-      const label = sec === undefined ? undefined : labels.get(entry.key);
-      return (
+  /** The heading of the source of `task` (a group's first row): its label (name and qualifier), and its key as `data-source`. */
+  const sourceHeading = (task: Task | undefined, key: string): Pick<GroupHeadingProps, "name" | "qualifier" | "source"> => {
+    const label = labels.get(key);
+    const source = task === undefined ? null : sourceOf(task.folder);
+    return { name: label?.name ?? (source === null ? key : labelOf(source)), qualifier: label?.qualifier ?? undefined, source: key };
+  };
+  /** A grouped list's entries, each folded group's rows left out; `headingOf` names each heading and counts it over the group's rows, folded or not. */
+  const renderEntries = <T,>(
+    entries: readonly ListEntry<T>[],
+    render: (row: T) => ReactNode,
+    headingOf: (group: { key: string; level: 1 | 2 }, rows: readonly T[]) => Pick<GroupHeadingProps, "name" | "qualifier" | "source" | "nested" | "count">,
+  ): ReactNode[] => {
+    const rowsOf = rowsByGroup(entries);
+    return unfoldedEntries(entries, folded).map((entry) =>
+      entry.kind === "row" ? (
+        render(entry.row)
+      ) : (
         <GroupHeading
           key={`section:${entry.key}`}
           groupKey={entry.key}
           level={entry.level}
-          source={entry.key}
-          name={label?.name ?? (sec === undefined ? entry.key : labelOf(sec.source))}
-          qualifier={label?.qualifier ?? undefined}
-          count={sec?.items.filter(open).length ?? 0}
+          {...headingOf(entry, rowsOf.get(entry.key) ?? [])}
           folded={folded.has(entry.key)}
           onFold={(on) => fold(entry.key, on)}
         />
-      );
+      ),
+    );
+  };
+  /** `rows` under a heading per project, each folding; with no row of a project, no headings. */
+  const sectioned = <T,>(rows: readonly T[], taskOf: (row: T) => Task, render: (row: T) => ReactNode, open: (row: T) => boolean = (r) => !isDone(taskOf(r))): ReactNode[] => {
+    const sections = sectionsBySource(rows, (r) => sourceOf(taskOf(r).folder));
+    if (sections.every((sec) => sec.source.kind === "none")) return rows.map(render);
+    const entries: ListEntry<T>[] = sections.flatMap((sec) => [{ kind: "group" as const, key: sourceKey(sec.source), level: 1 as const }, ...sec.items.map((row) => ({ kind: "row" as const, row }))]);
+    return renderEntries(entries, render, (group, groupRows) => ({ ...sourceHeading(groupRows[0] === undefined ? undefined : taskOf(groupRows[0]), group.key), count: groupRows.filter(open).length }));
+  };
+  /**
+   * Project's rows in its two groups, "Tasks" and "Notes and thoughts" — at Workspace inside a
+   * heading per project. "Tasks" and a project's heading count what the switcher counts
+   * (`countsInProject`); "Notes and thoughts" counts its rows.
+   */
+  const projectGrouped = (rows: readonly Task[], render: (row: Task) => ReactNode): ReactNode[] => {
+    const atWorkspace = context.kind === "workspace";
+    const entries = projectEntries(rows, (t) => projectGroupOf(t, day) ?? "tasks", atWorkspace ? (t) => sourceOf(t.folder) : undefined);
+    const counted = (groupRows: readonly Task[]) => groupRows.filter((t) => countsInProject(t, day)).length;
+    return renderEntries(entries, render, (group, groupRows) => {
+      if (group.level === 1) return { ...sourceHeading(groupRows[0], group.key), count: counted(groupRows) };
+      // A level-2 key is its group's, under its source's at Workspace (`projectEntries`).
+      const notes = group.key.endsWith("notes");
+      return { name: PROJECT_GROUP_NAMES[notes ? "notes" : "tasks"], nested: atWorkspace, count: notes ? groupRows.length : counted(groupRows) };
     });
   };
 
-  /** The view's rows: the pinned ones (in pin order, above the list) and the rest (grouped where the view is). */
-  const pinnedFirst = <T,>(list: readonly T[], taskOf: (row: T) => Task, render: (row: T, pinned?: boolean) => ReactNode, open?: (row: T) => boolean): { pinned: ReactNode[]; rest: ReactNode[] } => {
+  /** The view's rows: the pinned ones (in pin order, above the list) and the rest (`layout`: under project headings where the view has them, else flat). */
+  const pinnedFirst = <T,>(
+    list: readonly T[],
+    taskOf: (row: T) => Task,
+    render: (row: T, pinned?: boolean) => ReactNode,
+    layout: (rest: readonly T[], one: (row: T) => ReactNode) => ReactNode[] = (rest, one) => (bySource ? sectioned(rest, taskOf, one) : rest.map(one)),
+  ): { pinned: ReactNode[]; rest: ReactNode[] } => {
     const split = splitPinned(list, pinnedHere, (r) => taskOf(r).path);
-    const one = (r: T) => render(r);
-    return { pinned: split.pinned.map((r) => render(r, true)), rest: grouped ? sectioned(split.rest, taskOf, one, open) : split.rest.map(one) };
+    return { pinned: split.pinned.map((r) => render(r, true)), rest: layout(split.rest, (r) => render(r)) };
   };
   let listed: { pinned: ReactNode[]; rest: ReactNode[] };
   if (view.view === "today") listed = pinnedFirst(today, (r) => r.task, todayRow);
-  else if (view.view === "project") listed = pinnedFirst(projectList, (t) => t, listRow);
+  else if (view.view === "project") listed = dueToday ? pinnedFirst(projectToday, (r) => r.task, todayRow) : pinnedFirst(projectList, (t) => t, listRow, projectGrouped);
   else if (view.view === "recurring") {
     const recurringView = (r: (typeof recurringList)[number], pinned?: boolean) => recurringRow(r.task, recurringHints(r.task, r.state, day), r.state.phase, null, pinned);
-    listed = pinnedFirst(recurringList, (r) => r.task, recurringView, (r) => r.state.phase !== "ended");
+    listed = pinnedFirst(recurringList, (r) => r.task, recurringView, (rest, one) => (bySource ? sectioned(rest, (r) => r.task, one, (r) => r.state.phase !== "ended") : rest.map(one)));
   } else listed = pinnedFirst(all, (t) => t, listRow);
   const rows = listed.rest;
   const todayNote = view.view === "today" && !onlyOwn ? (items.tasks.find((t) => t.type === "daily-note" && !t.archived && t.path === dailyNotePath(root, day)) ?? null) : null;
@@ -809,7 +857,8 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
 
   const counts: Record<PlannerViewId, number> = {
     today: wholeDay.filter((r) => !isDone(r.task)).length,
-    project: projectList.filter((t) => !isDone(t)).length,
+    // "Due today" on or off: the open tasks and the recurring items due (`countsInProject`).
+    project: projectGroups.tasks.filter((t) => countsInProject(t, day)).length,
     recurring: recurringList.filter((r) => r.state.phase !== "ended").length,
     all: filtered.filter((t) => !isDone(t) && !t.archived && t.type !== "daily-note").length,
   };
@@ -868,14 +917,14 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     view.view === "today"
       ? inOwn("Nothing for today")
       : view.view === "project"
-        ? inOwn("No open tasks")
+        ? inOwn(dueToday ? "Nothing for today" : "Nothing open")
         : view.view === "recurring"
           ? inOwn("No recurring tasks")
           : filtering
             ? "Nothing matches the filters"
             : "No open tasks";
   const emptyText =
-    view.view === "today"
+    view.view === "today" || dueToday
       ? "Nothing overdue, due or planned."
       : view.view === "recurring"
         ? "Tasks that come back on a schedule show here."
@@ -993,14 +1042,14 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       {context.kind === "project" && (view.view === "project" || view.view === "recurring") ? (
         <MixBar
           ownId={context.id}
-          noProject={view.mixNoProject}
-          mixed={mixins.mixProjects.map((key) => ({ key, label: labelOf(sourceByKey(key, list?.projects ?? [], sources)) }))}
+          mixed={mixins.mixins.map((key) => ({ key, label: labelOf(key === NO_PROJECT ? NONE_SOURCE : sourceByKey(key, list?.projects ?? [], sources)) }))}
           groups={list?.groups ?? []}
           projects={list?.projects ?? []}
-          onToggleNoProject={() => setView({ ...view, mixNoProject: !view.mixNoProject })}
-          onAdd={(key) => setView({ ...view, mixProjects: [...mixins.mixProjects.filter((k) => k !== key), key] })}
-          onRemove={(key) => setView({ ...view, mixProjects: mixins.mixProjects.filter((k) => k !== key) })}
-        />
+          onAdd={(key) => setView({ ...view, mixins: [...mixins.mixins.filter((k) => k !== key), key] })}
+          onRemove={(key) => setView({ ...view, mixins: mixins.mixins.filter((k) => k !== key) })}
+        >
+          {view.view === "project" ? <DueTodayChip name={ownSource === undefined ? ownName : labelOf(ownSource)} on={view.dueToday} onToggle={() => setView({ ...view, dueToday: !view.dueToday })} /> : null}
+        </MixBar>
       ) : null}
       {view.view === "all" ? (
         <div className="chip-bar" role="toolbar" aria-label="Filters" data-testid="filter-bar">
@@ -1266,6 +1315,9 @@ function sourceByKey(key: string, projects: readonly { id: string; name: string;
   const p = projects.find((x) => x.id === key);
   return { kind: "project", key, id: p?.id ?? null, name: p?.name ?? key, groupPath: [...(p?.groupPath ?? [])], folder: "" };
 }
+
+/** Project's group headings. */
+const PROJECT_GROUP_NAMES: Record<ProjectGroup, string> = { tasks: "Tasks", notes: "Notes and thoughts" };
 
 const TYPE_LABELS: Record<PlannerType, string> = { task: "Tasks", recurring: "Recurring", note: "Notes", thought: "Thoughts", "daily-note": "Daily notes" };
 

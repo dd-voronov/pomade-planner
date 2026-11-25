@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { foldsKey, groupKey, NO_FOLDS, parseFolds, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type ListEntry } from "./folds";
+import { foldsKey, groupKey, NO_FOLDS, parseFolds, rowsByGroup, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type ListEntry } from "./folds";
 
 describe("fold state", () => {
   it.each([
@@ -64,5 +64,26 @@ describe("unfoldedEntries — two levels", () => {
   it("inner groups without an outer one (a list of level-2 groups alone) fold each on its own", () => {
     const flat = [g("tasks", 2), r("fix"), g("notes", 2), r("idea")];
     expect(unfoldedEntries(flat, new Set(["tasks"])).map((e) => (e.kind === "group" ? `#${e.key}` : e.row))).toEqual(["#tasks", "#notes", "idea"]);
+  });
+});
+
+describe("rowsByGroup — what each heading counts", () => {
+  const g = (key: string, level: 1 | 2 = 1): ListEntry<string> => ({ kind: "group", key, level });
+  const r = (row: string): ListEntry<string> => ({ kind: "row", row });
+
+  it("an outer group holds its inner groups' rows; an inner group its own", () => {
+    const list = [g("none"), r("tax"), g("quiz"), g("quiz/tasks", 2), r("fix"), r("dark"), g("quiz/notes", 2), r("idea"), g("pomade"), g("pomade/tasks", 2), r("ship")];
+    expect(Object.fromEntries(rowsByGroup(list))).toEqual({
+      none: ["tax"],
+      quiz: ["fix", "dark", "idea"],
+      "quiz/tasks": ["fix", "dark"],
+      "quiz/notes": ["idea"],
+      pomade: ["ship"],
+      "pomade/tasks": ["ship"],
+    });
+  });
+
+  it("level-2 groups alone: each its own rows", () => {
+    expect(Object.fromEntries(rowsByGroup([g("tasks", 2), r("fix"), g("notes", 2), r("idea")]))).toEqual({ tasks: ["fix"], notes: ["idea"] });
   });
 });

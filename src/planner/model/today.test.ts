@@ -309,9 +309,9 @@ describe("recurring items in Today", () => {
     ]);
   });
 
-  it("the Project view holds a recurring item only while it is in Today", () => {
-    expect(projectRows([invoices()], "2026-11-18")).toEqual([]);
-    expect(projectRows([invoices()], "2026-12-02").map((t) => t.title)).toEqual(["Upload invoices"]);
+  it("the Project view holds a recurring item between its runs and in Today alike", () => {
+    expect(projectRows([invoices()], "2026-11-18").tasks.map((t) => t.title)).toEqual(["Upload invoices"]);
+    expect(projectRows([invoices()], "2026-12-02").tasks.map((t) => t.title)).toEqual(["Upload invoices"]);
   });
 });
 
@@ -326,10 +326,10 @@ describe("notes, thoughts, daily notes and archived items", () => {
   const archivedNote = task({ title: "Old idea", type: "note", archived: true });
   const open = task({ title: "Do it", doOn: D });
 
-  it("never in Project; in Today a note or thought only on its do-on day — never by a deadline; no daily note, nothing archived", () => {
+  it("in Project's second group while open; in Today a note or thought only on its do-on day — never by a deadline; no daily note, nothing archived", () => {
     const all = [note, thought, resolved, daily2, archivedTask, open];
     expect(todayRows(all, D).map((r) => r.task.title)).toEqual(["Idea", "Do it"]);
-    expect(projectRows(all, D).map((t) => t.title)).toEqual(["Do it"]);
+    expect(projectRows(all, D)).toEqual({ tasks: [open], notes: [thought, note] });
     expect(recurringRows([recurring({ daily: true }, { title: "R", doOn: D, archived: true })], D)).toEqual([]);
   });
 

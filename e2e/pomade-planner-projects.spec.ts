@@ -12,7 +12,7 @@ import { join, resolve } from "node:path";
 
 import { expect, test, type ElectronApplication, type FrameLocator, type Page } from "@playwright/test";
 
-import { quickAdded, row, setClock, titles } from "./fixtures/planner";
+import { addFrom, quickAdded, row, setClock, titles } from "./fixtures/planner";
 import { APP_VERSION, POMADE_BIN, createPomadeFixture, launchPomade, panelShown, pomadeEnv, type PomadeFixture } from "./fixtures/pomade";
 import { shot } from "./fixtures/screens";
 
@@ -168,12 +168,12 @@ test.describe("Planner projects in a real Pomade", () => {
     await shot(page, "e004-pomade-workspace-today");
   });
 
-  test("in Pomade's Project, “+ No-project items” mixes them in, each with its source; switching to QuizLab and back restores Pomade's chip and its last view (Project)", async () => {
+  test("in Pomade's Project, “+ Add from…” ▸ No project mixes them in, each with its source; switching to QuizLab and back restores Pomade's chip and its last view (Project)", async () => {
     await goTo(ids().pomade);
     const p = panel();
     await expect(p.getByTestId("mix-bar")).toHaveCount(0);
     await p.getByTestId("view-project").click();
-    await p.getByTestId("mix-no-project").click();
+    await addFrom(p, "No project");
     await expect(row(p, "Pay the tax").getByTestId("hint-source")).toHaveText("No project");
     expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner", "Write release notes"]);
     await shot(page, "e004-pomade-project-view");
@@ -184,7 +184,7 @@ test.describe("Planner projects in a real Pomade", () => {
     expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner", "Fix login bug"]);
     await goTo(ids().pomade);
     await expect(p.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
-    await expect(p.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
+    await expect(p.getByTestId("mix-chip")).toHaveAttribute("data-source", "none");
     expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner", "Write release notes"]);
   });
 

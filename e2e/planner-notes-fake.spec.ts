@@ -169,11 +169,12 @@ test.describe("daily notes", () => {
 });
 
 test.describe("notes and thoughts", () => {
-  test("with no do-on, never in Today or Project; in All with the type filter, each with its glyph and no checkbox", async ({ page }) => {
+  test("with no do-on, never in Today; in Project under Notes and thoughts; in All with the type filter, each with its glyph and no checkbox", async ({ page }) => {
     const a = await openPanel(page);
     for (const title of ["Quiz timer idea", "Why do I sleep badly on Sundays?", "Does QuizLab need a leaderboard?"]) await expect(row(a, title)).toHaveCount(0);
     await a.getByTestId("view-project").click();
-    await expect(row(a, "Quiz timer idea")).toHaveCount(0);
+    await expect(row(a, "Quiz timer idea")).toHaveAttribute("data-type", "note");
+    await expect(row(a, "Is a standing desk worth it?")).toHaveCount(0);
     await a.getByTestId("view-all").click();
     await expect(row(a, "Quiz timer idea")).toHaveAttribute("data-type", "note");
     await expect(row(a, "Why do I sleep badly on Sundays?")).toHaveAttribute("data-type", "thought");
@@ -245,12 +246,13 @@ test.describe("pins", () => {
   test("a task pinned in QuizLab's Project view stays on top there only — not in Today, not in Pomade, not at Workspace; several in pin order", async ({ page }) => {
     const a = await openPanel(page, { project: "quiz" });
     await a.getByTestId("view-project").click();
-    expect(await titles(a)).toEqual(["Fix the score screen", "Add dark mode"]);
+    const notes = ["Does QuizLab need a leaderboard?", "Sound effects"];
+    expect(await titles(a)).toEqual(["Fix the score screen", "Add dark mode", ...notes]);
     await row(a, "Add dark mode").hover();
     await row(a, "Add dark mode").getByTestId("task-pin").click();
     await expect(a.getByTestId("pinned-list").getByTestId("task-title")).toHaveText(["Add dark mode"]);
     await expect(row(a, "Add dark mode").getByTestId("pinned-mark")).toBeVisible();
-    expect(await titles(a)).toEqual(["Add dark mode", "Fix the score screen"]);
+    expect(await titles(a)).toEqual(["Add dark mode", "Fix the score screen", ...notes]);
     await row(a, "Fix the score screen").hover();
     await row(a, "Fix the score screen").getByTestId("task-pin").click();
     await expect(a.getByTestId("pinned-list").getByTestId("task-title")).toHaveText(["Add dark mode", "Fix the score screen"]);

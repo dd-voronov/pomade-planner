@@ -4,8 +4,8 @@ import { groupLabel, initialActive, stepOneOptions, stepTwoOptions, type PickerG
 
 interface ProjectPickerProps {
   groups: readonly PickerGroup[];
-  /** The project chosen now (`null`: no project). */
-  value: string | null;
+  /** The project chosen now (`null`: no project; `undefined`: nothing is chosen — the mix-in picker). */
+  value: string | null | undefined;
   /** Offer "No project" first. */
   withNone: boolean;
   /** What a typed query starts as (the key that opened the picker). */
@@ -50,7 +50,7 @@ export function ProjectPicker({ groups, value, withNone, initialQuery = "", onPi
     return withNone ? list : list.filter((o) => o.kind !== "none");
   }, [groups, group, query, withNone]);
   const preferred = (o: PickerOption) =>
-    o.kind === "project" ? o.project.id === value : o.kind === "group" ? o.group.projects.some((p) => p.id === value) : value === null;
+    value !== undefined && (o.kind === "project" ? o.project.id === value : o.kind === "group" ? o.group.projects.some((p) => p.id === value) : value === null);
   const [active, setActive] = useState(() => initialActive(options, query, preferred));
   const activeIndex = Math.max(0, Math.min(active, options.length - 1));
   const list = useRef<HTMLUListElement>(null);

@@ -2,14 +2,16 @@
 // Workspace. Today is the whole day in every context — inside a project its project filter narrows
 // it to the project's items. At Workspace, Project and Recurring span everything (grouped by
 // project); inside a project they show the project's items plus its mixed-in sources —
-// workspace-level items and other projects — and a mixed-in row carries its source's label. All
-// always spans everything, narrowed by its project and type filters.
+// workspace-level items and other projects — and a mixed-in row carries its source's label.
+// Project lists every open item of every type in two groups: tasks and recurring items, then
+// notes and thoughts. All always spans everything, narrowed by its project and type filters.
 
 import type { LocalDate } from "pomade-kit/schedule";
 
+import { groupKey, type ListEntry } from "./folds";
 import type { Task } from "./items";
-import { NO_PROJECT, sourceKey, type Source } from "./projects";
-import { compareTasks, isScheduled, recurringRow } from "./today";
+import { NO_PROJECT, sectionsBySource, sourceKey, type Source } from "./projects";
+import { compareTasks, isVisibleOn, recurringRow } from "./today";
 import type { PlannerView, PlannerViewId } from "./view-state";
 
 export type Context = { kind: "workspace" } | { kind: "project"; id: string };
@@ -25,10 +27,8 @@ export function inToday(context: Context, view: Pick<PlannerView, "onlyProject">
 }
 
 /** Whether Project and Recurring show `source`'s items in `context` with `view`'s mix-ins. */
-export function inScope(context: Context, view: Pick<PlannerView, "mixNoProject" | "mixProjects">, source: Source): boolean {
-  if (context.kind === "workspace") return true;
-  if (isOwn(context, source)) return true;
-  return source.kind === "none" ? view.mixNoProject : view.mixProjects.includes(source.key);
+export function inScope(context: Context, view: Pick<PlannerView, "mixins">, source: Source): boolean {
+  return context.kind === "workspace" || isOwn(context, source) || view.mixins.includes(sourceKey(source));
 }
 
 /** Whether All shows an item of `source` and `type` with `view`'s filters (an empty filter passes everything). */
@@ -65,18 +65,75 @@ export function revealInAll(view: PlannerView, source: Source, type: string): Pl
   };
 }
 
+/** Project's two groups: the tasks and recurring items, then the notes and thoughts. */
+export type ProjectGroup = "tasks" | "notes";
+
+export const PROJECT_GROUPS: readonly ProjectGroup[] = ["tasks", "notes"];
+
 /**
- * The Project view's rows (tasks and recurring items — notes, thoughts and daily notes live in
- * All): every open task, and the ones ticked on `day` (crossed out until the
- * boundary), in list order; a recurring item only while it is in Today — between occurrences it
- * shows in the Recurring view alone ([[recurring]] "`do-on` and where an item stands").
+ * The Project group that lists `task` on `day`, or `null` when Project doesn't: a task while open
+ * or ticked that day (crossed out until the boundary), every recurring item not stopped by hand —
+ * between its runs and once ended too, each with where it stands — and every open note and
+ * thought. Archived items, done tasks, resolved thoughts and daily notes are All's.
  */
-export function projectRows(tasks: readonly Task[], day: LocalDate): Task[] {
-  return tasks.filter((t) => isScheduled(t) && (t.repeat !== null ? recurringRow(t, day) !== null : !t.done || t.doneOn === day)).sort(compareTasks);
+export function projectGroupOf(task: Task, day: LocalDate): ProjectGroup | null {
+  if (task.archived) return null;
+  switch (task.type) {
+    case "task":
+      return isVisibleOn(task, day) ? "tasks" : null;
+    case "recurring":
+      return task.done ? null : "tasks";
+    case "note":
+    case "thought":
+      return task.done ? null : "notes";
+    case "daily-note":
+      return null;
+  }
 }
 
-/** The mix-ins as they stay valid: the project's own key and keys of sources no longer there dropped. */
-export function liveMixins(context: Context, view: Pick<PlannerView, "mixProjects">, known: ReadonlySet<string>): string[] {
+/** Project's rows on `day`, each group in list order. */
+export function projectRows(tasks: readonly Task[], day: LocalDate): Record<ProjectGroup, Task[]> {
+  const rows: Record<ProjectGroup, Task[]> = { tasks: [], notes: [] };
+  for (const task of tasks) {
+    const group = projectGroupOf(task, day);
+    if (group !== null) rows[group].push(task);
+  }
+  return { tasks: rows.tasks.sort(compareTasks), notes: rows.notes.sort(compareTasks) };
+}
+
+/**
+ * Project's list as entries ([[views]] "Groups"): inside a project "Tasks" then "Notes and
+ * thoughts", each a level-2 group keyed by its group; at Workspace (`sourceOf` given) a level-1
+ * group per source in heading order (`sectionsBySource`), each holding the same two groups keyed
+ * under it (`groupKey`). A group with no row has no heading. Rows keep the order given.
+ */
+export function projectEntries<R>(rows: readonly R[], groupOf: (row: R) => ProjectGroup, sourceOf?: (row: R) => Source): ListEntry<R>[] {
+  const inner = (items: readonly R[], outer: string | null): ListEntry<R>[] =>
+    PROJECT_GROUPS.flatMap((g) => {
+      const mine = items.filter((r) => groupOf(r) === g);
+      if (mine.length === 0) return [];
+      return [{ kind: "group" as const, key: outer === null ? g : groupKey([outer, g]), level: 2 as const }, ...mine.map((row) => ({ kind: "row" as const, row }))];
+    });
+  if (sourceOf === undefined) return inner(rows, null);
+  return sectionsBySource(rows, sourceOf).flatMap((sec) => {
+    const key = sourceKey(sec.source);
+    return [{ kind: "group" as const, key, level: 1 as const }, ...inner(sec.items, key)];
+  });
+}
+
+/**
+ * Whether a row of Project's "Tasks" counts — on the switcher, on "Tasks" and on a project's
+ * heading: an open task, and a recurring item while it is in Today (due). Notes and thoughts
+ * don't; "Notes and thoughts" counts its rows.
+ */
+export function countsInProject(task: Task, day: LocalDate): boolean {
+  if (task.done || task.archived) return false;
+  if (task.type === "task") return true;
+  return task.type === "recurring" && recurringRow(task, day) !== null;
+}
+
+/** The mix-ins as they stay valid: the project's own key and keys of projects no longer there dropped; the no-project items always stay. */
+export function liveMixins(context: Context, view: Pick<PlannerView, "mixins">, known: ReadonlySet<string>): string[] {
   const own = context.kind === "project" ? context.id : null;
-  return view.mixProjects.filter((k) => k !== own && k !== NO_PROJECT && known.has(k));
+  return view.mixins.filter((k) => k !== own && (k === NO_PROJECT || known.has(k)));
 }

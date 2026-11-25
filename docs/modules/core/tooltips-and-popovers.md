@@ -23,7 +23,7 @@ Every icon-only button of either app (the Planner's and the Board's headers, row
 toasts), a row's actions, and a view shown as its glyph carry a tip: the name, with the shortcut
 where there is one ("New task (⌘⇧A)"). So does every other Planner control that explains itself
 — the add form's and the compact view's Details, the project field, the type switch's options, a
-locked tick's reason, the repeat editor's fields, the mix-in chips and the select bar — and the
+locked tick's reason, the repeat editor's fields, Project's chips ("Due today", "+ Add from…", a mixed-in source) and the select bar — and the
 Planner's controls keep no `title` attribute: the system's grey tooltip stays only on text that
 is cut short (a long title, a path, a rule in words). A row's title says what a click and a
 ⌘-click do ([[views]] "Rows").
@@ -58,5 +58,5 @@ puts it below its anchor when it fits, else above, else on the side with more ro
 capped (it scrolls inside); aligned to the anchor's start or end, shifted left at the right edge,
 narrower than a narrow frame. `role` is "dialog" or "menu". The Board's create form, card popover and triage picker and the
 Planner's row menu use it
-([[editing-drag-create]]), and so do the Planner's "+ Project" mix-in picker and All's filter
+([[editing-drag-create]]), and so do the Planner's "+ Add from…" mix-in picker and All's filter
 menus (`ViewBars.tsx`, [[views]]).

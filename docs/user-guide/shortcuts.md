@@ -69,7 +69,7 @@ In the floating quick-add form and in place in the Planner tab.
 
 ### Project picker
 
-Also the **+ Project** mix-in picker.
+Also the **+ Add from…** mix-in picker.
 
 | Key | Does |
 |---|---|

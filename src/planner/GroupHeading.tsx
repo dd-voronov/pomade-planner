@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from "react";
 
-interface GroupHeadingProps {
+export interface GroupHeadingProps {
   /** The group's key (`folds.ts` `groupKey`): what its fold is stored under. */
   groupKey: string;
   /** 1: a group of the list; 2: a group inside one — lighter, and indented under an outer group (`nested`). */

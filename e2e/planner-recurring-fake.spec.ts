@@ -8,7 +8,7 @@ import { expect, test, type FrameLocator, type Page } from "@playwright/test";
 
 import { APP_PORT, HARNESS_PORT } from "../playwright.config";
 import { RECURRING_TASKS } from "../test/fixtures/workspace";
-import { logged, openQuickAdd, row, setClock, settled, titles } from "./fixtures/planner";
+import { addFrom, logged, openQuickAdd, row, setClock, settled, titles } from "./fixtures/planner";
 import { shot } from "./fixtures/screens";
 
 const APP = `http://localhost:${APP_PORT}/`;
@@ -51,7 +51,7 @@ const SWITCHER_STEPS_IN = (className: string): string[] => className.split(" ").
 const TODAY = ["Pay the rent", "Change toothbrush", "Take vitamins", "Water the plants", "Upload invoices", "Plan the week", "Renew the certificate"];
 
 test.describe("Today", () => {
-  test("lead time, due today, overdue, missed N× and an unreadable rule, each labelled; between occurrences and ended stay out", async ({ page }) => {
+  test("lead time, due today, overdue, missed N× and an unreadable rule, each labelled; between occurrences and ended stay out — Project lists them all", async ({ page }) => {
     const a = await openPanel(page);
     await expect(a.getByTestId("planner-day")).toHaveText("Wed, Dec 2");
     expect(await titles(a)).toEqual(TODAY);
@@ -71,9 +71,12 @@ test.describe("Today", () => {
     for (const title of ["Check the smoke alarms", "Pay the gym"]) await expect(row(a, title)).toHaveCount(0);
     await expect(a.getByTestId("count-today")).toHaveText("7");
     await shot(page, "e005-fake-today-panel");
-    // The Project view holds them only while they are in Today.
+    // The Project view holds every one, each with where it stands; it counts the ones due.
     await a.getByTestId("view-project").click();
-    expect(await titles(a)).toEqual(TODAY);
+    expect((await titles(a)).sort()).toEqual([...TODAY, "Check the smoke alarms", "Pay the gym"].sort());
+    await expect(row(a, "Check the smoke alarms").getByTestId("hint-next")).toHaveText("next Dec 15");
+    await expect(row(a, "Pay the gym").getByTestId("hint-reason")).toHaveText("Ended");
+    await expect(a.getByTestId("count-project")).toHaveText("7");
   });
 
   test("ticking inside the lead time logs done and moves do-on to the 5th of next month; the row says so, then leaves Today", async ({ page }) => {
@@ -179,11 +182,11 @@ test.describe("the Recurring view", () => {
     await shot(page, "e005-fake-recurring-tab");
   });
 
-  test("inside a project: its recurring items only; mixing in the no-project items adds theirs", async ({ page }) => {
+  test("inside a project: its recurring items only; + Add from… ▸ No project adds theirs", async ({ page }) => {
     const a = await openPanel(page, { project: "pomade" });
     await a.getByTestId("view-recurring").click();
     expect(await titles(a)).toEqual(["Renew the certificate"]);
-    await a.getByTestId("mix-no-project").click();
+    await addFrom(a, "No project");
     await expect(row(a, "Pay the rent").getByTestId("hint-source")).toHaveText("No project");
   });
 

@@ -8,7 +8,7 @@ kind: reference
 # Projects — sub-folders, the project-id → folder map, renames
 
 **Module:** `planner` · **UI:** the context (Workspace or the active project), the project headings,
-the project picker and All's project filter · **Code:** `src/planner/model/projects.ts`,
+the project picker (in quick add and as Project's "+ Add from…") and All's project filter · **Code:** `src/planner/model/projects.ts`,
 `src/planner/useProjects.ts`, `src/planner/write.ts` (`moveProjectFolder`, `saveProjectFolders`,
 `syncScopeFolders`, `addProjectScopeFolder`),
 `src/planner/model/settings.ts` · **e2e:** `planner-projects-fake.spec.ts`,
@@ -97,7 +97,9 @@ project's before the map is written — names and groups from Pomade's live list
 only the map); a sub-folder nobody owns is its own source, named after the folder.
 
 - **Headings** (`sectionsBySource`, `compareSources`): "No project" first, then each project by
-  name (ungrouped before grouped), each with its open count; each folds ([[views]] "Groups").
+  name (ungrouped before grouped), each with its open count; each folds ([[views]] "Groups"). In
+  Project at Workspace each holds the project's "Tasks" and "Notes and thoughts" ([[views]] "The
+  views").
 - **Labels** (`sourceLabels`): the name, with a qualifier when another source has the same name —
   the group path ("QuizLab (Archive)"), "Ungrouped", or "folder only" for a folder no project
   owns. The [[today-command]] prints the same headings.

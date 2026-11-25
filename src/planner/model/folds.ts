@@ -68,3 +68,17 @@ export function unfoldedEntries<R>(entries: readonly ListEntry<R>[], folded: Rea
   }
   return shown;
 }
+
+/** The rows under each group of `entries`, by key, in list order: a level-1 group's include its inner groups' rows. */
+export function rowsByGroup<R>(entries: readonly ListEntry<R>[]): Map<string, R[]> {
+  const rows = new Map<string, R[]>();
+  /** The groups the next row is in, outermost first. */
+  let open: { key: string; level: number }[] = [];
+  for (const entry of entries) {
+    if (entry.kind === "group") {
+      open = [...open.filter((g) => g.level < entry.level), { key: entry.key, level: entry.level }];
+      rows.set(entry.key, []);
+    } else for (const g of open) rows.get(g.key)?.push(entry.row);
+  }
+  return rows;
+}

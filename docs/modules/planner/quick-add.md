@@ -143,14 +143,18 @@ project field (the typed letters become its query).
   the project. So "Fix login bug", Tab, `qui`, Enter, Enter files it into QuizLab.
 - Adding into a project whose folder isn't there yet makes it and writes the map entry
   ([[projects]] "The map").
+- The same picker is **+ Add from…** in Project and Recurring inside a project ([[views]]
+  "Context"): "No project" first, then the groups, every project not mixed in yet and the
+  project itself left out; nothing is checked, and a pick mixes that source in.
 
 ## After an add
 
 - **In place** the form closes and the new row is scrolled to, focused and marked for a moment —
-  its group unfolded when it was folded ([[views]] "Groups"). When the view doesn't list the item
-  on its own terms (a note with no day, a task with no date added from Today, another project's
-  item in Project), the list's foot says where it is — "Added — “Lamp for the desk” is
-  in All." — with **Show**, which takes there: Project or Recurring when they list it, else All, its
+  its group unfolded when it was folded ([[views]] "Groups"); a note or thought added from Project
+  lands under "Notes and thoughts". When the view doesn't list the item on its own terms (a note
+  or a task with no date added from Today, another project's item in Project), the list's foot
+  says where it is — "Added — “Lamp for the desk” is in Project." — with **Show**, which takes
+  there: Project or Recurring when they list it, else All, its
   filters widened by just the item's project and type when they hide it (`viewListing`,
   `revealInAll`).
 - **From the overlay** the item shows in the lists through the file watch.

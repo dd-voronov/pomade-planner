@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Popover } from "../core/Popover";
 import type { Rect } from "../core/place";
 import { matchesQuery, pickerGroups, type PickerGroupInfo, type PickerProject } from "./model/picker";
+import { NO_PROJECT } from "./model/projects";
 import { ProjectPicker } from "./ProjectPicker";
 
 const rectOf = (el: Element): Rect => {
@@ -53,6 +54,7 @@ export function OnlyProjectBar({ name, on, onToggle }: { name: string; on: boole
 }
 
 export interface MixedSource {
+  /** Its source key (`none` = the no-project items). */
   key: string;
   label: string;
 }
@@ -60,48 +62,31 @@ export interface MixedSource {
 interface MixBarProps {
   /** The context project: its own items are always shown, so the picker leaves it out. */
   ownId: string;
-  noProject: boolean;
+  /** The sources mixed in, in the order added. */
   mixed: readonly MixedSource[];
   groups: readonly PickerGroupInfo[];
   projects: readonly PickerProject[];
-  onToggleNoProject: () => void;
   onAdd: (key: string) => void;
   onRemove: (key: string) => void;
+  /** Chips standing first in the bar (Project's "Due today"). */
+  children?: ReactNode;
 }
 
 /**
- * The mix-in chips of a project context's Project and Recurring ([[views]] "Context"): "No-project items" toggles the
- * workspace-level items in; "+ Project" picks another project (the two-step picker); each mixed-in
- * project is a chip that × removes.
+ * The bar of a project context's Project and Recurring ([[views]] "Context"): each mixed-in source
+ * is a chip × removes, then "+ Add from…", the two-step picker with "No project" first — every
+ * source not mixed in yet, the project itself aside.
  */
-export function MixBar({ ownId, noProject, mixed, groups, projects, onToggleNoProject, onAdd, onRemove }: MixBarProps) {
+export function MixBar({ ownId, mixed, groups, projects, onAdd, onRemove, children }: MixBarProps) {
   const [picking, setPicking] = useState<Rect | null>(null);
   const add = useRef<HTMLButtonElement>(null);
   const takenKeys = mixed.map((m) => m.key).join("\n");
-  const offered = useMemo(() => {
-    const taken = new Set(takenKeys.split("\n"));
-    return pickerGroups(
-      groups,
-      projects.filter((p) => p.id !== ownId && !taken.has(p.id)),
-    );
-  }, [groups, projects, ownId, takenKeys]);
+  const taken = useMemo(() => new Set(takenKeys.split("\n")), [takenKeys]);
+  const offered = useMemo(() => pickerGroups(groups, projects.filter((p) => p.id !== ownId && !taken.has(p.id))), [groups, projects, ownId, taken]);
+  const noneOffered = !taken.has(NO_PROJECT);
   return (
     <div className="chip-bar" role="toolbar" aria-label="Mix in" data-testid="mix-bar">
-      <button
-        type="button"
-        className={`chip${noProject ? " chip--on" : ""}`}
-        aria-pressed={noProject}
-        data-tip={noProject ? "Stop mixing in the no-project items" : "Mix in the items that belong to no project"}
-        data-testid="mix-no-project"
-        onClick={onToggleNoProject}
-      >
-        {noProject ? "No project" : "+ No-project items"}
-        {noProject ? (
-          <span className="chip__x">
-            <Cross />
-          </span>
-        ) : null}
-      </button>
+      {children}
       {mixed.map((m) => (
         <button key={m.key} type="button" className="chip chip--on" data-testid="mix-chip" data-source={m.key} aria-label={`Stop mixing in ${m.label}`} data-tip={`Stop mixing in ${m.label}`} onClick={() => onRemove(m.key)}>
           <span className="chip__label">{m.label}</span>
@@ -110,20 +95,28 @@ export function MixBar({ ownId, noProject, mixed, groups, projects, onToggleNoPr
           </span>
         </button>
       ))}
-      {offered.length > 0 ? (
-        <button ref={add} type="button" className="chip" aria-expanded={picking !== null} data-testid="mix-add" onClick={(e) => setPicking(rectOf(e.currentTarget))}>
-          + Project
+      {noneOffered || offered.length > 0 ? (
+        <button
+          ref={add}
+          type="button"
+          className="chip"
+          aria-expanded={picking !== null}
+          data-tip="Mix in another project's items, or the items of no project"
+          data-testid="mix-add"
+          onClick={(e) => setPicking(rectOf(e.currentTarget))}
+        >
+          <span className="chip__label">+ Add from…</span>
         </button>
       ) : null}
       {picking !== null ? (
-        <Popover anchor={picking} label="Mix in a project" testId="mix-popover" className="popover--picker" onClose={() => setPicking(null)} restoreFocus={() => add.current?.focus()}>
+        <Popover anchor={picking} label="Add from" testId="mix-popover" className="popover--picker" onClose={() => setPicking(null)} restoreFocus={() => add.current?.focus()}>
           <ProjectPicker
             groups={offered}
-            value={null}
-            withNone={false}
-            label="Mix in"
+            value={undefined}
+            withNone={noneOffered}
+            label="Add from"
             onPick={(p) => {
-              if (p !== null) onAdd(p.id);
+              onAdd(p === null ? NO_PROJECT : p.id);
               setPicking(null);
             }}
             onCancel={() => setPicking(null)}
@@ -131,6 +124,27 @@ export function MixBar({ ownId, noProject, mixed, groups, projects, onToggleNoPr
         </Popover>
       ) : null}
     </div>
+  );
+}
+
+/** Project's "Due today" inside a project ([[views]] "Context"): on, the list is the project's Today items alone, and the chip carries its ×. */
+export function DueTodayChip({ name, on, onToggle }: { name: string; on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      className={`chip${on ? " chip--on" : ""}`}
+      aria-pressed={on}
+      data-tip={on ? `Show everything of ${name} again` : `Show ${name}'s Today items alone`}
+      data-testid="due-today"
+      onClick={onToggle}
+    >
+      <span className="chip__label">Due today</span>
+      {on ? (
+        <span className="chip__x">
+          <Cross />
+        </span>
+      ) : null}
+    </button>
   );
 }
 

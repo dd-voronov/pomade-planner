@@ -38,7 +38,7 @@ If the template can't be used later (deleted, unreadable frontmatter), the setti
 
 | Key | Holds |
 |---|---|
-| `planner.view.<project id>` (`__workspace__` for Workspace) | selected view, Show done, Show archived, Today's **Only *project***, Project's and Recurring's mix-ins, All's filters |
+| `planner.view.<project id>` (`__workspace__` for Workspace) | selected view, Show done, Show archived, Today's **Only *project***, Project's **Due today**, Project's and Recurring's mix-ins, All's filters |
 | `planner.pins.<project id>` | pinned paths per view, in pin order (Today's: Workspace's alone, one list for every project) |
 | `planner.folds.<project id>` | the folded groups of each view |
 | `planner.dailyNoteDay` | the last day the Planner ran on (and made that day's note) |

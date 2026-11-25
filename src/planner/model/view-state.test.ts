@@ -17,8 +17,10 @@ describe("planner view state", () => {
     [{ showArchived: 1 }, DEFAULT_VIEW],
     [{ view: "recurring", showDone: "yes" }, V({ view: "recurring" })],
     [{ view: "notes" }, DEFAULT_VIEW],
-    [{ mixNoProject: true, mixProjects: ["quiz", "quiz", 3, ""] }, V({ mixNoProject: true, mixProjects: ["quiz"] })],
-    [{ mixNoProject: "yes", mixProjects: "quiz" }, DEFAULT_VIEW],
+    [{ mixins: ["none", "quiz", "quiz", 3, ""] }, V({ mixins: ["none", "quiz"] })],
+    [{ mixins: "quiz" }, DEFAULT_VIEW],
+    [{ dueToday: true }, V({ dueToday: true })],
+    [{ dueToday: "yes" }, DEFAULT_VIEW],
     [{ projects: ["none", "quiz"], types: ["task", null] }, V({ projects: ["none", "quiz"], types: ["task"] })],
     [{ onlyProject: true }, V({ onlyProject: true })],
     [{ onlyProject: "yes" }, DEFAULT_VIEW],
@@ -26,8 +28,22 @@ describe("planner view state", () => {
     expect(parsePlannerView(value)).toEqual(view);
   });
 
+  it.each([
+    // The no-project items read as that source, first; the projects as they were.
+    [{ view: "project", mixNoProject: true, mixProjects: ["quiz", "pomade"] }, V({ view: "project", mixins: ["none", "quiz", "pomade"] })],
+    [{ mixNoProject: true, mixProjects: [] }, V({ mixins: ["none"] })],
+    [{ mixNoProject: false, mixProjects: ["quiz", "quiz", 3, ""] }, V({ mixins: ["quiz"] })],
+    [{ mixNoProject: true, mixProjects: ["none", "quiz"] }, V({ mixins: ["none", "quiz"] })],
+    [{ mixNoProject: "yes", mixProjects: "quiz" }, DEFAULT_VIEW],
+    // With `mixins` saved, the other two are not read.
+    [{ mixins: ["quiz"], mixNoProject: true, mixProjects: ["pomade"] }, V({ mixins: ["quiz"] })],
+  ])("mix-ins saved as mixNoProject and mixProjects: %j → %j", (value, view) => {
+    expect(parsePlannerView(value)).toEqual(view);
+    expect(serializePlannerView(parsePlannerView(value))).not.toHaveProperty("mixNoProject");
+  });
+
   it("round-trips and keys by context", () => {
-    const view = V({ view: "project", showDone: true, showArchived: true, onlyProject: true, mixNoProject: true, mixProjects: ["a"], projects: ["none"], types: ["task"] });
+    const view = V({ view: "project", showDone: true, showArchived: true, onlyProject: true, dueToday: true, mixins: ["none", "a"], projects: ["none"], types: ["task"] });
     expect(parsePlannerView(serializePlannerView(view))).toEqual(view);
     expect(plannerViewKey("__workspace__")).toBe("planner.view.__workspace__");
   });

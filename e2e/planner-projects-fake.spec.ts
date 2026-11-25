@@ -7,7 +7,7 @@
 import { expect, test, type FrameLocator, type Page } from "@playwright/test";
 
 import { APP_PORT, HARNESS_PORT } from "../playwright.config";
-import { openQuickAdd, quickAdded, row, settled, titles } from "./fixtures/planner";
+import { addFrom, openQuickAdd, quickAdded, row, settled, titles } from "./fixtures/planner";
 import { shot } from "./fixtures/screens";
 
 const APP = `http://localhost:${APP_PORT}/`;
@@ -48,6 +48,7 @@ const exists = (page: Page, path: string) =>
   }, path);
 const settings = async (page: Page) => JSON.parse(await fileText(page, SETTINGS)) as { tasksRoot: string; projectFolders?: Record<string, { folder: string; name: string; groupPath: string[] }> };
 const sections = (a: FrameLocator) => a.locator('[data-testid="task-section"]').evaluateAll((els) => els.map((el) => el.getAttribute("data-source")));
+const groups = (a: FrameLocator) => a.locator('[data-testid="task-section"]').evaluateAll((els) => els.map((el) => el.getAttribute("data-group")));
 const sectionNames = (a: FrameLocator) => a.getByTestId("task-section-name").allTextContents();
 
 /** The line under the header: the context's name, its folder's path in the tooltip. */
@@ -135,17 +136,19 @@ test.describe("context and views", () => {
     await shot(page, "e004-fake-project-view");
   });
 
-  test("mix-ins in Project and Recurring: + No-project items and + a project mix them in, each row with its source; switching projects and back restores the chips and the view; Today has none", async ({ page }) => {
+  test("mix-ins in Project and Recurring: + Add from… mixes in No project and a project, each row with its source; switching projects and back restores the chips and the view; Today has none", async ({ page }) => {
     const a = await openPanel(page);
     await expect(a.getByTestId("mix-bar")).toHaveCount(0);
     await a.getByTestId("view-project").click();
-    await a.getByTestId("mix-no-project").click();
-    await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
+    await expect(a.getByTestId("mix-add")).toHaveText("+ Add from…");
+    await addFrom(a, "No project");
+    await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "none");
+    await expect(a.getByTestId("mix-chip")).toHaveText("No project");
     await expect(row(a, "Pay the tax").getByTestId("hint-source")).toHaveText("No project");
     await expect(row(a, "Ship the planner").getByTestId("hint-source")).toHaveCount(0);
     expect(await titles(a)).toEqual(PROJECT_WITH_NO_PROJECT);
 
-    // + Project: the two-step picker leaves Pomade itself out; typing finds QuizLab straight away.
+    // + Add from…: the two-step picker leaves Pomade itself and what is mixed in already out; typing finds QuizLab straight away.
     await a.getByTestId("mix-add").click();
     await expect(a.getByTestId("project-picker")).toBeVisible();
     await expect(a.getByTestId("picker-filter")).toBeFocused();
@@ -154,16 +157,18 @@ test.describe("context and views", () => {
     await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab", "QuizLab"]);
     await shot(page, "e004-fake-mixin-picker");
     await a.getByTestId("picker-filter").press("Enter");
-    await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "quiz");
+    await expect(a.getByTestId("mix-chip").nth(1)).toHaveAttribute("data-source", "quiz");
     await expect(row(a, "Fix the score screen").getByTestId("hint-source")).toHaveText("QuizLab");
     await expect(row(a, "Add dark mode").getByTestId("hint-source")).toHaveText("QuizLab");
     await shot(page, "e004-fake-project-mixins");
-    await expect.poll(() => page.evaluate(() => window.fakeHost.state["planner.view.pomade"])).toEqual({ view: "project", showDone: false, showArchived: false, onlyProject: false, mixNoProject: true, mixProjects: ["quiz"], projects: [], types: [] });
+    await expect.poll(() => page.evaluate(() => window.fakeHost.state["planner.view.pomade"])).toEqual({ view: "project", showDone: false, showArchived: false, onlyProject: false, dueToday: false, mixins: ["none", "quiz"], projects: [], types: [] });
+    const chips = () => a.getByTestId("mix-chip").evaluateAll((els) => els.map((el) => el.getAttribute("data-source")));
 
-    // Recurring offers the same chips, mixed in as they are.
+    // Recurring offers the same chips, mixed in as they are, and no "Due today".
     await a.getByTestId("view-recurring").click();
-    await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
-    await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "quiz");
+    await expect.poll(chips).toEqual(["none", "quiz"]);
+    await expect(a.getByTestId("mix-add")).toBeVisible();
+    await expect(a.getByTestId("due-today")).toHaveCount(0);
     // Today has no mix-in chips: the whole day, whatever is mixed in.
     await a.getByTestId("view-today").click();
     await expect(a.getByTestId("mix-bar")).toHaveCount(0);
@@ -176,17 +181,20 @@ test.describe("context and views", () => {
     await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
     await a.getByTestId("view-project").click();
     await contextIs(a, "QuizLab", "Tasks/QuizLab/");
-    await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "false");
     await expect(a.getByTestId("mix-chip")).toHaveCount(0);
     expect(await titles(a)).toEqual(["Fix the score screen", "Add dark mode"]);
     await page.evaluate(() => window.fakeHost.setActiveProject("pomade"));
     await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
-    await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
-    await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "quiz");
+    await expect.poll(chips).toEqual(["none", "quiz"]);
 
-    // A chip's × takes it out again.
-    await a.getByTestId("mix-chip").click();
+    // A chip's × takes it out again; No project goes back into the picker.
+    await a.locator('[data-testid="mix-chip"][data-source="quiz"]').click();
     await expect(row(a, "Add dark mode")).toHaveCount(0);
+    await a.locator('[data-testid="mix-chip"][data-source="none"]').click();
+    await expect(row(a, "Pay the tax")).toHaveCount(0);
+    await a.getByTestId("mix-add").click();
+    await expect(a.getByTestId("picker-option").first()).toHaveText("No project");
+    await page.keyboard.press("Escape");
   });
 
   test("All spans every project: filtered to two projects it shows only theirs; the type filter; both remembered", async ({ page }) => {
@@ -224,10 +232,10 @@ test.describe("context and views", () => {
     await expect(a.getByTestId("count-all")).toHaveText("13");
   });
 
-  test("Workspace Project: every open item, grouped by project", async ({ page }) => {
+  test("Workspace Project: every open item, grouped by project, each with its Tasks group", async ({ page }) => {
     const a = await openPanel(page, "workspace");
     await a.getByTestId("view-project").click();
-    await expect.poll(() => sections(a)).toEqual(["none", "folder:old stuff", "pomade", "quiz"]);
+    await expect.poll(() => groups(a)).toEqual(["none", "none/tasks", "folder:old stuff", "folder:old stuff/tasks", "pomade", "pomade/tasks", "quiz", "quiz/tasks"]);
     await expect(row(a, "Add dark mode")).toBeVisible();
     await expect(row(a, "Learn a piano piece")).toBeVisible();
     await expect(a.getByTestId("mix-bar")).toHaveCount(0);
@@ -236,11 +244,9 @@ test.describe("context and views", () => {
   test("the narrow panel in a project with mix-ins and in All with filters: nothing overflows", async ({ page }) => {
     const a = await openPanel(page, undefined, { panelWidth: 200 });
     await a.getByTestId("view-project").click();
-    await a.getByTestId("mix-no-project").click();
-    await a.getByTestId("mix-add").click();
-    await a.getByTestId("picker-filter").pressSequentially("nora");
-    await a.getByTestId("picker-filter").press("Enter");
-    await expect(a.getByTestId("mix-chip")).toHaveCount(1);
+    await addFrom(a, "No project");
+    await addFrom(a, "nora");
+    await expect(a.getByTestId("mix-chip")).toHaveCount(2);
     const overflow = () => a.locator("html").evaluate((el) => el.scrollWidth - el.clientWidth);
     await shot(page, "e004-fake-narrow-mixins");
     expect(await overflow()).toBe(0);
@@ -465,7 +471,7 @@ test.describe("a project removed", () => {
     await a.getByTestId("mix-add").click();
     await a.getByTestId("picker-filter").pressSequentially("quiz");
     await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab"]);
-    await expect(a.getByTestId("picker-option")).toContainText("Archive");
+    await expect(a.getByTestId("picker-option").filter({ hasText: "QuizLab" })).toContainText("Archive");
     await a.getByTestId("picker-filter").press("Escape");
 
     await a.getByTestId("view-all").click();

@@ -208,16 +208,16 @@ test.describe("the add form in place, in the tab", () => {
     await page.keyboard.press("Alt+Tab");
     await page.keyboard.press("Alt+Tab");
     await expect(a.getByTestId("qa-type-note")).toBeChecked();
-    // A note with no day lives in All.
+    // A note with no day lives in Project, under "Notes and thoughts".
     await a.getByTestId("qa-do-on").fill("");
     await a.getByTestId("qa-title").press("Enter");
     await expect(a.getByTestId("add-form")).toHaveCount(0);
-    await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — “Lamp for the desk” is in All.Show");
+    await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — “Lamp for the desk” is in Project.Show");
     await expect(a.getByTestId("added-show")).toBeFocused();
     await shot(page, "e008-fake-tab-added-elsewhere");
     expect(await titles(a)).not.toContain("Lamp for the desk");
     await page.keyboard.press("Enter");
-    await expect(a.getByTestId("view-all")).toHaveAttribute("aria-selected", "true");
+    await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
     const note = row(a, "Lamp for the desk");
     await expect(note.getByTestId("task-open")).toBeFocused();
     await expect(note).toHaveAttribute("data-added", "");
@@ -236,7 +236,8 @@ test.describe("the add form in place, in the tab", () => {
   });
 
   test("an item All's filters hide: the foot says so and Show widens the filters just enough", async ({ page }) => {
-    const a = await openPlanner(page, { surface: "tab" });
+    // Inside Pomade, a thought of QuizLab: Project doesn't list it, All's type filter hides it.
+    const a = await openPlanner(page, { surface: "tab", fixture: "planner", project: "pomade" });
     await a.getByTestId("view-all").click();
     await a.getByTestId("filter-types").click();
     await a.locator('[data-testid="filter-option"][data-key="task"] input').check();
@@ -244,12 +245,16 @@ test.describe("the add form in place, in the tab", () => {
     await openAddForm(a);
     await page.keyboard.type("Is it time for a new bike?");
     await a.getByTestId("qa-type-thought").check();
+    await a.getByTestId("qa-project").click();
+    await a.getByTestId("picker-filter").pressSequentially("pomade-kit");
+    await a.getByTestId("picker-filter").press("Enter");
+    await expect(a.getByTestId("qa-project")).toHaveAttribute("data-project", "kit");
     await a.getByTestId("qa-title").press("Enter");
     await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — the filters hide “Is it time for a new bike?”.Show");
     await a.getByTestId("added-show").click();
     await expect(row(a, "Is it time for a new bike?").getByTestId("task-open")).toBeFocused();
     await expect(a.getByTestId("filter-types")).toHaveAccessibleName("Types: 2 types");
-    expect(await page.evaluate(() => (window.fakeHost.state["planner.view.__workspace__"] as { types: string[] }).types)).toEqual(["task", "thought"]);
+    expect(await page.evaluate(() => (window.fakeHost.state["planner.view.pomade"] as { types: string[] }).types)).toEqual(["task", "thought"]);
   });
 
   test("Daily in place opens today's note in an editor tab — made first, the tab itself makes none — and closes the form, focus back on +", async ({ page }) => {
