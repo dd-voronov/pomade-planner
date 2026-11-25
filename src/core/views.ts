@@ -44,7 +44,7 @@ export function quickAddRoute(prefill: QuickAddPrefill): string {
  * the form keeps the frame that tall from there (overlay-fit.ts). A task's is 220, the frame
  * Pomade's ⌘⇧A opens at; the fake-host e2e pins each to the form as drawn.
  */
-export const QUICK_ADD_HEIGHT: Record<ItemKind, number> = { task: 220, recurring: 235, note: 205, thought: 189, "daily-note": 171 };
+export const QUICK_ADD_HEIGHT: Record<ItemKind, number> = { task: 220, recurring: 235, note: 220, thought: 220, "daily-note": 171 };
 
 /** `overlay.open` for quick add with `prefill` from the Planner panel: at its form's height, beside the panel. */
 export const quickAddOverlay = (prefill: QuickAddPrefill): OpenOverlayParams => ({ route: quickAddRoute(prefill), height: QUICK_ADD_HEIGHT[prefill.kind], anchor: "panel" });

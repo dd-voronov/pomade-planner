@@ -1,5 +1,6 @@
 // Editing an item in place ([[item-in-place]] "Saving, no button"): the file as the form's draft —
-// the title, a task's dates and importance, a recurring item's rule in the repeat editor, Details —
+// the title, a task's dates and importance, a note's or thought's `do-on`, a recurring item's rule in
+// the repeat editor, Details —
 // and what a changed draft writes back: field-only writes for the fields, the body for Details.
 //
 // Details is the body without what the view shows apart or never shows: the white space at its
@@ -111,8 +112,8 @@ const dateWrite = (key: string, field: DraftCheck["doOn"], current: LocalDate | 
 
 /**
  * The field-only writes that bring `file` to `draft` (`check`: what its fields come to now, on
- * planner day `check.day`). A title is written when it isn't empty; a task's dates and importance
- * when they changed (emptied: the key is removed); a recurring item's rule when the editor holds
+ * planner day `check.day`). A title is written when it isn't empty; a task's dates and importance,
+ * a note's or thought's `do-on`, when they changed (emptied: the key is removed); a recurring item's rule when the editor holds
  * it and it changed — with the `do-on` the new rule gives (`doOnAfterRuleChange`).
  */
 export function itemEdit(file: ItemFile, draft: ItemDraft, check: DraftCheck): ItemEdit {
@@ -126,7 +127,7 @@ export function itemEdit(file: ItemFile, draft: ItemDraft, check: DraftCheck): I
       const next = check.importance.kind === "number" ? check.importance.value : null;
       if (next !== task.importance) fields.push({ key: FIELD.importance, value: next });
     }
-  }
+  } else if (task.type === "note" || task.type === "thought") fields.push(...dateWrite(FIELD.doOn, check.doOn, task.doOn));
   let repeat: Schedule | null = null;
   if (task.type === "recurring" && file.repeatEditable && task.repeat?.kind === "ok" && check.repeat.kind === "ok" && !sameSchedule(check.repeat.schedule, task.repeat.schedule)) {
     repeat = check.repeat.schedule;

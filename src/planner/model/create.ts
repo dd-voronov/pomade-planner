@@ -1,8 +1,8 @@
 // Quick add ([[quick-add]]): the fields as typed — date phrases resolved against the planner day,
 // importance as a number — and the new item's file: `<created>-<slug>.md` in the tasks root (a
 // taken name becomes `-2`, `-3`, …), its frontmatter in the order of [[storage-and-item-types]] "Writing an item". A recurring item carries
-// its `repeat:` block as `pomade-kit` formats it; a note or a thought has no dates. Details are the
-// file's body, as typed.
+// its `repeat:` block as `pomade-kit` formats it; a note or a thought takes a `do-on` alone. Details
+// are the file's body, as typed.
 
 import { parseDatePhrase } from "pomade-kit/dates";
 import { joinPath } from "pomade-kit/protocol";
@@ -57,7 +57,7 @@ export const taskFilePath = (root: string, created: LocalDate, title: string, n 
 export type NewItemType = "task" | "recurring" | "note" | "thought";
 
 export interface NewTask {
-  /** `task` (the default) or `recurring` (with `repeat`), `note` or `thought` (no dates, no importance). */
+  /** `task` (the default) or `recurring` (with `repeat`), `note` or `thought` (a `do-on` alone: no deadline, no importance). */
   type?: NewItemType;
   /** Normalized, non-empty. */
   title: string;
@@ -81,7 +81,7 @@ export function detailsBody(details: string): string {
   return details.endsWith("\n") ? details : `${details}\n`;
 }
 
-/** A new item's text: `type`, `title`, `status`, the dates and importance that are set, a recurring item's `repeat:`, `created`; then its body. */
+/** A new item's text: `type`, `title`, `status`, the dates and importance that are set (a note's or thought's `do-on` alone), a recurring item's `repeat:`, `created`; then its body. */
 export function newTaskContent(t: NewTask): string {
   const type = t.type ?? (t.repeat === undefined ? "task" : "recurring");
   const lines = [`${FIELD.type}: ${type}`, `${FIELD.title}: ${yamlString(t.title)}`, `${FIELD.status}: ${STATUS.open}`];
@@ -90,7 +90,7 @@ export function newTaskContent(t: NewTask): string {
     if (t.deadline !== null) lines.push(`${FIELD.deadline}: ${t.deadline}`);
     if (t.importance !== null) lines.push(`${FIELD.importance}: ${t.importance}`);
     if (t.repeat !== undefined) lines.push(formatSchedule(FIELD.repeat, t.repeat));
-  }
+  } else if (t.doOn !== null) lines.push(`${FIELD.doOn}: ${t.doOn}`);
   lines.push(`${FIELD.created}: ${t.created}`);
   return `---\n${lines.join("\n")}\n---\n${t.body ?? ""}`;
 }

@@ -1,13 +1,13 @@
 ---
 doc: docs/modules/planner/daily-notes.md
 audience: engineers, product
-holds: one note per planner day made by the launch frame from the template (or the built-in one), never back-filled, its checkbox progress and its card pinned on the Workspace Today
+holds: one note per planner day made by the launch frame from the template (or the built-in one), never back-filled, its checkbox progress and its card pinned on Today
 kind: reference
 ---
 
 # Daily notes — one note per planner day, from a template
 
-**Module:** `planner` · **UI:** the daily note's card on the Workspace Today, All with "Daily
+**Module:** `planner` · **UI:** the daily note's card on Today, All with "Daily
 notes", the Daily type of quick add, the template setting · **Code:** `src/planner/model/daily.ts`,
 `src/planner/model/body.ts`, `src/planner/usePlannerState.ts` (`useDailyNoteCreation`),
 `src/planner/write.ts` (`createDailyNote`, `readTemplate`), `src/planner/DailyCard.tsx`,
@@ -20,7 +20,7 @@ notes", the Daily type of quick add, the template setting · **Code:** `src/plan
 
 Each planner day gets one structured note, `Daily/<YYYY-MM-DD>.md` in the tasks root, made from the
 user's template the first time the Planner runs that day — before the Planner is ever opened — and
-pinned on the Workspace Today with its checklist progress. A daily note is one item, not many tasks.
+pinned on Today — at Workspace and in every project — with its checklist progress. A daily note is one item, not many tasks.
 
 ## When
 
@@ -63,16 +63,18 @@ typed or picked from any `.md` file of the workspace with **Choose…**;
 `1.`, `1)`; nested, in block quotes too) starting `[ ]`, `[x]` or `[X]` and some text; lines in
 fenced code don't count. Shown in the accent once every line is ticked.
 
-## Pinned on the Workspace Today
+## Pinned on Today
 
-A card above the list (`DailyCard`): title, "Daily note" and its date when it has a title of its
-own, the progress as text and a bar. A click opens it as a row's does ([[item-in-place]]; with ⌘ or
-Ctrl, the editor tab); its pin unpins it for that planner day only (`planner.dailyNoteUnpinned`,
-`dailyNotePinned`).
+A card above the list (`DailyCard`) on Today in every context — not while Today's project filter
+narrows it to a project ([[views]] "Context"): title, "Daily note" and its date when it has a title
+of its own, the progress as text and a bar. A click opens it as a row's does ([[item-in-place]];
+with ⌘ or Ctrl, the editor tab); its pin unpins it for that planner day only, in every context
+(`planner.dailyNoteUnpinned`, `dailyNotePinned`).
 
 ## Elsewhere
 
-- Workspace-level only (`Daily/` is no project's).
+- Workspace-level only (`Daily/` is no project's). It takes no `do-on`: a daily note is never a
+  row of Today, whatever its frontmatter holds.
 - All lists every daily note, newest first (by `date:`, else the file name; `compareDailyNotes`),
   when its type filter has "Daily notes" ([[views]] "The views").
 - A daily note without a `title:` reads as its date ("Tue, Nov 10").

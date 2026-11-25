@@ -10,6 +10,7 @@ kind: reference
 **Module:** `core` · **UI:** the Planner's settings page ([[settings-and-onboarding]]), the Board
 tab's ⋯ menu ([[backlog-location]]) · **Code:** `src/core/settings-file.ts`,
 `src/planner/model/settings.ts`, `src/planner/model/view-state.ts`, `src/planner/model/pins.ts`,
+`src/planner/model/folds.ts`,
 `src/planner/usePlannerState.ts`, `src/planner/clock.ts`, `src/planner/write.ts` (`saveSettings`,
 `saveProjectFolders`), `src/board/model/settings.ts`, `src/board/model/view-state.ts`,
 `src/board/useBoardData.ts`, `src/board/ReporterForm.tsx` · **e2e:** `pomade-two-apps.spec.ts`, `planner-fake.spec.ts`,
@@ -30,7 +31,7 @@ ever written into an item file.
 |---|---|---|
 | Synced settings, `<workspace>/Apps/<app id>/settings.json` | `Apps/pomade-planner/settings.json`: `tasksRoot` (workspace-relative; no default), `dailyNoteTemplate` (workspace-relative `.md`), `dayBoundary` (`H:MM`, default `3:00`), `projectFolders` (the project-id → folder map, [[projects]]) | `Apps/pomade-board/settings.json`: `backlogPathPattern` (default `docs/roadmap/`, [[backlog-location]]), `reporter` (the handle written as `reporter:` on created tickets, default `d.voronov`, [[editing-drag-create]] "Reporter setting") |
 | Per-project settings (Host API per-project app settings, kept per app id in the workspace config) | none | `backlogPath` (backlog folder override, relative to the project root), `moveDoneToDoneFolder` (default on) |
-| Machine-local state (Host API `state`), `<userData>/app-state/<app id>/` | `planner.view.<contextId>` (view, "Show done", "Show archived", mix-ins, All's filters; `__workspace__` for Workspace), `planner.pins.<contextId>`, `planner.dailyNoteDay` (the day the Planner last ran on), `planner.dailyNoteUnpinned`, `planner.summaryDay`, `planner.settingsWritten` (bumped by a settings write so the other frames re-read) | `board.view.<projectId>` (area and toggled columns) |
+| Machine-local state (Host API `state`), `<userData>/app-state/<app id>/` | `planner.view.<contextId>` (view, "Show done", "Show archived", Today's project filter `onlyProject`, Project's and Recurring's mix-ins, All's filters; `__workspace__` for Workspace), `planner.pins.<contextId>` (Today's list only in `__workspace__`'s: one for every context), `planner.folds.<contextId>` (each view's folded groups), `planner.dailyNoteDay` (the day the Planner last ran on), `planner.dailyNoteUnpinned`, `planner.summaryDay`, `planner.settingsWritten` (bumped by a settings write so the other frames re-read) | `board.view.<projectId>` (area and toggled columns) |
 
 ## Synced settings file
 
@@ -63,6 +64,7 @@ read when a board loads. Its per-project settings are set from the Board tab and
 - Planner view state (`view-state.ts`): `parsePlannerView` / `serializePlannerView`, a bad value
   falling back to `DEFAULT_VIEW` (Today); lists capped at 500 keys against a hand-edited state
   file. Pins (`pins.ts`): each view's paths in pin order, capped at 200 per view ([[views]] "Pins").
+  Folds (`folds.ts`): each view's folded group keys, capped at 500 per view ([[views]] "Groups").
 - `usePlannerState.ts`: a key read once and followed through the other frames' changes, with a
   setter that stores it; and the day's daily note, made by the launch panel frame
   ([[daily-notes]] "When").

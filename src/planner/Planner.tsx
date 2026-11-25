@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import type { HostClient } from "pomade-kit/sdk";
-import type { JsonValue } from "pomade-kit/protocol";
+import { WORKSPACE_PROJECT_ID, type JsonValue } from "pomade-kit/protocol";
 
 import { EmptyState } from "../core/EmptyState";
 import { errorText, useActiveProject } from "../core/host";
 import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
 import { dailyNotePath } from "./model/daily";
+import { foldsKey, parseFolds, serializeFolds, setFolded, unfoldAll, unfoldedEntries, type Folds, type ListEntry } from "./model/folds";
 import { allHints, dayHeading, displayTitle, recurringHints, shortDate, todayHints, type Hint } from "./model/labels";
 import { isTaskType, PLANNER_TYPES, type Items, type PlannerType, type Task } from "./model/items";
-import { DAILY_UNPINNED_KEY, dailyNotePinned, isPinned, parsePins, serializePins, splitPinned, togglePin, pinsKey } from "./model/pins";
+import { DAILY_UNPINNED_KEY, dailyNotePinned, isPinned, parsePins, serializePins, splitPinned, togglePin, pinsKey, type Pins } from "./model/pins";
 import { groupLabel } from "./model/picker";
 import { folderForNew, folderKey, folderSources, NO_PROJECT, NONE_SOURCE, sectionsBySource, sourceKey, sourceLabels, type ProjectSource, type Source } from "./model/projects";
-import { inAllFilter, inScope, isOwn, liveMixins, projectRows, revealInAll, viewListing, type Context } from "./model/scope";
+import { inAllFilter, inScope, inToday, isOwn, liveMixins, projectRows, revealInAll, viewListing, type Context } from "./model/scope";
 import { PLANNER_KEYS, type ParsedPlannerSettings } from "./model/settings";
 import { recurringState, type LogWord } from "./model/recurring";
 import { allTasks, compareTasks, recurringRows, todayRows, type TodayRow } from "./model/today";
@@ -33,6 +34,7 @@ import {
 import { AddFoot, useAddInPlace } from "./AddInPlace";
 import { DailyCard } from "./DailyCard";
 import { DeleteConfirm } from "./DeleteConfirm";
+import { GroupHeading } from "./GroupHeading";
 import { ItemPane, ItemSplit } from "./ItemPane";
 import { OpenInTabGlyph } from "./OpenInTabGlyph";
 import { PlannerGlyph } from "./PlannerGlyph";
@@ -43,7 +45,7 @@ import { useAttention } from "./useAttention";
 import { useOpenItem, type ItemAsk } from "./useOpenItem";
 import { useAppState, useDailyNoteCreation } from "./usePlannerState";
 import { useFolderReconciliation, useProjectList, type ProjectList } from "./useProjects";
-import { FilterMenu, MixBar, type FilterOption } from "./ViewBars";
+import { FilterMenu, MixBar, OnlyProjectBar, type FilterOption } from "./ViewBars";
 import { archiveItem, completeRecurring, resolveThought, restoreItem, saveSettings, tickTask, trashFiles, WriteError } from "./write";
 
 export type PlannerSurface = "panel" | "tab";
@@ -346,8 +348,10 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const active = useActiveProject(host);
   const context: Context = active.kind === "project" ? { kind: "project", id: active.id } : { kind: "workspace" };
   const [view, setView] = useView(host, active.id);
-  const [pins, setPins] = useAppState(host, pinsKey(active.id), parsePins, serializePins);
+  const [contextPins, setContextPins] = useAppState(host, pinsKey(active.id), parsePins, serializePins);
+  const [workspacePins, setWorkspacePins] = useAppState(host, pinsKey(WORKSPACE_PROJECT_ID), parsePins, serializePins);
   const [unpinned, setUnpinned] = useAppState(host, DAILY_UNPINNED_KEY, parseUnpinned, serializeUnpinned);
+  const [folds, setFolds] = useAppState(host, foldsKey(active.id), parseFolds, serializeFolds);
   // The panel is the Planner's launch frame (startOnLaunch): it alone makes the day's note, sets the badge and posts the summary.
   const launchFrame = surface === "panel";
   const daily = useDailyNoteCreation(host, launchFrame, root, day, dailyNoteTemplate, reload);
@@ -400,6 +404,21 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     [sources],
   );
   const labelOf = (source: Source): string => labels.get(sourceKey(source))?.text ?? (source.kind === "none" ? "No project" : source.name);
+
+  /** The keys of the groups an item stands in, outermost first (`folds.ts`): its source's. */
+  const groupsOf = useCallback((task: Task): string[] => [sourceKey(sourceOf(task.folder))], [sourceOf]);
+  /** The item just added, once its file is read. */
+  const addedPath = add.state.kind === "added" ? add.state.added.path : null;
+  const addedTask = addedPath === null ? null : (items.tasks.find((t) => t.path === addedPath) ?? null);
+  // A group holding the item asked for (the panel's click, an item route) or just added unfolds.
+  const revealing = useReveal(
+    [item.open === null ? null : { path: item.open.path, ask: `open:${String(item.open.id)}:${String(item.open.asks)}` }, addedTask === null ? null : { path: addedTask.path, ask: "added" }],
+    items,
+    groupsOf,
+    view?.view ?? null,
+    folds,
+    setFolds,
+  );
 
   const own = context.kind === "project" ? (list?.projects.find((p) => p.id === context.id) ?? null) : null;
   const ownName = context.kind === "project" ? (own?.name ?? active.name) : "Workspace";
@@ -468,7 +487,14 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       .finally(() => void reload());
   };
 
-  if (view === null || pins === null || unpinned === null) return <main className="planner" data-testid={testId} aria-busy="true" />;
+  if (view === null || contextPins === null || workspacePins === null || unpinned === null || folds === null) return <main className="planner" data-testid={testId} aria-busy="true" />;
+  // Today has one pin list for the whole workspace: the Workspace's; every other view's are the context's own.
+  // The Workspace's key is read and written through its own state alone, so it never goes stale here.
+  const pins: Pins = context.kind === "workspace" ? workspacePins : { ...contextPins, today: workspacePins.today };
+  const setPins = (next: Pins) => {
+    if (context.kind === "workspace" || next.today !== pins.today) setWorkspacePins(context.kind === "workspace" ? next : { ...workspacePins, today: next.today });
+    else setContextPins({ ...next, today: [] });
+  };
   const pinnedHere = pins[view.view];
   const pinOf = (task: Task) => ({ pinned: isPinned(pins, view.view, task.path), onToggle: () => setPins(togglePin(pins, view.view, task.path)) });
   /** What each row action does: a recurring item's Skip (`row`: its Today row), a note's Archive, an archived item's Restore, a thought's Resolve and Reopen. */
@@ -487,17 +513,24 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   };
   const mixins = { mixNoProject: view.mixNoProject, mixProjects: liveMixins(context, view, knownKeys) };
   const scoped = shown.filter((t) => inScope(context, mixins, sourceOf(t.folder)));
-  const today = withAcks(todayRows(scoped, day), acks.list(), (a) => a.row, (r) => r.task);
+  /** Today narrowed to the project's own items: the project filter is on, inside a project. */
+  const onlyOwn = context.kind === "project" && view.onlyProject;
+  const wholeDay = withAcks(todayRows(shown, day), acks.list(), (a) => a.row, (r) => r.task);
+  const today = onlyOwn ? wholeDay.filter((r) => inToday(context, view, sourceOf(r.task.folder))) : wholeDay;
   const projectList = withAcks(projectRows(scoped, day), acks.list(), (a) => (a.row === null ? null : a.task), (t) => t);
   const recurringList = recurringRows(scoped, day);
   const filtered = shown.filter((t) => inAllFilter(view, sourceOf(t.folder), t.type));
   const showDaily = view.types.includes("daily-note");
   const all = allTasks(filtered, { showDone: view.showDone, showArchived: view.showArchived, showDaily });
-  const grouped = context.kind === "workspace" && view.view !== "all";
+  /** The list stands under project headings: Today unless narrowed to the project, Project and Recurring at Workspace. */
+  const grouped = view.view === "today" ? !onlyOwn : context.kind === "workspace" && view.view !== "all";
   const unreadableShown = items.unreadable.filter((u) =>
     view.view === "all"
       ? inAllFilter(view, sourceOf(u.folder), u.type) && (view.showArchived || !u.archived) && (showDaily || u.type !== "daily-note")
-      : !u.archived && isTaskType(u.type) && inScope(context, mixins, sourceOf(u.folder)) && (view.view !== "recurring" || u.type === "recurring"),
+      : !u.archived &&
+        isTaskType(u.type) &&
+        (view.view === "today" ? inToday(context, view, sourceOf(u.folder)) : inScope(context, mixins, sourceOf(u.folder))) &&
+        (view.view !== "recurring" || u.type === "recurring"),
   );
 
   /** All's rows top to bottom (pinned, the list, the unreadable files): what select mode chooses from. */
@@ -614,10 +647,12 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     }
   };
 
+  /** Whose rows go unlabelled: the context's own — in the whole day's Today, as at Workspace, the workspace-level items. */
+  const labelContext: Context = view.view === "today" && !onlyOwn ? { kind: "workspace" } : context;
   /** A row's source label: shown when the row isn't the context's own — under a project heading only on a pinned row, which stands above the headings. */
   const rowSource = (task: Task, pinned = false): string | undefined => {
     const source = sourceOf(task.folder);
-    return (grouped && !(pinned && source.kind === "project")) || isOwn(context, source) ? undefined : labelOf(source);
+    return (grouped && !(pinned && source.kind === "project")) || isOwn(labelContext, source) ? undefined : labelOf(source);
   };
   const excerpt = surface === "tab" ? (task: Task) => task.excerpt : () => null;
   /** A recurring item's row: done advances it (never unticks), Skip on hover; locked while its rule can't be read, once ended, and while a write is under way. */
@@ -698,21 +733,32 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
       />
     );
   };
+  /** The view's folded groups, those holding the item asked for or just added aside. */
+  const folded = new Set(folds[view.view].filter((k) => !revealing.has(k)));
+  const fold = (key: string, on: boolean) => setFolds(setFolded(folds, view.view, key, on));
+  /** `rows` under a heading per project, each folding; with no row of a project, no headings. */
   const sectioned = <T,>(rows: readonly T[], taskOf: (row: T) => Task, render: (row: T) => ReactNode, open: (row: T) => boolean = (r) => !isDone(taskOf(r))): ReactNode[] => {
     const sections = sectionsBySource(rows, (r) => sourceOf(taskOf(r).folder));
     if (sections.every((sec) => sec.source.kind === "none")) return rows.map(render);
-    return sections.flatMap((sec) => {
-      const label = labels.get(sourceKey(sec.source));
-      return [
-        <li key={`section:${sourceKey(sec.source)}`} className="task-section" data-testid="task-section" data-source={sourceKey(sec.source)}>
-          <span className="task-section__name" data-testid="task-section-name">
-            {label?.name ?? labelOf(sec.source)}
-          </span>
-          {label?.qualifier ? <span className="task-section__qualifier">{label.qualifier}</span> : null}
-          <span className="task-section__count">{sec.items.filter(open).length}</span>
-        </li>,
-        ...sec.items.map(render),
-      ];
+    const byKey = new Map(sections.map((sec) => [sourceKey(sec.source), sec]));
+    const entries: ListEntry<T>[] = sections.flatMap((sec) => [{ kind: "group" as const, key: sourceKey(sec.source), level: 1 as const }, ...sec.items.map((row) => ({ kind: "row" as const, row }))]);
+    return unfoldedEntries(entries, folded).map((entry) => {
+      if (entry.kind === "row") return render(entry.row);
+      const sec = byKey.get(entry.key);
+      const label = sec === undefined ? undefined : labels.get(entry.key);
+      return (
+        <GroupHeading
+          key={`section:${entry.key}`}
+          groupKey={entry.key}
+          level={entry.level}
+          source={entry.key}
+          name={label?.name ?? (sec === undefined ? entry.key : labelOf(sec.source))}
+          qualifier={label?.qualifier ?? undefined}
+          count={sec?.items.filter(open).length ?? 0}
+          folded={folded.has(entry.key)}
+          onFold={(on) => fold(entry.key, on)}
+        />
+      );
     });
   };
 
@@ -730,7 +776,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     listed = pinnedFirst(recurringList, (r) => r.task, recurringView, (r) => r.state.phase !== "ended");
   } else listed = pinnedFirst(all, (t) => t, listRow);
   const rows = listed.rest;
-  const todayNote = context.kind === "workspace" && view.view === "today" ? (items.tasks.find((t) => t.type === "daily-note" && !t.archived && t.path === dailyNotePath(root, day)) ?? null) : null;
+  const todayNote = view.view === "today" && !onlyOwn ? (items.tasks.find((t) => t.type === "daily-note" && !t.archived && t.path === dailyNotePath(root, day)) ?? null) : null;
   const dailyCard =
     todayNote !== null && dailyNotePinned(day, unpinned.day) ? (
       <DailyCard
@@ -762,12 +808,17 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   const filtering = view.projects.length > 0 || view.types.length > 0;
 
   const counts: Record<PlannerViewId, number> = {
-    today: today.filter((r) => !isDone(r.task)).length,
+    today: wholeDay.filter((r) => !isDone(r.task)).length,
     project: projectList.filter((t) => !isDone(t)).length,
     recurring: recurringList.filter((r) => r.state.phase !== "ended").length,
     all: filtered.filter((t) => !isDone(t) && !t.archived && t.type !== "daily-note").length,
   };
-  const where = `${root === "" ? "" : `${root}/`}${ownFolder === null ? "" : `${ownFolder}/`}`;
+  const rootPath = root === "" ? "" : `${root}/`;
+  /** The line under the header names the context: the project in its own views (Today only while narrowed to it), else "All projects"; the folder's path is its tooltip. */
+  const namesProject = context.kind === "project" && (view.view !== "today" || onlyOwn);
+  const ownSource = context.kind === "project" ? [...sources.values()].find((src) => src.id === context.id) : undefined;
+  const contextName = namesProject ? (ownSource === undefined ? ownName : labelOf(ownSource)) : "All projects";
+  const contextPath = namesProject && ownFolder !== null ? `${rootPath}${ownFolder}/` : rootPath || "the workspace root";
 
   /** What an add starts with here ([[quick-add]] "Pre-fills"); the project is the context's on every path. */
   const prefill: QuickAddPrefill = { doOn: view.view === "today" ? "today" : "", kind: view.view === "recurring" ? "recurring" : "task" };
@@ -777,9 +828,6 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
     if (surface === "tab") add.open(from);
     else void host.overlay.open(quickAddOverlay(prefill)).catch((e: unknown) => setError(`Couldn't open quick add: ${errorText(e)}`));
   };
-  /** The item the add form just made, once its file is read: where it shows. */
-  const addedPath = add.state.kind === "added" ? add.state.added.path : null;
-  const addedTask = addedPath === null ? null : (items.tasks.find((t) => t.path === addedPath) ?? null);
   const addFoot = (
     <AddFoot
       add={add}
@@ -815,7 +863,7 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
   ];
   const typeOptions: FilterOption[] = PLANNER_TYPES.map((t) => ({ key: t, label: TYPE_LABELS[t] }));
 
-  const inOwn = (what: string): string => (context.kind === "project" ? `${what} in ${ownName}` : what);
+  const inOwn = (what: string): string => (namesProject ? `${what} in ${contextName}` : what);
   const emptyTitle =
     view.view === "today"
       ? inOwn("Nothing for today")
@@ -937,11 +985,12 @@ function Views({ host, surface, clock, settings, items, reload, testId, onShowSe
             </label>
           </>
         )}
-        <span className="planner__root" title={where || "the workspace root"} data-testid="planner-where">
-          <bdi>{where === "" ? "/" : where}</bdi>
+        <span className="planner__context" data-tip={contextPath} data-testid="planner-context">
+          <bdi>{contextName}</bdi>
         </span>
       </div>
-      {context.kind === "project" && view.view !== "all" ? (
+      {context.kind === "project" && view.view === "today" ? <OnlyProjectBar name={ownSource === undefined ? ownName : labelOf(ownSource)} on={view.onlyProject} onToggle={() => setView({ ...view, onlyProject: !view.onlyProject })} /> : null}
+      {context.kind === "project" && (view.view === "project" || view.view === "recurring") ? (
         <MixBar
           ownId={context.id}
           noProject={view.mixNoProject}
@@ -1273,6 +1322,44 @@ function useAcks() {
       drop,
     };
   }, [acks]);
+}
+
+/** An ask to show an item: its path, and what tells this ask from the next one for the same path. */
+interface Reveal {
+  path: string;
+  ask: string;
+}
+
+/**
+ * Unfold the groups that hold an item asked for or just added ([[views]] "Groups"), once per ask:
+ * returns the keys to show unfolded at once, and stores them unfolded on `view` as soon as the item
+ * and the fold state are read. A group folded again afterwards stays folded.
+ */
+function useReveal(asks: readonly (Reveal | null)[], items: Items, groupsOf: (task: Task) => string[], view: PlannerViewId | null, folds: Folds | null, setFolds: (next: Folds) => void): ReadonlySet<string> {
+  const done = useRef(new Set<string>());
+  const pending: { id: string; keys: string[] }[] = [];
+  for (const a of asks) {
+    if (a === null || view === null) continue;
+    const id = JSON.stringify([view, a.path, a.ask]);
+    const task = items.tasks.find((t) => t.path === a.path);
+    if (task !== undefined && !done.current.has(id)) pending.push({ id, keys: groupsOf(task) });
+  }
+  const keys = pending.flatMap((p) => p.keys);
+  const pendingIds = JSON.stringify(pending.map((p) => p.id));
+  const read = folds !== null;
+  const latest = useRef({ folds, setFolds, keys, view });
+  useLayoutEffect(() => {
+    latest.current = { folds, setFolds, keys, view };
+  });
+  useEffect(() => {
+    const { folds: current, setFolds: set, keys: shown, view: on } = latest.current;
+    const ids = JSON.parse(pendingIds) as string[];
+    if (ids.length === 0 || current === null || on === null) return;
+    for (const id of ids) done.current.add(id);
+    const next = unfoldAll(current, on, shown);
+    if (next !== current) set(next);
+  }, [pendingIds, read]);
+  return new Set(keys);
 }
 
 /** `rows` with each acknowledged item that has left them put back where it was (its row from before the write), in list order. */

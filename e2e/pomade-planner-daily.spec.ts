@@ -195,7 +195,7 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     await expect(p.getByTestId("daily-card-progress")).toHaveText("2/8", { timeout: 1_500 });
   });
 
-  test("⌘⇧A → Thought creates a thought that appears in All but never in Today; “Resolve” marks it resolved", async () => {
+  test("⌘⇧A → Thought with no day creates a thought that appears in All but not in Today; “Resolve” marks it resolved", async () => {
     const p = await openPanel();
     await page.keyboard.press("Meta+Shift+A");
     await expect(page.getByTestId("app-overlay")).toBeVisible();
@@ -206,7 +206,8 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     await page.keyboard.press("Tab");
     for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowRight");
     await expect(overlay.getByTestId("qa-type-thought")).toBeChecked();
-    await expect(overlay.getByTestId("qa-about")).toBeVisible();
+    await expect(overlay.getByTestId("qa-do-on")).toHaveValue("");
+    await expect(overlay.getByTestId("qa-deadline")).toHaveCount(0);
     await shot(page, "e006-pomade-quick-add-thought-overlay");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("app-overlay")).toHaveCount(0);
@@ -267,9 +268,9 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     expect(await titles(p)).toEqual(["Add dark mode", "Fix login bug"]);
     await page.mouse.move(700, 450);
     await shot(page, "e006-pomade-pins-project");
-    // Not on QuizLab's Today, not at Workspace.
+    // Not on Today, not at Workspace.
     await p.getByTestId("view-today").click();
-    await expect(p.getByTestId("pinned-list")).toHaveCount(0);
+    await expect(p.getByTestId("pinned-list").getByTestId("task-row")).toHaveCount(0);
     await page.getByTestId("project-__workspace__").click();
     await p.getByTestId("view-project").click();
     await expect(row(p, "Add dark mode")).toBeVisible();
@@ -283,7 +284,7 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     await p.getByTestId("view-today").click();
   });
 
-  test("changing type: in Pomade's editor re-renders the item as the new type within ~1 s", async () => {
+  test("changing type: in Pomade's editor re-renders the item as the new type within ~1 s — a note planned for the day stays in Today", async () => {
     const p = await openPanel();
     await expect(row(p, "Call the dentist")).toBeVisible();
     await row(p, "Call the dentist").getByTestId("task-open").click({ modifiers: ["Meta"] });
@@ -296,8 +297,10 @@ test.describe("daily notes, notes, thoughts and pins in a real Pomade", () => {
     await page.keyboard.press("Meta+s");
     await expect.poll(() => text("2026-11-07-call-the-dentist.md")).toContain("type: note");
     const saved = Date.now();
-    await expect(row(p, "Call the dentist")).toHaveCount(0, { timeout: 1_500 });
+    // Its do-on is the day: as a note it stays in Today, with its type's glyph in the checkbox's place.
+    await expect(row(p, "Call the dentist")).toHaveAttribute("data-type", "note", { timeout: 1_500 });
     expect(Date.now() - saved).toBeLessThan(1_500);
+    await expect(row(p, "Call the dentist").getByTestId("task-check")).toHaveCount(0);
     await p.getByTestId("view-all").click();
     await expect(row(p, "Call the dentist")).toHaveAttribute("data-type", "note");
     await p.getByTestId("view-today").click();

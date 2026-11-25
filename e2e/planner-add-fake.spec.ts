@@ -208,7 +208,9 @@ test.describe("the add form in place, in the tab", () => {
     await page.keyboard.press("Alt+Tab");
     await page.keyboard.press("Alt+Tab");
     await expect(a.getByTestId("qa-type-note")).toBeChecked();
-    await page.keyboard.press("Enter");
+    // A note with no day lives in All.
+    await a.getByTestId("qa-do-on").fill("");
+    await a.getByTestId("qa-title").press("Enter");
     await expect(a.getByTestId("add-form")).toHaveCount(0);
     await expect(a.getByTestId("added-elsewhere")).toHaveText("Added — “Lamp for the desk” is in All.Show");
     await expect(a.getByTestId("added-show")).toBeFocused();
@@ -563,7 +565,7 @@ test.describe("the overlay", () => {
       await expect(form).not.toHaveAttribute("data-fill");
       await shot(page, `e008-fake-overlay-${kind}`);
     }
-    expect(await resizes(page)).toEqual([235, 205, 189, 171, 220]);
+    expect(await resizes(page)).toEqual([235, 220, 171, 220]);
   });
 
   test("Details grows the frame a line at a time and never scrolls; clearing it shrinks the frame; at Pomade's cap Details scrolls inside, the keys in view; ⌘↵ adds with the body", async ({ page }) => {
@@ -571,7 +573,7 @@ test.describe("the overlay", () => {
     const a = app(page);
     await a.getByTestId("qa-title").fill("Buy a lamp");
     await a.getByTestId("qa-type-note").check();
-    await expect.poll(() => heights(a)).toEqual({ frame: 205, form: 205 });
+    await expect.poll(() => heights(a)).toEqual({ frame: 220, form: 220 });
     const details = a.getByTestId("qa-details");
     const form = a.getByTestId("quick-add-form");
     // Any scroll of Details while the frame catches up would be a jump of its text.
@@ -581,7 +583,7 @@ test.describe("the overlay", () => {
     for (const [n, word] of [[2, "two"], [3, "three"], [4, "four"]] as const) {
       await page.keyboard.press("Enter");
       await page.keyboard.type(word);
-      await expect.poll(() => heights(a)).toEqual({ frame: 205 + 16 * (n - 1), form: 205 + 16 * (n - 1) });
+      await expect.poll(() => heights(a)).toEqual({ frame: 220 + 16 * (n - 1), form: 220 + 16 * (n - 1) });
       expect(await fits(details)).toBe(true);
     }
     await expect(details).not.toHaveAttribute("data-scrolled");
@@ -589,8 +591,8 @@ test.describe("the overlay", () => {
     expect(await insideFrame(a.getByTestId("qa-keys"))).toBe(true);
     await shot(page, "e008-fake-overlay-details");
     await details.fill("");
-    await expect.poll(() => heights(a)).toEqual({ frame: 205, form: 205 });
-    expect(await resizes(page)).toEqual([205, 221, 237, 253, 205]);
+    await expect.poll(() => heights(a)).toEqual({ frame: 220, form: 220 });
+    expect(await resizes(page)).toEqual([236, 252, 268, 220]);
 
     // Past the cap (60% of the 720 px window: 432): the form fills the frame, Details gives way and scrolls inside.
     await details.fill(Array.from({ length: 30 }, (_, i) => `line ${i + 1}`).join("\n"));
@@ -604,7 +606,7 @@ test.describe("the overlay", () => {
     await shot(page, "e008-fake-overlay-details-capped");
     await details.fill("one\ntwo");
     await expect(form).not.toHaveAttribute("data-fill");
-    await expect.poll(() => heights(a)).toEqual({ frame: 221, form: 221 });
+    await expect.poll(() => heights(a)).toEqual({ frame: 236, form: 236 });
     await details.press("Meta+Enter");
     await expect(page.locator("#stage iframe")).toHaveCount(0);
     expect(await fileText(page, "Tasks/2026-11-17-buy-a-lamp.md")).toBe("---\ntype: note\ntitle: Buy a lamp\nstatus: open\ncreated: 2026-11-17\n---\none\ntwo\n");

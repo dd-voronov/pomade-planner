@@ -96,7 +96,7 @@ test.describe("tooltips and the Planner's header in a real Pomade", () => {
     await shot(page, "t002-pomade-tip-action");
 
     // Off the control, the tip leaves.
-    await p.getByTestId("planner-where").hover();
+    await p.getByTestId("show-done").hover();
     await expect(p.getByTestId("tip")).toHaveCount(0);
   });
 

@@ -4,12 +4,14 @@
 //
 // - The planner day runs from boundary to boundary (default 3:00): at 01:30 it is still the
 //   previous day. It is `pomade-kit`'s `currentDay`, the day date phrases count from.
-// - Today holds tasks and recurring items only — never notes, thoughts or daily notes, nor
-//   anything archived. Every open task with a reason: `overdue` (deadline before today), `due-today`
-//   (deadline today), `planned` (`do-on` today) or `rolled-over` (`do-on` before today — "planned
-//   N days ago"); the first that applies, in that order.
+// - Today holds tasks and recurring items, and the notes and thoughts planned for the day — never
+//   daily notes, nor anything archived. Every open task with a reason: `overdue` (deadline before
+//   today), `due-today` (deadline today), `planned` (`do-on` today) or `rolled-over` (`do-on`
+//   before today — "planned N days ago"); the first that applies, in that order. A note or thought
+//   is there on its `do-on` day only (`planned`): it never rolls over, and other dates on it count
+//   for nothing.
 // - A task ticked today (`done-on` = the planner day) stays, crossed out, with the reason it had,
-//   until the next boundary.
+//   until the next boundary; so does a thought resolved today.
 // - A recurring item (recurring.ts) is in Today from `do-on − lead-days`: `lead-time` before its
 //   date ("due in N days"), `recurring-due` on and after it ("due today", "missed N×"). Done and
 //   skip advance it rather than cross it out, so it never shows ticked.
@@ -82,10 +84,17 @@ export function recurringRow(task: Task, day: LocalDate): TodayRow | null {
 /** Whether an item can be in Today, Project or Recurring at all: a task or recurring item, not archived. */
 export const isScheduled = (task: Task): boolean => isTaskType(task.type) && !task.archived;
 
+/** Whether a note or thought is in Today on `day`: planned for that very day (`do-on`), not archived — open, or resolved that day. */
+export const isPlannedNote = (task: Task, day: LocalDate): boolean => (task.type === "note" || task.type === "thought") && !task.archived && task.doOn === day && isVisibleOn(task, day);
+
 /** Today on `day`: its rows in order. */
 export function todayRows(tasks: readonly Task[], day: LocalDate): TodayRow[] {
   const rows: TodayRow[] = [];
   for (const task of tasks) {
+    if (isPlannedNote(task, day)) {
+      rows.push({ task, reason: "planned", plannedDaysAgo: 0, recurring: null });
+      continue;
+    }
     if (!isScheduled(task)) continue;
     if (task.repeat !== null) {
       const row = recurringRow(task, day);

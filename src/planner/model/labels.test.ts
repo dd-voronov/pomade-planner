@@ -49,6 +49,11 @@ describe("todayHints", () => {
     expect(hints(fields)).toEqual(expected);
   });
 
+  it("a note or thought planned for the day: its own hints, never a reason or its planned day", () => {
+    expect(hints({ type: "note", doOn: D, created: "2026-11-12" })).toEqual([["created", "added Nov 12", "muted"]]);
+    expect(hints({ type: "thought", doOn: D, done: true, doneOn: D })).toEqual([["done", "resolved today", "muted"]]);
+  });
+
   it("names invalid fields", () => {
     expect(hints({ doOn: D, problems: ["deadline isn't a date (YYYY-MM-DD)"] })).toEqual([["problem", "deadline isn't a date (YYYY-MM-DD)", "warning"]]);
   });
@@ -167,6 +172,8 @@ describe("notes, thoughts and daily notes on a row", () => {
       ["archived", "archived"],
     ]);
     expect(hints(task({ type: "thought", done: true, doneOn: D }))).toEqual([["done", "resolved today"]]);
+    expect(hints(task({ type: "note", created: "2026-11-12", doOn: "2026-11-20" }))).toEqual([["do-on", "do Fri"]]);
+    expect(hints(task({ type: "thought", created: "2026-11-12", doOn: D, done: true, doneOn: D }))).toEqual([["done", "resolved today"]]);
     expect(hints(task({ archived: true, doOn: "2026-11-18" }))).toEqual([
       ["do-on", "do tomorrow"],
       ["archived", "archived"],

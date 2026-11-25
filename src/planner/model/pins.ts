@@ -1,9 +1,9 @@
 // Pins ([[views]] "Pins"): per view and per context, in machine-local app state — one key per context
 // (`planner.pins.<projectId>`, `__workspace__` for Workspace) holding each view's pinned paths in
-// pin order. A pinned row shows above the view's list, in pin order, while the view lists it; a
-// pin whose item is gone or out of the view simply isn't shown. The daily note is pinned on the
-// Workspace Today by itself each day; unpinning it holds for that planner day only
-// (`DAILY_UNPINNED_KEY` holds the day).
+// pin order; Today's are the Workspace's in every context (Planner.tsx). A pinned row shows above
+// the view's list, in pin order, while the view lists it; a pin whose item is gone or out of the
+// view simply isn't shown. The daily note is pinned on Today by itself each day; unpinning it holds
+// for that planner day only, in every context (`DAILY_UNPINNED_KEY` holds the day).
 
 import type { JsonValue } from "pomade-kit/protocol";
 import type { LocalDate } from "pomade-kit/schedule";
@@ -54,5 +54,5 @@ export function splitPinned<T>(rows: readonly T[], pinned: readonly string[], pa
   return { pinned: first, rest: rows.filter((r) => !set.has(pathOf(r))) };
 }
 
-/** Whether the daily note is pinned on the Workspace Today on `day`: unless it was unpinned that very day. */
+/** Whether the daily note is pinned on Today on `day`: unless it was unpinned that very day. */
 export const dailyNotePinned = (day: LocalDate, unpinnedOn: JsonValue | null): boolean => unpinnedOn !== day;

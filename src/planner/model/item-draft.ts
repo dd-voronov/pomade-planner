@@ -1,6 +1,6 @@
 // An item's fields as the form holds them ([[quick-add]] "Fields"): the type, the title, the project, a
-// task's date phrases and importance, a recurring item's repeat editor, Details — and what they
-// come to: each field's value or problem, and the item to write.
+// task's date phrases and importance (a note's or thought's `do-on` alone), a recurring item's
+// repeat editor, Details — and what they come to: each field's value or problem, and the item to write.
 
 import type { LocalDate, Time } from "pomade-kit/schedule";
 
@@ -73,7 +73,8 @@ export type DraftItem =
 
 /**
  * The item a draft of a file type (not a daily note) writes on `created`: the fields of its type
- * only — a note or thought carries no dates whatever was typed while it was a task.
+ * only — a note or thought carries its `do-on` and no other date or importance, whatever was typed
+ * while it was a task.
  */
 export function draftItem(draft: ItemDraft, check: DraftCheck, created: LocalDate): DraftItem {
   const title = normalizeTitle(draft.title);
@@ -96,5 +97,6 @@ export function draftItem(draft: ItemDraft, check: DraftCheck, created: LocalDat
       },
     };
   }
-  return { kind: "ok", item: { ...common, type: draft.kind === "thought" ? "thought" : "note", doOn: null, deadline: null, importance: null } };
+  if (check.doOn.kind === "error") return { kind: "error", field: "fields", message: "Fix the marked field first." };
+  return { kind: "ok", item: { ...common, type: draft.kind === "thought" ? "thought" : "note", doOn: check.doOn.kind === "date" ? check.doOn.date : null, deadline: null, importance: null } };
 }

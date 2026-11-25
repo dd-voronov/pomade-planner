@@ -38,7 +38,8 @@ editor tab. **Open in tab** gives the full Pomade editor when the item needs it.
 
 The panel is too narrow to edit in: a click opens or focuses the Planner tab of the same context at
 the item's route (`tabs.openApp` at `item?path=<the file's path>`, `itemRoute`). The tab shows the
-panel's view (view state is per context), so the row is listed and marked. The tab opens the pane
+panel's view (view state is per context), so the row is listed and marked — its group unfolded
+when it was folded ([[views]] "Groups"). The tab opens the pane
 and returns to route `planner` at once (`PlannerTab`), so the same row asked again is a route change
 again.
 
@@ -51,8 +52,8 @@ again.
   and close.
 - **Fields:** the add form's fields (`ItemFields`, editing — without the project and the type
   switch): the title (a file without one shows its row's title as the placeholder), a task's
-  `do-on`, `deadline` and `importance` — dates read `YYYY-MM-DD` and take phrases — a recurring
-  item's rule in the repeat editor, and **Details**: the file's body as raw markdown, as tall as its
+  `do-on`, `deadline` and `importance`, a note's or thought's `do-on` — dates read `YYYY-MM-DD` and
+  take phrases — a recurring item's rule in the repeat editor, and **Details**: the file's body as raw markdown, as tall as its
   text (the pane scrolls). The type and the project stand: they are changed in the file.
 - **Log:** a recurring item's `## Log`, when it is the body's last section, is not part of Details
   (`bodyParts`): it shows under it, read-only, and stays in the file byte for byte.

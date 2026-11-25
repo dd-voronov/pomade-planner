@@ -1,5 +1,5 @@
 // `pomade-planner today` ([[today-command]]): its arguments and what it prints — the Today module's rows as
-// text or JSON, grouped by project like the Workspace Today, or narrowed to one project. The
+// text or JSON, grouped by project like Today, or narrowed to one project like its project filter. The
 // command itself (cli/main.ts) only reads files.
 
 import { isLocalDate, type LocalDate } from "pomade-kit/schedule";
@@ -12,11 +12,12 @@ import { todayRows, type TodayRow } from "./today";
 export const USAGE = `Usage: pomade-planner today [--project <name>] [--json] [--date YYYY-MM-DD]
 
 Prints the Planner's Today: overdue tasks, tasks due today, tasks planned for today or
-earlier, and recurring tasks that are due, missed or inside their lead time — the same items,
-in the same order and under the same project headings, as the Workspace Today in Pomade — and
-the path of the day's daily note when there is one.
+earlier, recurring tasks that are due, missed or inside their lead time, and the notes and
+thoughts planned for the day — the same items, in the same order and under the same project
+headings, as Today in Pomade — and the path of the day's daily note when there is one.
 
-  --project <name>     only that project's Today; two projects of one name: "<name> (<group>)"
+  --project <name>     only that project's items, as Today's "Only <project>" filter shows them;
+                       two projects of one name: "<name> (<group>)"
   --json               one JSON object: the day, its daily note, its items (each with its reason),
                        unreadable files
   --date YYYY-MM-DD    Today as of that planner day instead of now
@@ -59,7 +60,8 @@ export interface TodayReport {
     type: string;
     /** The item's project; `null` for a workspace-level item. */
     project: string | null;
-    status: "open" | "done";
+    /** `done`: a task ticked on the day; `resolved`: a thought resolved on the day. */
+    status: "open" | "done" | "resolved";
     "do-on": LocalDate | null;
     deadline: LocalDate | null;
     importance: number | null;
@@ -90,7 +92,7 @@ export function todayReport(day: LocalDate, rows: readonly TodayRow[], unreadabl
       title: task.title,
       type: task.type,
       project: projectOf(task.folder),
-      status: task.done ? "done" : "open",
+      status: !task.done ? "open" : task.type === "thought" ? "resolved" : "done",
       "do-on": task.doOn,
       deadline: task.deadline,
       importance: task.importance,
@@ -114,14 +116,22 @@ const REASON_WORDS: Record<TodayRow["reason"], string> = {
   "lead-time": "coming up",
 };
 
+/** A row's mark: a task's checkbox; a note or thought — no checkbox in the views — its type. */
+function markOf(row: TodayRow): string {
+  if (row.task.type === "note" || row.task.type === "thought") return `(${row.task.type}${row.task.done ? ", resolved" : ""})`;
+  return `[${row.task.done ? "x" : " "}]`;
+}
+
 function rowLine(row: TodayRow, day: LocalDate): string {
-  const hints = todayHints(row, day)
+  // A note's or thought's own hints (when it was added) say nothing of the day: its reason does.
+  const own = row.task.type === "note" || row.task.type === "thought" ? [] : todayHints(row, day);
+  const hints = own
     .filter((h) => h.kind !== "problem")
     .map((h) => h.text.charAt(0).toLowerCase() + h.text.slice(1));
   const details = hints.length > 0 ? hints : [REASON_WORDS[row.reason]];
   const importance = importanceText(row.task.importance);
   if (importance !== null) details.push(importance);
-  return `  [${row.task.done ? "x" : " "}] ${row.task.title} — ${details.join(", ")}`;
+  return `  ${markOf(row)} ${row.task.title} — ${details.join(", ")}`;
 }
 
 export interface TextOptions {
@@ -165,7 +175,7 @@ export type TodayOutput = { ok: true; text: string } | { ok: false; code: number
 
 /**
  * The command's whole answer for the tasks root's items on `day`: every item grouped by project, or
- * — with `--project` — one project's Today. `map` is the settings' project-id → folder map, which
+ * — with `--project`, Today's project filter — one project's items. `map` is the settings' project-id → folder map, which
  * names the folders' projects (a folder no project owns goes by its own name). `dailyNote`: the
  * day's daily note when its file exists — named in the workspace-wide answer only.
  */

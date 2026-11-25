@@ -188,7 +188,7 @@ test.describe("projects", () => {
   });
 });
 
-test("names the day's daily note when its file exists — text and --json; notes, thoughts and daily notes are never Today items", async () => {
+test("names the day's daily note when its file exists — text and --json; a note or thought is a Today item on its do-on day only, a daily note never", async () => {
   const ws = await workspace("ws-daily", {
     ...tasks,
     "Apps/pomade-planner/settings.json": '{ "tasksRoot": "Tasks" }',
@@ -200,11 +200,13 @@ test("names the day's daily note when its file exists — text and --json; notes
   expect(text.status).toBe(0);
   expect(text.stdout.split("\n").slice(0, 2)).toEqual(["Today — Tue, Nov 17, 2026", "  Daily note: Tasks/Daily/2026-11-17.md"]);
   expect(text.stdout).not.toContain("An idea");
-  expect(text.stdout).not.toContain("Why");
-  const json = JSON.parse(run(["today", "--json", "--date", "2026-11-17"], { POMADE_WORKSPACE: ws }).stdout) as { "daily-note": string | null; items: { title: string }[] };
+  expect(text.stdout).toContain("\n  (thought) Why — planned today\n");
+  const json = JSON.parse(run(["today", "--json", "--date", "2026-11-17"], { POMADE_WORKSPACE: ws }).stdout) as { "daily-note": string | null; items: { title: string; type: string; reason: string; status: string }[] };
   expect(json["daily-note"]).toBe("Tasks/Daily/2026-11-17.md");
   expect(json.items.map((i) => i.title)).not.toContain("An idea");
-  const other = JSON.parse(run(["today", "--json", "--date", "2026-11-18"], { POMADE_WORKSPACE: ws }).stdout) as { "daily-note": string | null };
+  expect(json.items.filter((i) => i.type !== "task")).toEqual([expect.objectContaining({ title: "Why", type: "thought", reason: "planned", status: "open" })]);
+  const other = JSON.parse(run(["today", "--json", "--date", "2026-11-18"], { POMADE_WORKSPACE: ws }).stdout) as { "daily-note": string | null; items: { title: string }[] };
   expect(other["daily-note"]).toBeNull();
+  expect(other.items.map((i) => i.title)).not.toContain("Why");
   expect(run(["today", "--date", "2026-11-18"], { POMADE_WORKSPACE: ws }).stdout).not.toContain("Daily note");
 });

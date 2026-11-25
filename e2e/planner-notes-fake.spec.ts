@@ -1,7 +1,7 @@
 // E-006 on the fake host (fake-host/, test/fixtures/workspace.ts `NOTES_FILES`): the day's daily
-// note made from the template and pinned on the Workspace Today with its progress, made once a day
+// note made from the template and pinned on Today with its progress, made once a day
 // and never back-filled, unpinned for one day; pins per view and context; notes and thoughts in All
-// (never in Today) with Resolve, Archive, Show archived and Restore; quick add's five types in the
+// (in Today only on their do-on day — planner-today-fake.spec.ts) with Resolve, Archive, Show archived and Restore; quick add's five types in the
 // overlay and the panel; a type changed on disk; the full tab's excerpts; the template setting.
 // The clock is the app's `test.clock` hook; the fixture is dated around Tue 2026-11-17.
 
@@ -169,7 +169,7 @@ test.describe("daily notes", () => {
 });
 
 test.describe("notes and thoughts", () => {
-  test("never in Today; in All with the type filter, each with its glyph and no checkbox", async ({ page }) => {
+  test("with no do-on, never in Today or Project; in All with the type filter, each with its glyph and no checkbox", async ({ page }) => {
     const a = await openPanel(page);
     for (const title of ["Quiz timer idea", "Why do I sleep badly on Sundays?", "Does QuizLab need a leaderboard?"]) await expect(row(a, title)).toHaveCount(0);
     await a.getByTestId("view-project").click();
@@ -242,7 +242,7 @@ test.describe("notes and thoughts", () => {
 });
 
 test.describe("pins", () => {
-  test("a task pinned in QuizLab's Project view stays on top there only — not in its Today, not in Pomade, not at Workspace; several in pin order", async ({ page }) => {
+  test("a task pinned in QuizLab's Project view stays on top there only — not in Today, not in Pomade, not at Workspace; several in pin order", async ({ page }) => {
     const a = await openPanel(page, { project: "quiz" });
     await a.getByTestId("view-project").click();
     expect(await titles(a)).toEqual(["Fix the score screen", "Add dark mode"]);
@@ -259,12 +259,13 @@ test.describe("pins", () => {
     expect(await state(page, "planner.pins.quiz")).toEqual({ today: [], project: ["Tasks/QuizLab/2026-11-14-add-dark-mode.md", "Tasks/QuizLab/2026-11-14-fix-the-score-screen.md"], recurring: [], all: [] });
 
     await a.getByTestId("view-today").click();
-    await expect(a.getByTestId("pinned-list")).toHaveCount(0);
+    await expect(a.getByTestId("daily-card")).toBeVisible();
+    await expect(a.getByTestId("pinned-list").getByTestId("task-row")).toHaveCount(0);
     await page.evaluate(() => window.fakeHost.setActiveProject("pomade"));
     await a.getByTestId("view-project").click();
     await expect(a.getByTestId("pinned-list")).toHaveCount(0);
     await page.evaluate(() => window.fakeHost.setActiveProject(null));
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/");
+    await expect(a.getByTestId("planner-context")).toHaveAttribute("data-tip", "Tasks/");
     await a.getByTestId("view-project").click();
     await expect(row(a, "Add dark mode")).not.toHaveAttribute("data-pinned", "true");
     await expect(a.getByTestId("pinned-list")).toHaveCount(0);
@@ -306,22 +307,26 @@ test.describe("pins", () => {
 test.describe("quick add's five types", () => {
   const OVERLAY: Open = { surface: "overlay", route: "quick-add" };
 
-  test("the overlay: a note and a thought are written with their type's frontmatter and no dates", async ({ page }) => {
-    for (const [type, title] of [
-      ["note", "Buy a new lamp for the desk"],
-      ["thought", "Should Nora start piano?"],
+  test("the overlay: a note and a thought are written with their type's frontmatter — a do-on when one is given, no other date", async ({ page }) => {
+    for (const [type, title, doOn] of [
+      ["note", "Buy a new lamp for the desk", "tomorrow"],
+      ["thought", "Should Nora start piano?", ""],
     ] as const) {
       await page.goto(harness(OVERLAY));
       const a = app(page);
       await expect(a.getByTestId("qa-title")).toBeFocused();
       await page.keyboard.type(title);
       await a.getByTestId(`qa-type-${type}`).check();
-      await expect(a.getByTestId("qa-about")).toBeVisible();
-      await expect(a.getByTestId("qa-do-on")).toHaveCount(0);
+      await expect(a.getByTestId("qa-do-on")).toBeVisible();
+      await expect(a.getByTestId("qa-deadline")).toHaveCount(0);
+      await expect(a.getByTestId("qa-importance")).toHaveCount(0);
+      await a.getByTestId("qa-do-on").fill(doOn);
       await shot(page, `e006-fake-quick-add-${type}-overlay`);
       await a.getByTestId("qa-title").press("Enter");
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-$/, "");
-      await expect.poll(() => fileText(page, `Tasks/2026-11-17-${slug}.md`).catch(() => null)).toBe(`---\ntype: ${type}\ntitle: ${title}\nstatus: open\ncreated: 2026-11-17\n---\n`);
+      await expect
+        .poll(() => fileText(page, `Tasks/2026-11-17-${slug}.md`).catch(() => null))
+        .toBe(`---\ntype: ${type}\ntitle: ${title}\nstatus: open\n${doOn === "" ? "" : "do-on: 2026-11-18\n"}created: 2026-11-17\n---\n`);
     }
   });
 

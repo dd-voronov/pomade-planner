@@ -1,6 +1,6 @@
 // E-004 on the fake host (fake-host/, test/fixtures/workspace.ts `PLANNER_WORKSPACE`): project
 // folders and the project-id → folder map, the context (Workspace or the active project), Today
-// grouped by project, Project and All with their filters, mix-ins remembered per project, the
+// grouped by project, Project and All with their filters, Project's and Recurring's mix-ins remembered per project, the
 // two-step project picker in quick add, and project renames and regroups following the folder.
 // The fixture's Tasks/ is dated around Tue 2026-11-17.
 
@@ -50,6 +50,18 @@ const settings = async (page: Page) => JSON.parse(await fileText(page, SETTINGS)
 const sections = (a: FrameLocator) => a.locator('[data-testid="task-section"]').evaluateAll((els) => els.map((el) => el.getAttribute("data-source")));
 const sectionNames = (a: FrameLocator) => a.getByTestId("task-section-name").allTextContents();
 
+/** The line under the header: the context's name, its folder's path in the tooltip. */
+async function contextIs(a: FrameLocator, name: string, path: string): Promise<void> {
+  await expect(a.getByTestId("planner-context")).toHaveText(name);
+  await expect(a.getByTestId("planner-context")).toHaveAttribute("data-tip", path);
+}
+
+/** Narrow Today to the context's project ("Only <project>"). */
+async function onlyOwn(a: FrameLocator): Promise<void> {
+  await a.getByTestId("only-project").click();
+  await expect(a.getByTestId("only-project")).toHaveAttribute("aria-pressed", "true");
+}
+
 async function openPanel(page: Page, project?: string, extra: Partial<Open> = {}): Promise<FrameLocator> {
   await page.goto(harness({ surface: "panel", icon: "planner", ...(project === undefined ? {} : { project }), ...extra }));
   const a = app(page);
@@ -57,6 +69,21 @@ async function openPanel(page: Page, project?: string, extra: Partial<Open> = {}
   await settled(a);
   return a;
 }
+
+/** Pomade's Project view with the no-project items mixed in. */
+const PROJECT_WITH_NO_PROJECT = [
+  "Pay the tax",
+  "Review the Host API",
+  "Renew Nora's swimming class",
+  "Call the dentist",
+  "Buy printer ink",
+  "Ship the planner",
+  "Book flights for the Christmas trip to see the grandparents in Valencia",
+  "Water the plants",
+  "Write release notes",
+  "Plan the holidays",
+  "Learn a piano piece",
+];
 
 const NO_PROJECT_TODAY = ["Pay the tax", "Renew Nora's swimming class", "Call the dentist", "Buy printer ink", "Book flights for the Christmas trip to see the grandparents in Valencia", "Water the plants"];
 
@@ -88,29 +115,35 @@ test.describe("context and views", () => {
     await expect(a.getByTestId("hint-source")).toHaveCount(0);
     expect(await a.getByTestId("unreadable-row").evaluateAll((els) => els.map((el) => el.getAttribute("data-path")))).toEqual(["Tasks/2026-11-13-broken.md", "Tasks/QuizLab/2026-11-14-broken.md"]);
     await expect(a.getByTestId("count-today")).toHaveText("9");
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/");
+    await contextIs(a, "All projects", "Tasks/");
     await shot(page, "e004-fake-workspace-today");
   });
 
-  test("inside Pomade: Today and Project show Pomade's items only; the subheader names its folder", async ({ page }) => {
+  test("inside Pomade: Today is the whole day, Only Pomade narrows it to Pomade's items; Project shows Pomade's items only; the line under the header names the context", async ({ page }) => {
     const a = await openPanel(page);
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/Pomade/");
+    await contextIs(a, "All projects", "Tasks/");
+    await expect.poll(() => sections(a)).toEqual(["none", "folder:old stuff", "pomade", "quiz"]);
+    await onlyOwn(a);
+    await contextIs(a, "Pomade", "Tasks/Pomade/");
     expect(await titles(a)).toEqual(["Review the Host API", "Ship the planner"]);
     await expect(a.getByTestId("task-section")).toHaveCount(0);
     await expect(a.getByTestId("unreadable-row")).toHaveCount(0);
     await a.getByTestId("view-project").click();
+    await contextIs(a, "Pomade", "Tasks/Pomade/");
     expect(await titles(a)).toEqual(["Review the Host API", "Ship the planner", "Write release notes"]);
     await expect(a.getByTestId("count-project")).toHaveText("3");
     await shot(page, "e004-fake-project-view");
   });
 
-  test("mix-ins: + No-project items and + a project mix them in, each row with its source; switching projects and back restores the chips and the view", async ({ page }) => {
+  test("mix-ins in Project and Recurring: + No-project items and + a project mix them in, each row with its source; switching projects and back restores the chips and the view; Today has none", async ({ page }) => {
     const a = await openPanel(page);
+    await expect(a.getByTestId("mix-bar")).toHaveCount(0);
+    await a.getByTestId("view-project").click();
     await a.getByTestId("mix-no-project").click();
     await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
     await expect(row(a, "Pay the tax").getByTestId("hint-source")).toHaveText("No project");
     await expect(row(a, "Ship the planner").getByTestId("hint-source")).toHaveCount(0);
-    expect(await titles(a)).toEqual(["Pay the tax", "Review the Host API", "Renew Nora's swimming class", "Call the dentist", "Buy printer ink", "Ship the planner", "Book flights for the Christmas trip to see the grandparents in Valencia", "Water the plants"]);
+    expect(await titles(a)).toEqual(PROJECT_WITH_NO_PROJECT);
 
     // + Project: the two-step picker leaves Pomade itself out; typing finds QuizLab straight away.
     await a.getByTestId("mix-add").click();
@@ -123,19 +156,29 @@ test.describe("context and views", () => {
     await a.getByTestId("picker-filter").press("Enter");
     await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "quiz");
     await expect(row(a, "Fix the score screen").getByTestId("hint-source")).toHaveText("QuizLab");
-    await shot(page, "e004-fake-today-mixins");
-
-    await a.getByTestId("view-project").click();
     await expect(row(a, "Add dark mode").getByTestId("hint-source")).toHaveText("QuizLab");
-    await expect.poll(() => page.evaluate(() => window.fakeHost.state["planner.view.pomade"])).toEqual({ view: "project", showDone: false, showArchived: false, mixNoProject: true, mixProjects: ["quiz"], projects: [], types: [] });
+    await shot(page, "e004-fake-project-mixins");
+    await expect.poll(() => page.evaluate(() => window.fakeHost.state["planner.view.pomade"])).toEqual({ view: "project", showDone: false, showArchived: false, onlyProject: false, mixNoProject: true, mixProjects: ["quiz"], projects: [], types: [] });
+
+    // Recurring offers the same chips, mixed in as they are.
+    await a.getByTestId("view-recurring").click();
+    await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
+    await expect(a.getByTestId("mix-chip")).toHaveAttribute("data-source", "quiz");
+    // Today has no mix-in chips: the whole day, whatever is mixed in.
+    await a.getByTestId("view-today").click();
+    await expect(a.getByTestId("mix-bar")).toHaveCount(0);
+    await expect(a.getByTestId("only-project")).toBeVisible();
+    await a.getByTestId("view-project").click();
 
     // Another project has its own view and no chips; back in Pomade both are restored.
     await page.evaluate(() => window.fakeHost.setActiveProject("quiz"));
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab/");
+    await contextIs(a, "All projects", "Tasks/");
     await expect(a.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
+    await a.getByTestId("view-project").click();
+    await contextIs(a, "QuizLab", "Tasks/QuizLab/");
     await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "false");
     await expect(a.getByTestId("mix-chip")).toHaveCount(0);
-    expect(await titles(a)).toEqual(["Fix the score screen"]);
+    expect(await titles(a)).toEqual(["Fix the score screen", "Add dark mode"]);
     await page.evaluate(() => window.fakeHost.setActiveProject("pomade"));
     await expect(a.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
     await expect(a.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
@@ -192,6 +235,7 @@ test.describe("context and views", () => {
 
   test("the narrow panel in a project with mix-ins and in All with filters: nothing overflows", async ({ page }) => {
     const a = await openPanel(page, undefined, { panelWidth: 200 });
+    await a.getByTestId("view-project").click();
     await a.getByTestId("mix-no-project").click();
     await a.getByTestId("mix-add").click();
     await a.getByTestId("picker-filter").pressSequentially("nora");
@@ -217,7 +261,7 @@ test.describe("context and views", () => {
 });
 
 test.describe("quick add: the project field", () => {
-  test("the overlay inside Pomade: “Fix login bug” → Tab, “qui”, Enter, Enter files it into Tasks/QuizLab/; QuizLab's Today has it, Pomade's doesn't", async ({ page }) => {
+  test("the overlay inside Pomade: “Fix login bug” → Tab, “qui”, Enter, Enter files it into Tasks/QuizLab/; Today has it under QuizLab, Only Pomade leaves it out", async ({ page }) => {
     await page.goto(harness({ surface: "overlay", route: "quick-add" }));
     const a = app(page);
     await expect(a.getByTestId("qa-title")).toBeFocused();
@@ -244,9 +288,12 @@ test.describe("quick add: the project field", () => {
 
     await page.goto(harness({ surface: "panel", icon: "planner", project: "quiz" }));
     await page.evaluate(() => window.fakeHost.writeFile("Tasks/QuizLab/2026-11-17-fix-login-bug.md", "---\ntype: task\ntitle: Fix login bug\nstatus: open\ndo-on: 2026-11-17\ncreated: 2026-11-17\n---\n"));
-    await expect(row(app(page), "Fix login bug")).toBeVisible();
+    await expect(app(page).locator('[data-testid="task-section"][data-source="quiz"] ~ [data-testid="task-row"]').filter({ hasText: "Fix login bug" })).toBeVisible();
     await page.evaluate(() => window.fakeHost.setActiveProject("pomade"));
-    await expect(app(page).getByTestId("planner-where")).toHaveText("Tasks/Pomade/");
+    await expect(app(page).getByTestId("view-planner-panel")).toHaveAttribute("data-context", "pomade");
+    await expect(row(app(page), "Fix login bug")).toBeVisible();
+    await onlyOwn(app(page));
+    await contextIs(app(page), "Pomade", "Tasks/Pomade/");
     await expect(row(app(page), "Fix login bug")).toHaveCount(0);
   });
 
@@ -334,9 +381,10 @@ test.describe("renames follow", () => {
   test("renaming QuizLab renames Tasks/QuizLab/ and updates the map; every task stays visible under the new name", async ({ page }) => {
     const a = await openPanel(page, "quiz");
     await expect.poll(async () => (await settings(page)).projectFolders?.quiz?.folder).toBe("QuizLab");
+    await onlyOwn(a);
     expect(await titles(a)).toEqual(["Fix the score screen"]);
     await page.evaluate(() => window.fakeHost.updateProject("quiz", { name: "QuizLab Pro" }));
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab Pro/");
+    await contextIs(a, "QuizLab Pro", "Tasks/QuizLab Pro/");
     await expect.poll(() => exists(page, "Tasks/QuizLab Pro/2026-11-14-add-dark-mode.md")).toBe(true);
     expect(await exists(page, "Tasks/QuizLab/2026-11-14-add-dark-mode.md")).toBe(false);
     await expect.poll(async () => (await settings(page)).projectFolders?.quiz).toEqual({ folder: "QuizLab Pro", name: "QuizLab Pro", groupPath: ["Building tools", "Tools"] });
@@ -349,6 +397,7 @@ test.describe("renames follow", () => {
   test("a rename onto a folder that is already there is reported in the panel and never merged; the tasks stay visible", async ({ page }) => {
     const a = await openPanel(page);
     await expect.poll(async () => (await settings(page)).projectFolders?.pomade?.folder).toBe("Pomade");
+    await onlyOwn(a);
     await page.evaluate(() => window.fakeHost.writeFile("Tasks/Old stuff/keep.md", "mine\n"));
     await page.evaluate(() => window.fakeHost.updateProject("pomade", { name: "Old stuff" }));
     await expect(a.getByTestId("folder-problem")).toHaveText("“Old stuff” can't take Tasks/Old stuff/ — a folder with that name is already there. Its tasks stay in Tasks/Pomade/; rename or move one of the two folders and it follows.");
@@ -374,7 +423,8 @@ test.describe("renames follow", () => {
       window.mountNow();
     }, SETTINGS);
     const a = app(page);
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab/");
+    await onlyOwn(a);
+    await contextIs(a, "QuizLab", "Tasks/QuizLab/");
     await expect.poll(() => exists(page, "Tasks/QuizLab/2026-11-14-add-dark-mode.md")).toBe(true);
     expect(await exists(page, "Tasks/Quiz/2026-11-14-add-dark-mode.md")).toBe(false);
     expect(await titles(a)).toEqual(["Fix the score screen"]);
@@ -404,6 +454,7 @@ test.describe("a project removed", () => {
   test("leaves the project picker and the All filter at once; its tasks stay in its folder under its last-seen name", async ({ page }) => {
     const a = await openPanel(page);
     await expect.poll(async () => (await settings(page)).projectFolders?.quiz?.folder).toBe("QuizLab");
+    await a.getByTestId("view-project").click();
     await a.getByTestId("mix-add").click();
     await a.getByTestId("picker-filter").pressSequentially("quiz");
     await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab", "QuizLab"]);
@@ -429,9 +480,11 @@ test.describe("a project removed", () => {
   test("the active project removed: the panel falls back to the Workspace, its tasks under its last-seen name", async ({ page }) => {
     const a = await openPanel(page, "quiz");
     await expect.poll(async () => (await settings(page)).projectFolders?.quiz?.folder).toBe("QuizLab");
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab/");
+    await onlyOwn(a);
+    await contextIs(a, "QuizLab", "Tasks/QuizLab/");
     await page.evaluate(() => window.fakeHost.removeProject("quiz"));
-    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/");
+    await expect(a.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "__workspace__");
+    await contextIs(a, "All projects", "Tasks/");
     await expect.poll(() => sections(a)).toEqual(["none", "folder:old stuff", "pomade", "quiz"]);
     expect(await sectionNames(a)).toEqual(["No project", "Old stuff", "Pomade", "QuizLab"]);
     await expect(row(a, "Fix the score screen")).toBeVisible();

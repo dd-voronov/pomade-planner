@@ -326,9 +326,9 @@ describe("notes, thoughts, daily notes and archived items", () => {
   const archivedNote = task({ title: "Old idea", type: "note", archived: true });
   const open = task({ title: "Do it", doOn: D });
 
-  it("never in Today or Project — even with dates set by hand; nothing archived is", () => {
+  it("never in Project; in Today a note or thought only on its do-on day — never by a deadline; no daily note, nothing archived", () => {
     const all = [note, thought, resolved, daily2, archivedTask, open];
-    expect(todayRows(all, D).map((r) => r.task.title)).toEqual(["Do it"]);
+    expect(todayRows(all, D).map((r) => r.task.title)).toEqual(["Idea", "Do it"]);
     expect(projectRows(all, D).map((t) => t.title)).toEqual(["Do it"]);
     expect(recurringRows([recurring({ daily: true }, { title: "R", doOn: D, archived: true })], D)).toEqual([]);
   });
@@ -340,6 +340,29 @@ describe("notes, thoughts, daily notes and archived items", () => {
     expect(allTasks(all, { ...o, showDaily: true }).map((t) => t.title)).toEqual(["Why", "Idea", "Do it", "2026-11-17", "2026-11-16"]);
     expect(allTasks(all, { ...o, showDone: true }).map((t) => t.title)).toEqual(["Why", "Idea", "Do it", "Solved"]);
     expect(allTasks(all, { ...o, showArchived: true }).map((t) => t.title)).toEqual(["Why", "Idea", "Do it", "Old", "Old idea"]);
+  });
+
+  it("a note or thought with do-on: planned on that day, among the tasks in list order; never rolled over, never before", () => {
+    const gift = task({ title: "Gift ideas", type: "note", doOn: D, created: "2026-11-12" });
+    const why = task({ title: "Why a leaderboard", type: "thought", doOn: D });
+    const tax = task({ title: "Pay the tax", deadline: "2026-11-14" });
+    const ink = task({ title: "Buy ink", doOn: "2026-11-20" });
+    const rows = todayRows([why, ink, gift, tax], D);
+    expect(rows.map((r) => [r.task.title, r.reason, r.plannedDaysAgo, r.recurring])).toEqual([
+      ["Pay the tax", "overdue", 0, null],
+      ["Gift ideas", "planned", 0, null],
+      ["Why a leaderboard", "planned", 0, null],
+    ]);
+    expect(todayRows([gift, why], "2026-11-18")).toEqual([]);
+    expect(todayRows([gift, why], "2026-11-16")).toEqual([]);
+  });
+
+  it("a thought resolved on its day stays crossed out until the boundary; resolved another day, or archived, it is out", () => {
+    const solvedToday = task({ title: "Solved", type: "thought", doOn: D, done: true, doneOn: D });
+    const solvedBefore = task({ title: "Solved before", type: "thought", doOn: D, done: true, doneOn: "2026-11-16" });
+    const archived = task({ title: "Filed", type: "note", doOn: D, archived: true });
+    const daily = task({ title: "Today's", type: "daily-note", date: D, doOn: D });
+    expect(todayRows([solvedToday, solvedBefore, archived, daily], D).map((r) => r.task.title)).toEqual(["Solved"]);
   });
 
   it("daily notes order by date, newest first, then by path", () => {

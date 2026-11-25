@@ -129,6 +129,15 @@ describe("itemEdit — what a changed draft writes", () => {
     expect(edited(file, { importance: "" }).edit.fields).toEqual([{ key: "importance", value: null }]);
   });
 
+  it("a note or a thought: do-on alone is written — set, changed or emptied; its other dates and importance are not", () => {
+    for (const type of ["note", "thought"] as const) {
+      const idea = itemFile(task({ title: "Gift ideas", type }), "", NOW, B3);
+      expect(edited(idea, { doOn: "fri", deadline: "fri", importance: "3" }).edit).toEqual({ fields: [{ key: "do-on", value: "2026-11-20" }], repeat: null });
+      const planned = itemFile(task({ title: "Gift ideas", type, doOn: "2026-11-20" }), "", NOW, B3);
+      expect(edited(planned, { doOn: "" }).edit.fields).toEqual([{ key: "do-on", value: null }]);
+    }
+  });
+
   it("text that isn't a value is not written, and stops nothing else", () => {
     expect(edited(file, { deadline: "someday", importance: "high", title: "Pay the tax now" }).edit.fields).toEqual([{ key: "title", value: "Pay the tax now" }]);
   });

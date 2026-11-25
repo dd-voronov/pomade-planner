@@ -97,7 +97,7 @@ project's before the map is written — names and groups from Pomade's live list
 only the map); a sub-folder nobody owns is its own source, named after the folder.
 
 - **Headings** (`sectionsBySource`, `compareSources`): "No project" first, then each project by
-  name (ungrouped before grouped), each with its open count.
+  name (ungrouped before grouped), each with its open count; each folds ([[views]] "Groups").
 - **Labels** (`sourceLabels`): the name, with a qualifier when another source has the same name —
   the group path ("QuizLab (Archive)"), "Ungrouped", or "folder only" for a folder no project
   owns. The [[today-command]] prints the same headings.

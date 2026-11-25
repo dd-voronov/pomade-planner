@@ -88,6 +88,23 @@ describe("todayText", () => {
     );
   });
 
+  it("a note and a thought planned for the day: their type in the checkbox's place, planned today; in --json with their type and status", () => {
+    const rows = todayRows(
+      [
+        ...tasks,
+        task({ title: "Gift ideas", path: "T/gift.md", type: "note", doOn: D, created: "2026-11-12" }),
+        task({ title: "Why a leaderboard", path: "T/why.md", type: "thought", doOn: D, done: true, doneOn: D }),
+        task({ title: "Later idea", path: "T/later.md", type: "note", doOn: "2026-11-18" }),
+      ],
+      D,
+    );
+    expect(todayText(D, rows, []).split("\n").slice(4, 7)).toEqual(["  (note) Gift ideas — planned today", "  [x] Call mum — planned today", "  (thought, resolved) Why a leaderboard — planned today"]);
+    expect(todayReport(D, rows, []).items.filter((i) => i.type !== "task").map((i) => [i.title, i.type, i.reason, i.status, i["do-on"]])).toEqual([
+      ["Gift ideas", "note", "planned", "open", D],
+      ["Why a leaderboard", "thought", "planned", "resolved", D],
+    ]);
+  });
+
   it("says so when Today is empty", () => {
     expect(todayText(D, [], [])).toBe("Today — Tue, Nov 17, 2026\n  Nothing for today.\n");
   });
@@ -141,7 +158,7 @@ describe("todayOutput — projects", () => {
     });
   });
 
-  it("--project narrows to one project's Today: no mix-ins, no headings, its unreadable files only", () => {
+  it("--project narrows to one project's Today, as Only <project> does: no headings, its unreadable files only", () => {
     expect(text("pomade-kit")).toEqual({ ok: true, text: "Today — pomade-kit — Tue, Nov 17, 2026\n  [ ] Ship kit — planned 1 day ago\n" });
     expect(text("QuizLab (Ungrouped)")).toEqual({
       ok: true,

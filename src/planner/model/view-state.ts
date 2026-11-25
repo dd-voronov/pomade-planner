@@ -1,6 +1,7 @@
 // The Planner's machine-local view state per context (Host API `state`, [[views]], [[settings-and-state]]): one key
 // per project and one for Workspace, holding the selected view, the All view's "Show done", "Show
-// archived" and filters (projects, types; empty = everything), and — in a project — the mixed-in sources.
+// archived" and filters (projects, types; empty = everything), and — in a project — Today's project
+// filter and the sources mixed into Project and Recurring.
 
 import type { JsonValue } from "pomade-kit/protocol";
 
@@ -12,7 +13,9 @@ export interface PlannerView {
   showDone: boolean;
   /** All shows archived items (`_archive/`). */
   showArchived: boolean;
-  /** Mix-ins (a project context): workspace-level items… */
+  /** Today's project filter (a project context): on, Today lists the project's items alone. */
+  onlyProject: boolean;
+  /** Project's and Recurring's mix-ins (a project context): workspace-level items… */
   mixNoProject: boolean;
   /** …and other projects' items, by source key (`projects.ts` `sourceKey`). */
   mixProjects: string[];
@@ -22,7 +25,7 @@ export interface PlannerView {
   types: string[];
 }
 
-export const DEFAULT_VIEW: PlannerView = { view: "today", showDone: false, showArchived: false, mixNoProject: false, mixProjects: [], projects: [], types: [] };
+export const DEFAULT_VIEW: PlannerView = { view: "today", showDone: false, showArchived: false, onlyProject: false, mixNoProject: false, mixProjects: [], projects: [], types: [] };
 
 /** The state key of a context: a project id, or the Workspace scope's. */
 export const plannerViewKey = (contextId: string): string => `planner.view.${contextId}`;
@@ -42,6 +45,7 @@ export function parsePlannerView(value: JsonValue | null): PlannerView {
     view,
     showDone: value.showDone === true,
     showArchived: value.showArchived === true,
+    onlyProject: value.onlyProject === true,
     mixNoProject: value.mixNoProject === true,
     mixProjects: stringList(value.mixProjects),
     projects: stringList(value.projects),
@@ -53,6 +57,7 @@ export const serializePlannerView = (view: PlannerView): JsonValue => ({
   view: view.view,
   showDone: view.showDone,
   showArchived: view.showArchived,
+  onlyProject: view.onlyProject,
   mixNoProject: view.mixNoProject,
   mixProjects: [...view.mixProjects],
   projects: [...view.projects],

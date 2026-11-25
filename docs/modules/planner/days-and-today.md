@@ -43,8 +43,8 @@ they always agree.
 
 ## What Today contains
 
-Tasks and recurring items only — never notes, thoughts, daily notes, nor anything archived
-(`isScheduled`). `todayRows(tasks, day)`:
+Tasks and recurring items, and the notes and thoughts planned for the day — never daily notes, nor
+anything archived (`isScheduled`, `isPlannedNote`). `todayRows(tasks, day)`:
 
 - overdue items (deadline before today);
 - items with deadline today;
@@ -52,10 +52,13 @@ Tasks and recurring items only — never notes, thoughts, daily notes, nor anyth
   ago";
 - recurring items that are due, or inside their lead time ("Due in 5 days") ([[recurring]]);
 - missed recurring occurrences don't stack: one item, labelled "Missed 2×" (`do-on` and every
-  occurrence after it up to today); a single missed one reads "Overdue" with its date.
+  occurrence after it up to today); a single missed one reads "Overdue" with its date;
+- a note or thought whose `do-on` is today, open (or a thought resolved today) — on that day only:
+  it never rolls over, and a `deadline` set on it by hand counts for nothing.
 
 **Reason** — each Today row carries the first that applies (`reasonOn`): `overdue`, `due-today`,
-`planned` (`do-on` today), `rolled-over` (`do-on` earlier, with `plannedDaysAgo`). A recurring
+`planned` (`do-on` today), `rolled-over` (`do-on` earlier, with `plannedDaysAgo`). A note's or
+thought's is always `planned`. A recurring
 item's reason comes from its schedule alone, never its `deadline`: `lead-time` before `do-on`,
 `recurring-due` on and after it.
 
@@ -64,7 +67,7 @@ item's reason comes from its schedule alone, never its `deadline`: `lead-time` b
 Ticking sets `status: done` and `done-on` (field-only, [[storage-and-item-types]] "Writing an
 item"); the file stays where it is. The item stays crossed out, with the reason it had, until the
 next day boundary (`isVisibleOn`: open, or `done-on` = the planner day) — undo by unticking — then
-leaves Today and Project. A recurring item is never crossed out: done advances it
+leaves Today and Project. A thought resolved on its planned day does the same in Today. A recurring item is never crossed out: done advances it
 ([[recurring]] "The row").
 
 ## Order inside every list
@@ -76,5 +79,6 @@ after every set one; then title and path, so the order never depends on the read
 
 `labels.ts` turns a row into its hints, relative to the planner day: Today's reason ("Overdue",
 "Due today", "planned N days ago", "Due in 3 days", "Missed 2×"), the deadline when it isn't the
-reason, a recurring item's rule; dates as "today", "tomorrow", a weekday within six days, "Nov 20",
+reason, a recurring item's rule, a note's or thought's own ("added Nov 12", "resolved today"; in
+All also its planned day, "do Fri"); dates as "today", "tomorrow", a weekday within six days, "Nov 20",
 "Nov 20, 2027"; Today's header as "Tue, Nov 17" (`dayHeading`); importance as `!3`.

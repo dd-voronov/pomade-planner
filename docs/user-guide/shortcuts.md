@@ -37,6 +37,8 @@ Every shortcut and mouse modifier of the Planner and the Board, grouped by where
 | hover or focus a row | shows its actions: Pin, Skip, Archive, Resolve/Reopen, Restore |
 | click a row's checkbox | tick / untick a task; done for a recurring item |
 | click a view tab | switches view |
+| click a group heading, or Enter / Space on it | folds or unfolds the group; its count stays |
+| ← / → on a focused group heading | folds / unfolds it |
 | Esc in the panel's ⋯ menu | closes it, focus back on ⋯ |
 
 ### Row menu

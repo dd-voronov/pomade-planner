@@ -64,9 +64,10 @@ without leaving the Planner, and attention that works before it is opened.
 - [[recurring]] — the `repeat:` rule in the kit's format, `do-on` as the next occurrence, lead time,
   missed and ended, done and skip as a log line then `do-on`, and the row's acknowledgement.
 - [[daily-notes]] — one note per planner day made by the launch frame from the template (or the
-  built-in one), never back-filled, its checkbox progress and its card pinned on the Workspace Today.
-- [[views]] — the panel and the tab, the header and the narrowing switcher, the context, what Today,
-  Project, Recurring and All show, mix-ins, All's filters, row actions, excerpts and pins.
+  built-in one), never back-filled, its checkbox progress and its card pinned on Today.
+- [[views]] — the panel and the tab, the header and the narrowing switcher, the context and the line
+  naming it, what Today, Project, Recurring and All show, Today's project filter, mix-ins, All's
+  filters, folding groups, row actions, excerpts and pins.
 - [[trimming]] — All's select mode: selecting within the filters, bulk Archive, and Delete to the
   macOS Trash after a confirmation, with per-file results.
 - [[item-in-place]] — the compact view beside the lists in the tab: opening from the tab or the

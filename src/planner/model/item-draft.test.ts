@@ -91,12 +91,14 @@ describe("draftItem", () => {
     expect(made({ ...newDraft(), title: "T", ...patch })).toEqual({ kind: "error", field: "fields", message: "Fix the marked field first." });
   });
 
-  it("a note or a thought carries no dates or importance, whatever was typed while it was a task; Details stay", () => {
+  it("a note or a thought carries its do-on alone — no deadline or importance, whatever was typed while it was a task; Details stay", () => {
     for (const kind of ["note", "thought"] as const) {
-      expect(made({ ...newDraft({ kind }), title: "Idea", doOn: "nov 31", deadline: "fri", importance: "high", details: "- one\n- two\n" })).toEqual({
+      expect(made({ ...newDraft({ kind }), title: "Idea", doOn: "today", deadline: "someday", importance: "high", details: "- one\n- two\n" })).toEqual({
         kind: "ok",
-        item: { type: kind, title: "Idea", created: "2026-11-17", doOn: null, deadline: null, importance: null, body: "- one\n- two\n" },
+        item: { type: kind, title: "Idea", created: "2026-11-17", doOn: "2026-11-17", deadline: null, importance: null, body: "- one\n- two\n" },
       });
+      expect(made({ ...newDraft({ kind }), title: "Idea", deadline: "fri" })).toMatchObject({ kind: "ok", item: { doOn: null, deadline: null } });
+      expect(made({ ...newDraft({ kind }), title: "Idea", doOn: "nov 31" })).toEqual({ kind: "error", field: "fields", message: "Fix the marked field first." });
     }
   });
 

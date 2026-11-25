@@ -20,12 +20,14 @@ describe("planner view state", () => {
     [{ mixNoProject: true, mixProjects: ["quiz", "quiz", 3, ""] }, V({ mixNoProject: true, mixProjects: ["quiz"] })],
     [{ mixNoProject: "yes", mixProjects: "quiz" }, DEFAULT_VIEW],
     [{ projects: ["none", "quiz"], types: ["task", null] }, V({ projects: ["none", "quiz"], types: ["task"] })],
+    [{ onlyProject: true }, V({ onlyProject: true })],
+    [{ onlyProject: "yes" }, DEFAULT_VIEW],
   ])("%j → %j", (value, view) => {
     expect(parsePlannerView(value)).toEqual(view);
   });
 
   it("round-trips and keys by context", () => {
-    const view = V({ view: "project", showDone: true, showArchived: true, mixNoProject: true, mixProjects: ["a"], projects: ["none"], types: ["task"] });
+    const view = V({ view: "project", showDone: true, showArchived: true, onlyProject: true, mixNoProject: true, mixProjects: ["a"], projects: ["none"], types: ["task"] });
     expect(parsePlannerView(serializePlannerView(view))).toEqual(view);
     expect(plannerViewKey("__workspace__")).toBe("planner.view.__workspace__");
   });

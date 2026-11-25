@@ -43,6 +43,8 @@ describe("attentionOf", () => {
         task({ title: "Ticked late", deadline: "2026-11-01", done: true, doneOn: D }),
         recurring(MONTHLY_10, { title: "Done by hand", doOn: D, done: true }),
         task({ title: "Note", type: "note", deadline: D }),
+        task({ title: "Planned note", type: "note", doOn: D }),
+        task({ title: "Planned thought", type: "thought", doOn: D, deadline: "2026-11-01" }),
         task({ title: "Thought", type: "thought", deadline: "2026-11-01" }),
         task({ title: "Daily", type: "daily-note", deadline: D }),
         task({ title: "Archived", deadline: D, archived: true }),

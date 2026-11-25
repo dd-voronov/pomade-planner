@@ -55,7 +55,7 @@ change within about a second.
 | `status` | task, recurring | `open` · `done` (anything else reads as open) |
 | | thought | `open` · `resolved` |
 | | note | `open` (archiving moves the file instead) |
-| `do-on` | task, recurring | `YYYY-MM-DD` — the day you plan to do it; a recurring item's next date, kept by the app |
+| `do-on` | task, recurring, note, thought | `YYYY-MM-DD` — the day you plan to do it; a recurring item's next date, kept by the app; a note or thought stands in Today on that day only |
 | `deadline` | task, recurring | `YYYY-MM-DD` — the day it is due |
 | `importance` | task, recurring | a number, higher = more important |
 | `repeat` | recurring | the rule, [below](#the-repeat-rule) |

@@ -99,13 +99,16 @@ test.describe("a project deleted in a real Pomade", () => {
   test("the active project deleted: the Planner panel goes to the Workspace, its tasks under its last-seen name, and it leaves the All filter", async () => {
     await page.getByTestId(`project-${id("beta")}`).click();
     const p = await showPanel(PLANNER_ICON, PLANNER_PANEL);
-    await expect(p.getByTestId("planner-where")).toHaveText(`${TODOS}/Beta/`);
+    await p.getByTestId("only-project").click();
+    await expect(p.getByTestId("planner-context")).toHaveText("Beta");
+    await expect(p.getByTestId("planner-context")).toHaveAttribute("data-tip", `${TODOS}/Beta/`);
     await expect.poll(async () => (await map())[id("beta")]?.folder).toBe("Beta");
 
     await deleteProject("beta");
     const after = await showPanel(PLANNER_ICON, PLANNER_PANEL);
     await expect(after.getByTestId("view-planner-panel")).toHaveAttribute("data-context", "__workspace__");
-    await expect(after.getByTestId("planner-where")).toHaveText(`${TODOS}/`);
+    await expect(after.getByTestId("planner-context")).toHaveText("All projects");
+    await expect(after.getByTestId("planner-context")).toHaveAttribute("data-tip", `${TODOS}/`);
     await after.getByTestId("view-all").click();
     await expect(row(after, "Plan Beta").getByTestId("hint-source")).toHaveText("Beta");
     await after.getByTestId("filter-projects").click();

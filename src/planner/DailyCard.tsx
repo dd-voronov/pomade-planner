@@ -21,7 +21,7 @@ interface DailyCardProps {
 }
 
 /**
- * Today's daily note, pinned on the Workspace Today ([[daily-notes]] "Pinned on the Workspace Today"): its title, its date, its
+ * Today's daily note, pinned on Today ([[daily-notes]] "Pinned on Today"): its title, its date, its
  * checklist progress ("5/8") as text and a bar; a click opens it as a row's does (`direct`: with ⌘
  * or Ctrl held); the pin button unpins it for the rest of the planner day; a right-click opens its menu.
  */

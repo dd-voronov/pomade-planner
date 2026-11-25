@@ -112,9 +112,9 @@ describe("newTaskContent — a recurring item", () => {
 });
 
 describe("notes and thoughts", () => {
-  it("type, title, status, created — no dates, no importance, no body", () => {
-    expect(newTaskContent({ type: "note", title: "Idea: a quiz timer", doOn: "2026-11-18", deadline: null, importance: 3, created: "2026-11-17" })).toBe(
-      '---\ntype: note\ntitle: "Idea: a quiz timer"\nstatus: open\ncreated: 2026-11-17\n---\n',
+  it("type, title, status, do-on when set, created — no deadline, no importance, no body", () => {
+    expect(newTaskContent({ type: "note", title: "Idea: a quiz timer", doOn: "2026-11-18", deadline: "2026-11-20", importance: 3, created: "2026-11-17" })).toBe(
+      '---\ntype: note\ntitle: "Idea: a quiz timer"\nstatus: open\ndo-on: 2026-11-18\ncreated: 2026-11-17\n---\n',
     );
     expect(newTaskContent({ type: "thought", title: "Why do we test", doOn: null, deadline: null, importance: null, created: "2026-11-17" })).toBe(
       "---\ntype: thought\ntitle: Why do we test\nstatus: open\ncreated: 2026-11-17\n---\n",

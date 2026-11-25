@@ -66,8 +66,8 @@ One tasks root, chosen on first run — onboarding asks; there is no silent defa
 | `task` | something to do | `do-on`, `deadline`, `importance` | `open` · `done` |
 | `recurring` | a task that comes back | `do-on`, `deadline`, `importance`, `repeat` | `open` (always; done/skip advance it) |
 | `daily-note` | the structured note of one day | `date` | — |
-| `note` | a quick drop; not a task | — | `open`; archived = moved to `_archive/` |
-| `thought` | something to think about later | — | `open` · `resolved` (`done-on` set) |
+| `note` | a quick drop; not a task | `do-on` | `open`; archived = moved to `_archive/` |
+| `thought` | something to think about later | `do-on` | `open` · `resolved` (`done-on` set) |
 
 - **Common fields:** `type`, `title`, `status`, `created`; `done-on` once done/resolved
   (`FIELD`). A task's `status` other than `done` reads as open; a missing `title` is the file
@@ -78,8 +78,9 @@ One tasks root, chosen on first run — onboarding asks; there is no silent defa
 - **Changing `type`** is a one-field edit: the file, description and history stay; the new type's
   fields appear in the editor, and the views show the item as its new type with the next read.
 - **Notes, thoughts and daily notes** have no checkbox (a glyph of their type in its place) and are
-  never in Today, Project or Recurring (`isTaskType`, `isScheduled`); dates set on them by hand are
-  ignored there.
+  never in Project or Recurring (`isTaskType`, `isScheduled`). A note or thought with a `do-on`
+  stands in Today on that day only ([[days-and-today]] "What Today contains"); a `deadline` or
+  `importance` set on one by hand, and any date on a daily note, are ignored there.
 - **Checkboxes inside a body** are plain markdown with no planner logic (a daily note's count as
   its progress, [[daily-notes]] "Progress").
 - `recurring` adds `repeat:` and a `## Log` in the body ([[recurring]]).
@@ -102,7 +103,9 @@ created: 2026-11-09
 - **New file** (`newTaskContent`, `create.ts`): the frontmatter is `type`, `title` (a YAML string
   that reads back as itself, `yamlString`), `status: open`, then — a task or recurring item —
   the `do-on`, `deadline` and `importance` that are set and a recurring item's `repeat:` block as
-  `pomade-kit` formats it (`formatSchedule`), then `created`; a note or a thought has no dates. Details typed in the form are the body ([[quick-add]] "Fields").
+  `pomade-kit` formats it (`formatSchedule`), then `created`; a note or a thought carries its
+  `do-on` when set, and no other date. Details typed in the form are the body ([[quick-add]]
+  "Fields").
 - **Ticking** (`tick.ts`, `tickTask`): field-only writes of `status: done` and `done-on: <planner
   day>`, or back to `open` with `done-on` removed; the file stays where it is. **Resolving** a
   thought is the same with `status: resolved` (`resolveThought`). Both only over the version the

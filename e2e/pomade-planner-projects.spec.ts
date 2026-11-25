@@ -91,11 +91,12 @@ test.describe("Planner projects in a real Pomade", () => {
     await fixture.cleanup();
   });
 
-  test("inside Pomade, quick add files “Fix login bug” into QuizLab via the picker (“qui” finds it): To-dos/QuizLab/; QuizLab's Today has it, Pomade's doesn't", async () => {
+  test("inside Pomade, quick add files “Fix login bug” into QuizLab via the picker (“qui” finds it): To-dos/QuizLab/; Today inside Pomade shows it with the daily note's card, Only Pomade leaves it out", async () => {
     const p = await openPanel();
     await setClock(p, "2026-11-17T10:00");
     await expect(p.getByTestId("planner-day")).toHaveText("Tue, Nov 17");
-    await expect(p.getByTestId("planner-where")).toHaveText(`${TODOS}/Pomade/`);
+    await expect(p.getByTestId("planner-context")).toHaveText("All projects");
+    await expect(p.getByTestId("planner-context")).toHaveAttribute("data-tip", `${TODOS}/`);
     // The Pomade/ folder that was already there is Pomade's, in the map.
     await expect.poll(() => map()).toEqual({ [ids().pomade]: { folder: "Pomade", name: "Pomade", groupPath: ["Building tools"] } });
 
@@ -120,11 +121,22 @@ test.describe("Planner projects in a real Pomade", () => {
     expect(await readFile(todo("QuizLab/2026-11-17-fix-login-bug.md"), "utf8")).toBe(quickAdded({ title: "Fix login bug", doOn: "2026-11-17", created: "2026-11-17" }));
     await expect.poll(async () => (await map())[ids().quiz]).toEqual({ folder: "QuizLab", name: "QuizLab", groupPath: ["Building tools", "Tools"] });
 
-    await expect(row(p, "Fix login bug")).toHaveCount(0);
+    // Today is the whole day inside Pomade too: another project's task, the day's daily note's card on top.
+    await mkdir(todo("Daily"), { recursive: true });
+    await writeFile(todo("Daily/2026-11-17.md"), "---\ntype: daily-note\ndate: 2026-11-17\n---\n");
+    await expect(row(p, "Fix login bug")).toHaveAttribute("data-reason", "planned");
+    await expect(p.locator(`[data-testid="task-section"][data-source="${ids().quiz}"] ~ [data-testid="task-row"]`).filter({ hasText: "Fix login bug" })).toBeVisible();
+    await expect(p.getByTestId("pinned-list").locator(":scope > li").first()).toHaveAttribute("data-testid", "daily-card");
+    await shot(page, "e010-pomade-today-in-project");
+    await p.getByTestId("only-project").click();
     expect(await titles(p)).toEqual(["Ship the planner"]);
+    await expect(p.getByTestId("daily-card")).toHaveCount(0);
+    await expect(p.getByTestId("planner-context")).toHaveAttribute("data-tip", `${TODOS}/Pomade/`);
+    await shot(page, "e010-pomade-today-only-project");
+    await p.getByTestId("only-project").click();
     await goTo(ids().quiz);
     await expect(row(p, "Fix login bug")).toHaveAttribute("data-reason", "planned");
-    await expect(p.getByTestId("planner-where")).toHaveText(`${TODOS}/QuizLab/`);
+    await expect(p.getByTestId("planner-context")).toHaveText("All projects");
   });
 
   test("the archived QuizLab, picked group first (Archive → QuizLab), gets its own folder: To-dos/QuizLab (Archive)/", async () => {
@@ -156,21 +168,20 @@ test.describe("Planner projects in a real Pomade", () => {
     await shot(page, "e004-pomade-workspace-today");
   });
 
-  test("in Pomade, “+ No-project items” mixes them in, each with its source; switching to QuizLab and back restores Pomade's chip and its last view (Project)", async () => {
+  test("in Pomade's Project, “+ No-project items” mixes them in, each with its source; switching to QuizLab and back restores Pomade's chip and its last view (Project)", async () => {
     await goTo(ids().pomade);
     const p = panel();
+    await expect(p.getByTestId("mix-bar")).toHaveCount(0);
+    await p.getByTestId("view-project").click();
     await p.getByTestId("mix-no-project").click();
     await expect(row(p, "Pay the tax").getByTestId("hint-source")).toHaveText("No project");
-    expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner"]);
-    await shot(page, "e004-pomade-today-mixins");
-    await p.getByTestId("view-project").click();
     expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner", "Write release notes"]);
     await shot(page, "e004-pomade-project-view");
 
     await goTo(ids().quiz);
     await expect(p.getByTestId("view-today")).toHaveAttribute("aria-selected", "true");
-    await expect(p.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "false");
-    expect(await titles(p)).toEqual(["Fix login bug"]);
+    await expect(p.getByTestId("mix-bar")).toHaveCount(0);
+    expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner", "Fix login bug"]);
     await goTo(ids().pomade);
     await expect(p.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
     await expect(p.getByTestId("mix-no-project")).toHaveAttribute("aria-pressed", "true");
@@ -246,8 +257,11 @@ test.describe("Planner projects in a real Pomade", () => {
     await openPanel();
     expect(await readFile(todo("QuizLab Pro/2026-11-17-fix-login-bug.md"), "utf8")).toContain("title: Fix login bug");
     await expect.poll(async () => (await map())[ids().quiz]).toEqual({ folder: "QuizLab Pro", name: "QuizLab Pro", groupPath: ["Building tools", "Tools"] });
-    await expect(p.getByTestId("planner-where")).toHaveText(`${TODOS}/QuizLab Pro/`);
+    await p.getByTestId("view-project").click();
+    await expect(p.getByTestId("planner-context")).toHaveText("QuizLab Pro");
+    await expect(p.getByTestId("planner-context")).toHaveAttribute("data-tip", `${TODOS}/QuizLab Pro/`);
     await expect(row(p, "Fix login bug")).toBeVisible();
+    await p.getByTestId("view-today").click();
     await expect(p.getByTestId("folder-problem")).toHaveCount(0);
     await page.getByTestId("project-__workspace__").click();
     await expect(p.getByTestId("task-section-name")).toHaveText(["No project", "Pomade", "QuizLab Pro"]);
@@ -301,7 +315,9 @@ test.describe("Planner projects in a real Pomade", () => {
     await goTo(ids().pomade);
     const p = await openPanel();
     await expect.poll(() => folders()).toEqual(["Ideas", "Pomade App", "QuizLab (Archive)", "QuizLab Pro"]);
-    await expect(p.getByTestId("planner-where")).toHaveText(`${TODOS}/Pomade App/`);
+    await expect(p.getByTestId("view-project")).toHaveAttribute("aria-selected", "true");
+    await expect(p.getByTestId("planner-context")).toHaveText("Pomade App");
+    await expect(p.getByTestId("planner-context")).toHaveAttribute("data-tip", `${TODOS}/Pomade App/`);
     await expect(row(p, "Ship the planner")).toBeVisible();
     await expect(p.getByTestId("folder-problem")).toHaveCount(0);
     await expect.poll(async () => (await map())[ids().pomade]?.folder).toBe("Pomade App");

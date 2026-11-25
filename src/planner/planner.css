@@ -47,7 +47,7 @@
   font-size: var(--fs-sm);
 }
 
-/* ── Sub-header: the planner day, or Show done; the tasks root. Where All's two toggles don't fit
+/* ── Sub-header: the planner day, or Show done; the context's name. Where All's two toggles don't fit
    side by side (the narrowest panels), Show archived wraps under Show done. ── */
 
 .planner__subheader {
@@ -84,14 +84,12 @@
   accent-color: var(--accent);
 }
 
-.planner__root {
+/* The context's name ("QuizLab", "All projects"), right-aligned; its folder's path is its tooltip. */
+.planner__context {
   flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   color: var(--text-faint);
-  font-family: var(--font-mono);
-  /* Cut at the start: the folder's own name is the part worth seeing. */
-  direction: rtl;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -525,7 +523,12 @@
   font-size: var(--fs-xs);
 }
 
-/* ── Sections: the Workspace Today and Project, one per project ── */
+/* "can't read — open to fix" wraps in the narrowest panel rather than running out of its row. */
+.task-row--unreadable .hint {
+  white-space: normal;
+}
+
+/* ── Sections: Today, and Project and Recurring at Workspace, one per project; each folds ── */
 
 .task-section {
   display: flex;
@@ -565,6 +568,60 @@
   margin-left: auto;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+}
+
+/* A heading that folds: the chevron and the name are one button; the count stays at the end. */
+.task-section--fold {
+  padding-inline: 0 2px;
+}
+
+.task-section__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin: -2px 0;
+  padding: 2px 4px 2px 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.task-section__toggle:hover {
+  background: var(--active-bg);
+}
+
+.task-section__toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.fold-chev {
+  flex: none;
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.task-section__toggle[aria-expanded="false"] .fold-chev {
+  transform: rotate(-90deg);
+}
+
+/* A group inside a group: lighter, and indented under its outer group. */
+.task-section--sub {
+  padding-top: var(--space-1);
+  font-weight: var(--fw-medium);
+}
+
+.task-section--sub .task-section__name {
+  color: var(--text-muted);
+}
+
+.task-section--nested {
+  padding-left: 14px;
 }
 
 /* ── Chips: the mix-ins of a project context, the All filters ── */

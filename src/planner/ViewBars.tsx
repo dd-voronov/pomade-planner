@@ -26,6 +26,32 @@ function Caret() {
   );
 }
 
+/**
+ * Today's bar inside a project ([[views]] "Context"): one chip, the project filter "Only <project>".
+ * Off, Today is the whole day; on, it lists the project's items alone and the chip carries its ×.
+ */
+export function OnlyProjectBar({ name, on, onToggle }: { name: string; on: boolean; onToggle: () => void }) {
+  return (
+    <div className="chip-bar" role="toolbar" aria-label="Filter" data-testid="today-bar">
+      <button
+        type="button"
+        className={`chip${on ? " chip--on" : ""}`}
+        aria-pressed={on}
+        data-tip={on ? "Show the whole day again" : `Show ${name}'s items alone`}
+        data-testid="only-project"
+        onClick={onToggle}
+      >
+        <span className="chip__label">Only {name}</span>
+        {on ? (
+          <span className="chip__x">
+            <Cross />
+          </span>
+        ) : null}
+      </button>
+    </div>
+  );
+}
+
 export interface MixedSource {
   key: string;
   label: string;
@@ -44,7 +70,7 @@ interface MixBarProps {
 }
 
 /**
- * The mix-in chips of a project context ([[views]] "Context"): "No-project items" toggles the
+ * The mix-in chips of a project context's Project and Recurring ([[views]] "Context"): "No-project items" toggles the
  * workspace-level items in; "+ Project" picks another project (the two-step picker); each mixed-in
  * project is a chip that × removes.
  */

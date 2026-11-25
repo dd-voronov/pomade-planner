@@ -203,8 +203,8 @@ export interface ItemFieldsProps {
  * opens on ↓, Space, a click or typing in the field and takes the fields' place while open); the
  * type switch after it in the Tab order, so "title, Tab, qui" still picks a project; then the
  * type's own fields — a task's `do-on`, deadline (date phrases, resolved on the label's line
- * against the planner day) and importance, a recurring item's repeat editor, a line about a note,
- * thought or daily note — and Details for every type but the daily note.
+ * against the planner day) and importance, a note's or thought's `do-on` alone, a recurring item's
+ * repeat editor, a line about the daily note — and Details for every type but the daily note.
  *
  * Keys: ⌥Tab and ⌥⇧Tab walk the type from any field, focus staying where it is (on the title when
  * its field left with the type). Tab and Shift+Tab go round the fields and never leave them — in a
@@ -353,14 +353,12 @@ export function ItemFields({ draft, onChange, check, groups, chosen, picking, on
             </div>
           </div>
         )}
-        {edit !== undefined && kind !== "task" && kind !== "recurring" ? null : kind === "note" || kind === "thought" || daily ? (
-          <p className="qa__about" data-testid="qa-about">
-            {kind === "note"
-              ? "A note has no dates: it lives in All, never in Today. Archive it when it's done with."
-              : kind === "thought"
-                ? "A thought has no dates: it lives in All, never in Today, until you resolve it."
-                : "Opens today's daily note in an editor tab — made from your template when it isn't there yet."}
-          </p>
+        {kind === "daily-note" ? (
+          daily ? (
+            <p className="qa__about" data-testid="qa-about">
+              Opens today's daily note in an editor tab — made from your template when it isn't there yet.
+            </p>
+          ) : null
         ) : kind === "recurring" && edit !== undefined && edit.repeatText !== null ? (
           <p className="qa__about" data-testid="qa-repeat-text">
             {edit.repeatText}
@@ -370,19 +368,23 @@ export function ItemFields({ draft, onChange, check, groups, chosen, picking, on
         ) : (
           <div className="qa__fields">
             <NotedInput id={`${id}-do-on`} label="Do on" value={draft.doOn} onChange={(doOn) => set({ doOn })} note={dateNote(check.doOn, check.day)} error={check.doOn.kind === "error"} testId="do-on" noteTestId="qa-do-on-resolved" placeholder="today, fri" />
-            <NotedInput id={`${id}-deadline`} label="Deadline" value={draft.deadline} onChange={(deadline) => set({ deadline })} note={dateNote(check.deadline, check.day)} error={check.deadline.kind === "error"} testId="deadline" noteTestId="qa-deadline-resolved" placeholder="nov 20, +3d" />
-            <NotedInput
-              id={`${id}-importance`}
-              label="Importance"
-              value={draft.importance}
-              onChange={(importance) => set({ importance })}
-              note={check.importance.kind === "error" ? "A number" : ""}
-              error={check.importance.kind === "error"}
-              testId="importance"
-              noteTestId="qa-importance-note"
-              placeholder="1–9"
-              inputMode="decimal"
-            />
+            {kind === "task" ? (
+              <>
+                <NotedInput id={`${id}-deadline`} label="Deadline" value={draft.deadline} onChange={(deadline) => set({ deadline })} note={dateNote(check.deadline, check.day)} error={check.deadline.kind === "error"} testId="deadline" noteTestId="qa-deadline-resolved" placeholder="nov 20, +3d" />
+                <NotedInput
+                  id={`${id}-importance`}
+                  label="Importance"
+                  value={draft.importance}
+                  onChange={(importance) => set({ importance })}
+                  note={check.importance.kind === "error" ? "A number" : ""}
+                  error={check.importance.kind === "error"}
+                  testId="importance"
+                  noteTestId="qa-importance-note"
+                  placeholder="1–9"
+                  inputMode="decimal"
+                />
+              </>
+            ) : null}
           </div>
         )}
         {edit !== undefined || hasDetails(kind) ? <Details value={draft.details} onChange={(details) => set({ details })} /> : null}

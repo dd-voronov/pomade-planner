@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { task } from "./fixtures";
 import { NONE_SOURCE, type ProjectSource } from "./projects";
-import { inAllFilter, inScope, isOwn, liveMixins, projectRows, revealInAll, viewListing, type Context } from "./scope";
+import { inAllFilter, inScope, inToday, isOwn, liveMixins, projectRows, revealInAll, viewListing, type Context } from "./scope";
 import { DEFAULT_VIEW } from "./view-state";
 
 const D = "2026-11-17";
@@ -21,7 +21,23 @@ describe("isOwn", () => {
   });
 });
 
-describe("inScope — Today and Project", () => {
+describe("inToday", () => {
+  it("the whole day in every context, mix-ins or not", () => {
+    for (const context of [WS, QUIZ]) {
+      for (const s of [NONE_SOURCE, src("quiz"), src("pomade"), src("folder:x", null)]) expect(inToday(context, DEFAULT_VIEW, s)).toBe(true);
+    }
+  });
+
+  it("the project filter leaves a project's own items; at Workspace there is none", () => {
+    const only = { onlyProject: true };
+    expect(inToday(QUIZ, only, src("quiz"))).toBe(true);
+    expect(inToday(QUIZ, only, src("pomade"))).toBe(false);
+    expect(inToday(QUIZ, only, NONE_SOURCE)).toBe(false);
+    expect(inToday(WS, only, src("pomade"))).toBe(true);
+  });
+});
+
+describe("inScope — Project and Recurring", () => {
   it("Workspace spans everything", () => {
     for (const s of [NONE_SOURCE, src("quiz"), src("folder:x", null)]) expect(inScope(WS, DEFAULT_VIEW, s)).toBe(true);
   });

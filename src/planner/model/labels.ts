@@ -98,9 +98,10 @@ export function recurringHints(task: Task, state: RecurringState, day: LocalDate
   return [...hints, ...problemHints(task)];
 }
 
-/** A Today row's hints: why it is there (overdue, due today, planned N days ago, due in N days, missed N×) and its deadline when that isn't the reason; a recurring row's rule. */
+/** A Today row's hints: why it is there (overdue, due today, planned N days ago, due in N days, missed N×) and its deadline when that isn't the reason; a recurring row's rule; a note's or thought's own. */
 export function todayHints(row: TodayRow, day: LocalDate): Hint[] {
   const { task, reason } = row;
+  if (task.type === "note" || task.type === "thought") return noteHints(task, day, false);
   if (row.recurring !== null) return [...phaseHints(row.recurring, day), ...repeatHint(task), ...problemHints(task)];
   const hints: Hint[] = [];
   const r = REASON_TEXT[reason];
@@ -126,14 +127,15 @@ export function displayTitle(task: Task, day: LocalDate): string {
   return task.type === "daily-note" && !task.titled && task.date !== null ? longDate(task.date, day) : task.title;
 }
 
-/** A note's, thought's or daily note's hints in All: today's note, its progress; when it was added, resolved or archived. */
-function noteHints(task: Task, day: LocalDate): Hint[] {
+/** A note's, thought's or daily note's hints: today's note, its progress; the day an open note or thought is planned for (`withDoOn`; Today leaves it out); when it was added, resolved or archived. */
+function noteHints(task: Task, day: LocalDate, withDoOn: boolean): Hint[] {
   const hints: Hint[] = [];
   if (task.type === "daily-note") {
     if (task.date === day) hints.push({ kind: "reason", text: "Today", tone: "accent" });
     else if (task.titled && task.date !== null) hints.push({ kind: "created", text: shortDate(task.date, day), tone: "muted" });
     hints.push(...progressHint(task));
   } else if (task.done) hints.push({ kind: "done", text: task.doneOn === null ? "resolved" : `resolved ${relativeDate(task.doneOn, day)}`, tone: "muted" });
+  else if (withDoOn && task.doOn !== null) hints.push({ kind: "do-on", text: `do ${relativeDate(task.doOn, day)}`, tone: "muted" });
   else if (task.created !== null) hints.push({ kind: "created", text: `added ${relativeDate(task.created, day)}`, tone: "muted" });
   if (task.archived) hints.push({ kind: "archived", text: "archived", tone: "muted" });
   if (task.problems.length > 0) hints.push({ kind: "problem", text: task.problems.join("; "), tone: "warning" });
@@ -142,7 +144,7 @@ function noteHints(task: Task, day: LocalDate): Hint[] {
 
 /** An All row's hints: done day, or its `do-on` and deadline (an open task past its deadline in red); a note's, thought's or daily note's own. */
 export function allHints(task: Task, day: LocalDate): Hint[] {
-  if (task.type === "note" || task.type === "thought" || task.type === "daily-note") return noteHints(task, day);
+  if (task.type === "note" || task.type === "thought" || task.type === "daily-note") return noteHints(task, day, true);
   const hints: Hint[] = [];
   if (task.done) {
     hints.push({ kind: "done", text: task.doneOn === null ? "done" : `done ${relativeDate(task.doneOn, day)}`, tone: "muted" });

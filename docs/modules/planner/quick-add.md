@@ -66,8 +66,9 @@ fields' place the frame keeps its height.
 
 ## Pre-fills
 
-The same on both paths: project = the context's (the active project; none at Workspace); `do-on` =
-today from a Today view; type = Recurring from the Recurring view, Task elsewhere. The overlay is a
+The same on both paths: project = the context's (the active project; none at Workspace), from Today
+too, whatever it shows; `do-on` = today from Today — a note or thought switched to there keeps it, so
+it lands in Today; type = Recurring from the Recurring view, Task elsewhere. The overlay is a
 fresh frame each time, so the panel puts them in its route: `quick-add?do-on=today`,
 `quick-add?type=recurring`, and the bare `quick-add` — the shortcut's route — for a task with no
 date (`quickAddRoute`, `parseQuickAddRoute`).
@@ -91,8 +92,9 @@ date (`quickAddRoute`, `parseQuickAddRoute`).
   closed with a line break when it has none, so a recurring item's `## Log` follows it; only white
   space is no body, and the file is then frontmatter alone (`detailsBody`). Everything else goes to
   the frontmatter.
-- **Note and thought:** no dates — a line in the place of the date fields says so; the frontmatter is
-  `type`, `title`, `status: open`, `created`.
+- **Note and thought:** **Do on** alone, in the first of the date fields' places (date phrases, as a
+  task's); the frontmatter is `type`, `title`, `status: open`, the `do-on` when set, `created`. With
+  a `do-on` the item stands in Today on that day ([[days-and-today]] "What Today contains").
 - **Daily:** Enter opens today's daily note in an editor tab, making it from the template first when
   it isn't there ([[daily-notes]]), and closes the form; the title and project fields are off, there
   is no Details, the head shows the note's path.
@@ -144,9 +146,10 @@ project field (the typed letters become its query).
 
 ## After an add
 
-- **In place** the form closes and the new row is scrolled to, focused and marked for a moment.
-  When the view doesn't list the item on its own terms (a note added from Today, a task with no
-  date, another project's item), the list's foot says where it is — "Added — “Lamp for the desk” is
+- **In place** the form closes and the new row is scrolled to, focused and marked for a moment —
+  its group unfolded when it was folded ([[views]] "Groups"). When the view doesn't list the item
+  on its own terms (a note with no day, a task with no date added from Today, another project's
+  item in Project), the list's foot says where it is — "Added — “Lamp for the desk” is
   in All." — with **Show**, which takes there: Project or Recurring when they list it, else All, its
   filters widened by just the item's project and type when they hide it (`viewListing`,
   `revealInAll`).

@@ -1,8 +1,9 @@
 // What each view shows in a context ([[views]] "Context"). The context is the active Pomade project or
-// Workspace. At Workspace, Today and Project span everything (Today grouped by project); inside a
-// project, Today and Project show the project's items plus its mixed-in sources — workspace-level
-// items and other projects — and a mixed-in row carries its source's label. All always spans
-// everything, narrowed by its project and type filters.
+// Workspace. Today is the whole day in every context — inside a project its project filter narrows
+// it to the project's items. At Workspace, Project and Recurring span everything (grouped by
+// project); inside a project they show the project's items plus its mixed-in sources —
+// workspace-level items and other projects — and a mixed-in row carries its source's label. All
+// always spans everything, narrowed by its project and type filters.
 
 import type { LocalDate } from "pomade-kit/schedule";
 
@@ -18,7 +19,12 @@ export function isOwn(context: Context, source: Source): boolean {
   return context.kind === "workspace" ? source.kind === "none" : source.kind === "project" && source.id === context.id;
 }
 
-/** Whether Today and Project show `source`'s items in `context` with `view`'s mix-ins. */
+/** Whether Today shows `source`'s items in `context`: always, but with the project filter on (`onlyProject`) only the project's own. */
+export function inToday(context: Context, view: Pick<PlannerView, "onlyProject">, source: Source): boolean {
+  return context.kind === "workspace" || !view.onlyProject || isOwn(context, source);
+}
+
+/** Whether Project and Recurring show `source`'s items in `context` with `view`'s mix-ins. */
 export function inScope(context: Context, view: Pick<PlannerView, "mixNoProject" | "mixProjects">, source: Source): boolean {
   if (context.kind === "workspace") return true;
   if (isOwn(context, source)) return true;

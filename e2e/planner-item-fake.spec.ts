@@ -272,7 +272,10 @@ test.describe("the compact view in the tab", () => {
     const pane = await openItem(a, "Why do I sleep badly on Sundays?");
     await expect(a.getByTestId("item-type")).toHaveText("Thought");
     await expect(pane.getByTestId("item-check")).toHaveCount(0);
-    await expect(pane.getByTestId("qa-do-on")).toHaveCount(0);
+    // A thought takes a do-on alone.
+    await expect(pane.getByTestId("qa-do-on")).toHaveValue("");
+    await expect(pane.getByTestId("qa-deadline")).toHaveCount(0);
+    await expect(pane.getByTestId("qa-importance")).toHaveCount(0);
     await pane.getByTestId("item-resolve").click();
     await expect.poll(() => fileText(page, "Tasks/2026-11-12-sleep.md")).toContain("status: resolved\ncreated: 2026-11-12\ndone-on: 2026-11-17\n");
     await expect(pane.getByTestId("item-reopen")).toBeVisible();
@@ -401,11 +404,12 @@ test.describe("the compact view in the tab", () => {
     await expect(row(a, "Post the parcel")).toHaveAttribute("data-open", "true");
     expect(await openedTabs(page)).toEqual([]);
 
-    // An item the view doesn't list opens all the same.
+    // An item the view doesn't list (a note with no day) opens all the same.
     await a.getByTestId("planner-add").click();
     const form = a.getByTestId("add-form");
     await expect(form.getByTestId("qa-title")).toBeFocused();
     await form.getByTestId("qa-type-note").check();
+    await form.getByTestId("qa-do-on").fill("");
     await form.getByTestId("qa-title").fill("Lamp for the desk");
     await page.keyboard.press("Shift+Meta+Enter");
     await expect(pane).toHaveAttribute("data-path", "Tasks/2026-11-17-lamp-for-the-desk.md");

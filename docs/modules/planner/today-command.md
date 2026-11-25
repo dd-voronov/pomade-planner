@@ -18,7 +18,7 @@ kind: reference
 
 Agents and scripts read the day's to-dos without Pomade: the command is the Planner's own code
 reading its own files directly, so it works whether Pomade runs or not, and it answers with the same
-items the Workspace Today shows. Consumer: `pomade-runner`'s morning-summary agent job.
+items Today shows — the notes and thoughts planned for the day included. Consumer: `pomade-runner`'s morning-summary agent job.
 
 ```
 pomade-planner today [--project <name>] [--json] [--date YYYY-MM-DD]
@@ -39,23 +39,27 @@ needs no running Pomade.
 
 ## Arguments
 
-- Default scope: the whole workspace (the Workspace Today).
-- `--project <name>` narrows to one project's Today (no mix-ins): its name in any case, its heading
-  label (`QuizLab (Archive)`), `<name> (<innermost group>)`, or its folder's name (`matchProject`).
+- Default scope: the whole workspace — Today as every context shows it.
+- `--project <name>` is Today's project filter: one project's items, as "Only <project>" shows them
+  ([[views]] "Context"). The project by its name in any case, its heading label
+  (`QuizLab (Archive)`), `<name> (<innermost group>)`, or its folder's name (`matchProject`).
   A name two projects share, or no project has, is a wrong argument that lists the names to use.
 - `--date YYYY-MM-DD` sets the planner day; otherwise it is now's, by the settings' day boundary.
 
 ## Output
 
-- **Text** (`todayText`): the same grouping as the Workspace Today — headings only once an item has a
-  project; with `--project`, the project's label in the title line and no headings. The daily note
-  as a "Daily note: <path>" line under the heading. A recurring item's line carries its Today label
-  and its rule ("missed 2×, since Oct 5, monthly on the 5th"). Unreadable tasks are listed.
+- **Text** (`todayText`): the same grouping as Today — headings only once an item has a project;
+  with `--project`, the project's label in the title line and no headings. The daily note as a
+  "Daily note: <path>" line under the heading. A task's line starts with its checkbox (`[ ]`,
+  `[x]`), a note's or thought's with its type ("(note)", "(thought, resolved)") and reads "planned
+  today". A recurring item's line carries its Today label and its rule ("missed 2×, since Oct 5,
+  monthly on the 5th"). Unreadable tasks are listed.
 - **`--json`** (`todayReport`): one object — `day`, `daily-note` (the day's note's path when its file
   exists, else `null`; always `null` with `--project`), `items`, `unreadable` (`path`, `reason`).
   Each item: `title`, `type`, `project` (the project's heading label, `null` for a workspace-level
   item), `do-on`, `deadline`, `importance`, `reason` (`overdue` · `due-today` · `planned` ·
-  `rolled-over` · `recurring-due` · `lead-time`), `path`, `status`, `created`, `done-on`,
+  `rolled-over` · `recurring-due` · `lead-time`; a note's or thought's is `planned`), `path`,
+  `status` (`open` · `done` · `resolved` — a thought resolved on the day), `created`, `done-on`,
   `planned-days-ago`, and `missed` — a recurring item's missed occurrences, 1 when only its `do-on`
   has passed, else 0.
 - Same rules as the UI (day boundary, rollover, lead time) — one shared Today module
