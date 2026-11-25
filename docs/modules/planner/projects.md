@@ -1,7 +1,7 @@
 ---
 doc: docs/modules/planner/projects.md
 audience: engineers, product
-holds: project membership as a sub-folder, safe folder names and their candidates, the project-id → folder map that makes renames and regroups follow, collisions, headings and labels, a project removed
+holds: project membership as a sub-folder, safe folder names and their candidates, the project-id → folder map that makes renames and regroups follow, collisions, each project's folder in its Pomade scope, headings and labels, a project removed
 kind: reference
 ---
 
@@ -9,7 +9,8 @@ kind: reference
 
 **Module:** `planner` · **UI:** the context (Workspace or the active project), the project headings,
 the project picker and All's project filter · **Code:** `src/planner/model/projects.ts`,
-`src/planner/useProjects.ts`, `src/planner/write.ts` (`moveProjectFolder`, `saveProjectFolders`),
+`src/planner/useProjects.ts`, `src/planner/write.ts` (`moveProjectFolder`, `saveProjectFolders`,
+`syncScopeFolders`, `addProjectScopeFolder`),
 `src/planner/model/settings.ts` · **e2e:** `planner-projects-fake.spec.ts`,
 `pomade-planner-projects.spec.ts`, `pomade-project-removed.spec.ts` · **Unit:**
 `src/planner/model/projects.test.ts`
@@ -70,6 +71,24 @@ frames doing it at once agree.
   moved; then the rename catches up by itself.
 - A mapped folder that is gone points the entry at the new name.
 - A move another Planner frame already made (old folder gone, new one there) counts as moved.
+
+## Scope folders
+
+Each pass ends by making every listed project's Planner scope folders (Host API
+`project.addScopeFolder`, `pomade:E-047`) exactly its folder in the tasks root
+(`planScopeFolders`, `syncScopeFolders`): `<tasks root>/<folder>` for a mapped project, none for an
+unmapped one. So Pomade counts a project's items as the project's — no "Outside this project" mark
+on its editor tabs ([[host-api-usage]] "Editor tabs in their project").
+
+- It reads each project's folders (`project.getScopeFolders`) and changes only the difference —
+  removals first — so a second frame's pass writes nothing.
+- A rename or regroup swaps the old path for the new one; a changed tasks folder moves every
+  project's; a collision keeps the folder the tasks stay in. The pass runs when the tasks root is
+  gone too, from the map alone.
+- Quick add making a project's folder adds it at once (`addProjectScopeFolder`), before the item's
+  editor tab can open.
+- A refused call is skipped silently and the next pass tries again: only the mark depends on it.
+- No-project items have no scope folder; the Workspace project has none (Pomade refuses one).
 
 ## Sources and labels
 

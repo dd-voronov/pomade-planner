@@ -52,7 +52,8 @@ An overlay — `surface=overlay`, or one the app opens itself with `overlay.open
 Pomade shows it: an `iframe[data-surface="overlay"]` over a scrim, 420 wide and as high as the app
 asks; Escape, `overlay.close` or a click on the scrim removes it and gives focus back. The nav bar
 holds presets for every surface. `window.fakeHost` and `window.mounted` are there for specs and the
-console.
+console; `window.hostCalls` lists every Host API call the app's frames made (to count writes), and
+`window.scopeFolders(projectId)` reads the app's scope folders of a project.
 
 Fixtures (`test/fixtures/workspace.ts`): Alpha (the sample backlog: every kind and status, `done/`,
 an unreadable ticket, an unknown status, a signal), Beta (no `docs/roadmap/`), Gamma (a chosen

@@ -32,7 +32,7 @@ outcome (`../Pomade/docs/auxiliary/grills/2026-11-09-g2-planner.md`), the platfo
 | **Shortcut** | ⌘⇧A, quick add ([[quick-add]]) | none |
 | **Backend** | none | none |
 | **Commands** | `pomade-planner today` ([[today-command]]) | none |
-| **Capabilities** | `project.read`, `files.read`, `files.write`, `tabs.open` | those and `project.write` (its per-project settings) |
+| **Capabilities** | `project.read`, `project.write` (each project's scope folder, [[projects]]), `files.read`, `files.write`, `tabs.open` | the same; `project.write` for its per-project settings |
 | **Data** ([[settings-and-state]]) | `Apps/pomade-planner/`, the tasks folder | `Apps/pomade-board/`, each project's backlog folder |
 
 **One codebase, two builds.** Each app is a folder under `apps/` — its page, its entry and its

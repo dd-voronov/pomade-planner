@@ -11,7 +11,9 @@ import {
   NAME_MAX,
   NONE_SOURCE,
   planFolders,
+  planScopeFolders,
   sanitizeFolderName,
+  scopeFolderOf,
   sectionsBySource,
   sourceKey,
   sourceLabels,
@@ -208,6 +210,59 @@ describe("planFolders", () => {
     const first = planFolders(projects, { a: E("QuizLab"), b: E("QuizLab (Archive)", "QuizLab", ["Archive"]) }, ["QuizLab", "QuizLab (Archive)", "Pomade"]);
     const disk = ["Quiz", "QuizLab (Archive)", "Pomade"];
     expect(planFolders(projects, first.map, disk)).toEqual({ map: first.map, moves: [], collisions: [], changed: false });
+  });
+});
+
+describe("planScopeFolders", () => {
+  const ids = ["a", "b", "c"];
+  const map: FolderMap = { a: E("Quiz"), b: E("QuizLab (Archive)", "QuizLab", ["Archive"]) };
+  const has = (entries: Record<string, string[]>) => new Map(Object.entries(entries));
+
+  it("a project's scope folder is its folder in the tasks root; at the workspace root, the folder itself", () => {
+    expect(scopeFolderOf("Tasks", "Quiz")).toBe("Tasks/Quiz");
+    expect(scopeFolderOf("Notes/Tasks", "QuizLab (Archive)")).toBe("Notes/Tasks/QuizLab (Archive)");
+    expect(scopeFolderOf("", "Quiz")).toBe("Quiz");
+  });
+
+  it("adds each mapped project's folder; an unmapped project gets none", () => {
+    expect(planScopeFolders(ids, "Tasks", map, has({ a: [], b: [], c: [] }))).toEqual({
+      remove: [],
+      add: [
+        { projectId: "a", path: "Tasks/Quiz" },
+        { projectId: "b", path: "Tasks/QuizLab (Archive)" },
+      ],
+    });
+  });
+
+  it("changes nothing when each project already has exactly its folder", () => {
+    expect(planScopeFolders(ids, "Tasks", map, has({ a: ["Tasks/Quiz"], b: ["Tasks/QuizLab (Archive)"], c: [] }))).toEqual({ remove: [], add: [] });
+  });
+
+  it("a renamed folder swaps: the old path goes, the new one comes", () => {
+    expect(planScopeFolders(["a"], "Tasks", map, has({ a: ["Tasks/QuizLab"] }))).toEqual({ remove: [{ projectId: "a", path: "Tasks/QuizLab" }], add: [{ projectId: "a", path: "Tasks/Quiz" }] });
+  });
+
+  it("a changed tasks folder moves every project's scope folder", () => {
+    expect(planScopeFolders(ids, "Chores", map, has({ a: ["Tasks/Quiz"], b: ["Tasks/QuizLab (Archive)"], c: [] }))).toEqual({
+      remove: [
+        { projectId: "a", path: "Tasks/Quiz" },
+        { projectId: "b", path: "Tasks/QuizLab (Archive)" },
+      ],
+      add: [
+        { projectId: "a", path: "Chores/Quiz" },
+        { projectId: "b", path: "Chores/QuizLab (Archive)" },
+      ],
+    });
+  });
+
+  it("removes every extra folder, an unmapped project's too; skips a project whose folders couldn't be read", () => {
+    expect(planScopeFolders(ids, "Tasks", map, has({ a: ["Tasks/Quiz", "Tasks/Stray"], c: ["Tasks/Old"] }))).toEqual({
+      remove: [
+        { projectId: "a", path: "Tasks/Stray" },
+        { projectId: "c", path: "Tasks/Old" },
+      ],
+      add: [],
+    });
   });
 });
 

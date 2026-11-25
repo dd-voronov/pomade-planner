@@ -457,3 +457,50 @@ test.describe("a project removed", () => {
     await expect(a.getByTestId("picker-option-name")).toHaveText(["QuizLab"]);
   });
 });
+
+test.describe("each project's folder is in its scope (T-021)", () => {
+  const PROJECTS = ["pomade", "kit", "quiz", "quiz-old", "school", "errands"];
+  const scopes = (page: Page) => page.evaluate(async (ids) => Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await window.scopeFolders(id)] as const))), PROJECTS);
+  const scopeWrites = (page: Page) => page.evaluate(() => window.hostCalls.filter((c) => c.method === "project.addScopeFolder" || c.method === "project.removeScopeFolder").length);
+  const MAPPED = { pomade: ["Tasks/Pomade"], kit: [], quiz: ["Tasks/QuizLab"], "quiz-old": [], school: [], errands: [] };
+
+  test("after an open each mapped project has exactly its folder; a second frame adds nothing", async ({ page }) => {
+    await openPanel(page, "workspace");
+    await expect.poll(() => scopes(page)).toEqual(MAPPED);
+    const writes = await scopeWrites(page);
+    expect(writes).toBe(2);
+    await page.evaluate(() => {
+      window.mountNow();
+    });
+    await expect(page.locator("#stage iframe")).toHaveCount(2);
+    await expect(page.frameLocator("#stage iframe >> nth=1").getByTestId("view-planner-panel")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.hostCalls.filter((c) => c.method === "project.getScopeFolders").length)).toBeGreaterThanOrEqual(2 * PROJECTS.length);
+    await settled(page.frameLocator("#stage iframe >> nth=1"));
+    expect(await scopeWrites(page)).toBe(writes);
+    expect(await scopes(page)).toEqual(MAPPED);
+  });
+
+  test("a rename swaps the folder; a changed tasks folder moves every project's", async ({ page }) => {
+    const a = await openPanel(page, "quiz");
+    await expect.poll(() => scopes(page)).toEqual(MAPPED);
+    await page.evaluate(() => window.fakeHost.updateProject("quiz", { name: "QuizLab Pro" }));
+    await expect(a.getByTestId("planner-where")).toHaveText("Tasks/QuizLab Pro/");
+    await expect.poll(() => scopes(page)).toEqual({ ...MAPPED, quiz: ["Tasks/QuizLab Pro"] });
+
+    const current = await settings(page);
+    await page.evaluate(([path, text]) => window.fakeHost.writeFile(path, text), [SETTINGS, JSON.stringify({ ...current, tasksRoot: "Chores" })] as const);
+    await expect(a.getByTestId("planner-where")).toHaveText("Chores/QuizLab Pro/");
+    await expect.poll(() => scopes(page)).toEqual({ ...MAPPED, pomade: ["Chores/Pomade"], quiz: ["Chores/QuizLab Pro"] });
+  });
+
+  test("quick add making a project's folder puts it in the project's scope", async ({ page }) => {
+    await page.goto(harness({ surface: "overlay", route: "quick-add", project: "kit" }));
+    const a = app(page);
+    await expect(a.getByTestId("qa-where")).toHaveText("in Tasks/pomade-kit/");
+    await page.keyboard.type("Cut a release");
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#stage iframe")).toHaveCount(0);
+    expect(await exists(page, "Tasks/pomade-kit/2026-11-17-cut-a-release.md")).toBe(true);
+    expect(await page.evaluate(() => window.scopeFolders("kit"))).toEqual(["Tasks/pomade-kit"]);
+  });
+});

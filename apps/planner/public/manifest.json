@@ -4,7 +4,7 @@
   "version": "0.2.2",
   "hostApi": 0,
   "icon": "planner.svg",
-  "capabilities": ["project.read", "files.read", "files.write", "tabs.open"],
+  "capabilities": ["project.read", "project.write", "files.read", "files.write", "tabs.open"],
   "events": { "subscribe": ["pomade.ready", "project.created", "project.renamed", "project.removed", "project.updated"] },
   "strip": [{ "id": "planner", "title": "Planner", "action": "panel", "route": "planner" }],
   "startOnLaunch": true,

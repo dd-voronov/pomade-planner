@@ -18,11 +18,14 @@
 // `iframe[data-surface="overlay"]` over a scrim, 420 wide and as high as the app asks; Escape,
 // `overlay.close` or a click on the scrim removes it and gives focus back to the frame that opened
 // it. `theme` (`light` · `dark`) is Pomade's theme at the handshake; `window.fakeHost.setTheme`
-// changes it. `window.fakeHost` and `window.mounted` are there for specs and the console.
+// changes it. `window.fakeHost` and `window.mounted` are there for specs and the console;
+// `window.hostCalls` lists every Host API call the app's frames made, `window.scopeFolders(id)` reads
+// a project's scope folders of the app (the fake host keeps them private).
 
 import "pomade-kit/tokens.css";
 import { createFakeHost, mountApp, type FakeHost, type FrameOptions, type MountedApp } from "pomade-kit/fake-host";
 import type { JsonValue, Surface } from "pomade-kit/protocol";
+import { connect } from "pomade-kit/sdk";
 
 import boardManifest from "../apps/board/public/manifest.json" with { type: "json" };
 import plannerManifest from "../apps/planner/public/manifest.json" with { type: "json" };
@@ -39,6 +42,8 @@ declare global {
     fakeHost: FakeHost;
     mounted: MountedApp | undefined;
     mountNow: (as?: FrameOptions) => void;
+    hostCalls: { method: string; params: unknown }[];
+    scopeFolders: (projectId: string) => Promise<string[]>;
   }
 }
 
@@ -148,6 +153,16 @@ window.fakeHost = createFakeHost({
   ...(hostApi === null ? {} : { hostApi: Number(hostApi) }),
   ...(theme === "dark" || theme === "light" ? { theme } : {}),
 });
+window.hostCalls = [];
+window.addEventListener("message", (event: MessageEvent<unknown>) => {
+  const data = event.data as { type?: unknown; method?: unknown; params?: unknown } | null;
+  if (data?.type === "call" && typeof data.method === "string") window.hostCalls.push({ method: data.method, params: data.params });
+});
+window.scopeFolders = async (projectId) => {
+  const result = await connect({ transport: window.fakeHost.createTransport() });
+  if (result.status !== "connected") throw new Error(`fake host: ${result.status}`);
+  return (await result.host.project.getScopeFolders({ projectId })).paths;
+};
 window.mountNow = (as) => {
   const frame: FrameOptions = as ?? open;
   stage.dataset.surface = frame.surface ?? "tab";

@@ -94,9 +94,10 @@ describe.each(["planner", "board"] as const)("the %s app's manifest", (app) => {
 describe("the Planner's manifest", () => {
   const m = parsed("planner");
 
-  it("is the app pomade-planner, named Planner, without the Board's project settings writes", () => {
+  it("is the app pomade-planner, named Planner, whose only project writes are its scope folders — never the Board's project settings", () => {
     expect(m).toMatchObject({ id: "pomade-planner", name: "Planner" });
-    expect(m.capabilities).not.toContain("project.write");
+    const projectWrites = methodsCalled("planner").filter((method) => METHOD_CAPABILITY[method] === "project.write");
+    expect(projectWrites).toEqual(["project.addScopeFolder", "project.removeScopeFolder"]);
   });
 
   it("has one strip icon, Planner, that fills the panel — the launch panel, which hears Pomade ready", () => {

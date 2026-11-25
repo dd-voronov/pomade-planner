@@ -194,8 +194,9 @@ list. One item at a time; another row's click takes the pane over. In a tab narr
 pane replaces the list, with a back arrow. From the panel a click opens the Planner tab with the
 pane. **⌘-click** a row opens the file in Pomade's editor instead. Unreadable files always open in
 the editor. An editor tab opens in the project you are in — Workspace when you use the Planner
-there — and Pomade stays in it; because the tasks folder lies outside the project, the tab carries
-Pomade's orange "Outside this project" mark.
+there — and Pomade stays in it. A project's folder in the tasks folder counts as part of that
+project, so its own items open without a mark; a no-project item, or another project's item opened
+here, carries Pomade's orange "Outside this project" mark.
 
 The pane shows:
 
@@ -303,6 +304,9 @@ Workspace Today pinned rows stand above the headings, labelled with their projec
 (`To-dos/QuizLab/`). The folder is made when you first add an item to that project. Two projects
 with one name: the later one's folder gets its group, `QuizLab (Archive)`.
 
+- **The folder is part of its project in Pomade**: its files carry no "Outside this project" mark
+  there and show their short path in the editor header. It follows a rename, a regroup and a new
+  tasks folder. Pomade never shows it in the project's file tree.
 - **Renaming or regrouping a project** in Pomade renames its folder — also when the rename happened
   while Pomade was closed. A case-only rename keeps the folder.
 - **A folder already taken** by something else: nothing moves; the Planner says so — "“QuizLab”

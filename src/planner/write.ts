@@ -22,7 +22,7 @@ import type { ItemEdit } from "./model/item-edit";
 import { FIELD, type Task } from "./model/items";
 import { advancedDoOn, appendLog, type LogWord } from "./model/recurring";
 import { deleteBatches, deleteOutcome, type DeleteResult, type RowFailure } from "./model/selection";
-import { parseFolderMap, PROJECT_FOLDERS_KEY, serializeFolderMap, type FolderMap } from "./model/projects";
+import { parseFolderMap, planScopeFolders, PROJECT_FOLDERS_KEY, scopeFolderOf, serializeFolderMap, type FolderMap } from "./model/projects";
 import { SYNCED_SETTINGS_PATH } from "./model/settings";
 import { resolveWrites, tickWrites, type FieldWrite } from "./model/tick";
 import { SETTINGS_CHANGED_KEY } from "./usePlannerData";
@@ -263,6 +263,33 @@ export async function moveProjectFolder(host: HostClient, root: string, from: st
     }
     return { reason: hostReason(error) };
   }
+}
+
+/**
+ * Make each listed project's Planner scope folders exactly its folder in the tasks root
+ * (model/projects `planScopeFolders`), so Pomade counts a project's tasks as the project's. Reads
+ * what Pomade holds first and changes only the difference: idempotent, several frames agree. A
+ * failed call leaves that folder as it is — only the editor tab's "Outside this project" mark
+ * depends on it — and the next pass tries again.
+ */
+export async function syncScopeFolders(host: HostClient, root: string, map: FolderMap, projectIds: readonly string[]): Promise<void> {
+  const current = new Map<string, string[]>();
+  await Promise.all(
+    projectIds.map((projectId) =>
+      host.project.getScopeFolders({ projectId }).then(
+        ({ paths }) => void current.set(projectId, paths),
+        () => undefined,
+      ),
+    ),
+  );
+  const { remove, add } = planScopeFolders(projectIds, root, map, current);
+  for (const change of remove) await host.project.removeScopeFolder(change).catch(() => undefined);
+  for (const change of add) await host.project.addScopeFolder(change).catch(() => undefined);
+}
+
+/** Put a project's folder in the tasks root in its scope — what quick add does when it makes the folder. */
+export async function addProjectScopeFolder(host: HostClient, root: string, projectId: string, folder: string): Promise<void> {
+  await host.project.addScopeFolder({ projectId, path: scopeFolderOf(root, folder) }).catch(() => undefined);
 }
 
 /** Set some projects' entries of the project-id → folder map, keeping every other entry and key of the file. */

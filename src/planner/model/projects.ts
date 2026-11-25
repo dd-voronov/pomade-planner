@@ -210,6 +210,39 @@ export function planFolders(projects: readonly ProjectLike[], map: FolderMap, di
   return { map: next, moves, collisions, changed: JSON.stringify(serializeFolderMap(next)) !== JSON.stringify(serializeFolderMap(map)) };
 }
 
+// ── Scope folders: a project's folder counts as the project's in Pomade ──
+
+/** A project's folder as a scope folder path: workspace-relative, as Pomade stores it (`scopeFolderPath`). */
+export function scopeFolderOf(root: string, folder: string): string {
+  return root === "" ? folder : `${root}/${folder}`;
+}
+
+/** One scope folder to add to or remove from a project. */
+export interface ScopeChange {
+  projectId: string;
+  path: string;
+}
+
+/**
+ * What makes each listed project's Planner scope folders exactly its folder in the tasks root:
+ * `[<root>/<folder>]` for a mapped project, none for an unmapped one. `current` holds each listed
+ * project's scope folders as Pomade has them; a project missing from it is skipped (its folders
+ * couldn't be read). Removals come first, so a project never holds two folders after a rename.
+ */
+export function planScopeFolders(projectIds: readonly string[], root: string, map: FolderMap, current: ReadonlyMap<string, readonly string[]>): { remove: ScopeChange[]; add: ScopeChange[] } {
+  const remove: ScopeChange[] = [];
+  const add: ScopeChange[] = [];
+  for (const projectId of projectIds) {
+    const has = current.get(projectId);
+    if (has === undefined) continue;
+    const entry = map[projectId];
+    const want = entry === undefined ? null : scopeFolderOf(root, entry.folder);
+    for (const path of has) if (path !== want) remove.push({ projectId, path });
+    if (want !== null && !has.includes(want)) add.push({ projectId, path: want });
+  }
+  return { remove, add };
+}
+
 // ── Sources: whose an item is ──
 
 /** The key of workspace-level items (no project) wherever sources are keyed. */

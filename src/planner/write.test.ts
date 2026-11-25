@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import manifest from "../../apps/planner/public/manifest.json" with { type: "json" };
 import { recurring } from "./model/fixtures";
 import { readItemsAt, type TextCache } from "./usePlannerData";
-import { archiveItem, completeRecurring, createDailyNote, createTask, moveProjectFolder, resolveThought, restoreItem, saveBody, saveItemEdit, saveProjectFolders, saveSettings, StaleError, tickTask, WriteError } from "./write";
+import { addProjectScopeFolder, archiveItem, completeRecurring, createDailyNote, createTask, moveProjectFolder, resolveThought, restoreItem, saveBody, saveItemEdit, saveProjectFolders, saveSettings, StaleError, syncScopeFolders, tickTask, WriteError } from "./write";
 
 const TEXT = "---\ntype: task\ntitle: Pay the tax # due soon\nstatus: open\ndeadline: 2026-11-14\nimportance: 5\ncreated: 2026-11-09\n---\nBody stays.\n";
 
@@ -114,6 +114,54 @@ describe("moveProjectFolder and saveProjectFolders", () => {
       backlogPathPattern: "plans/",
       projectFolders: { p: { folder: "Pomade", name: "Pomade", groupPath: [] }, q: { folder: "QuizLab", name: "QuizLab", groupPath: ["Work"] } },
     });
+  });
+});
+
+describe("syncScopeFolders and addProjectScopeFolder", () => {
+  const projects = [
+    { id: "quiz", name: "QuizLab", root: "Projects/QuizLab" },
+    { id: "pomade", name: "Pomade", root: "Projects/Pomade" },
+    { id: "errands", name: "Errands", root: "Life/Errands" },
+  ];
+  const map = { quiz: { folder: "QuizLab", name: "QuizLab", groupPath: [] }, pomade: { folder: "Pomade", name: "Pomade", groupPath: [] } };
+
+  async function scoped() {
+    const fake = createFakeHost({ manifest, projects });
+    const result = await connect({ transport: fake.transport });
+    if (result.status !== "connected") throw new Error(result.status);
+    const host = result.host;
+    const writes: string[] = [];
+    const add = host.project.addScopeFolder.bind(host.project);
+    const remove = host.project.removeScopeFolder.bind(host.project);
+    host.project.addScopeFolder = (p) => (writes.push(`+${p.projectId}:${p.path}`), add(p));
+    host.project.removeScopeFolder = (p) => (writes.push(`-${p.projectId}:${p.path}`), remove(p));
+    const folders = async () => Object.fromEntries(await Promise.all(projects.map(async (p) => [p.id, (await host.project.getScopeFolders({ projectId: p.id })).paths] as const)));
+    return { host, writes, folders };
+  }
+
+  it("gives each mapped project exactly its folder; a second pass, as from another frame, writes nothing", async () => {
+    const { host, writes, folders } = await scoped();
+    await syncScopeFolders(host, "Tasks", map, ["quiz", "pomade", "errands"]);
+    expect(await folders()).toEqual({ quiz: ["Tasks/QuizLab"], pomade: ["Tasks/Pomade"], errands: [] });
+    writes.length = 0;
+    await syncScopeFolders(host, "Tasks", map, ["quiz", "pomade", "errands"]);
+    expect(writes).toEqual([]);
+  });
+
+  it("a rename swaps the folder; a changed tasks folder moves them all", async () => {
+    const { host, folders } = await scoped();
+    await syncScopeFolders(host, "Tasks", map, ["quiz", "pomade", "errands"]);
+    await syncScopeFolders(host, "Tasks", { ...map, quiz: { folder: "Quiz", name: "Quiz", groupPath: [] } }, ["quiz", "pomade", "errands"]);
+    expect(await folders()).toEqual({ quiz: ["Tasks/Quiz"], pomade: ["Tasks/Pomade"], errands: [] });
+    await syncScopeFolders(host, "Chores", { ...map, quiz: { folder: "Quiz", name: "Quiz", groupPath: [] } }, ["quiz", "pomade", "errands"]);
+    expect(await folders()).toEqual({ quiz: ["Chores/Quiz"], pomade: ["Chores/Pomade"], errands: [] });
+  });
+
+  it("quick add's new folder goes into its project's scope; a refused call is not an error", async () => {
+    const { host, folders } = await scoped();
+    await addProjectScopeFolder(host, "Tasks", "errands", "Errands");
+    expect((await folders()).errands).toEqual(["Tasks/Errands"]);
+    await expect(addProjectScopeFolder(host, "Tasks", "ghost", "Ghost")).resolves.toBeUndefined();
   });
 });
 

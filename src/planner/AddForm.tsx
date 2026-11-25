@@ -12,7 +12,7 @@ import { plannerDay } from "./model/today";
 import { ItemFields, KIND_META } from "./ItemFields";
 import { useOverlayFit } from "./overlay-fit";
 import type { ProjectList } from "./useProjects";
-import { createDailyNote, createTask, saveProjectFolders, WriteError } from "./write";
+import { addProjectScopeFolder, createDailyNote, createTask, saveProjectFolders, WriteError } from "./write";
 
 /** What the form made: the file, and the item as it was typed. */
 export interface Added {
@@ -114,8 +114,11 @@ export function AddForm({ host, clock, root, boundary, projects, folders, templa
     setError(null);
     try {
       const path = await createTask(host, root, target?.folder ?? null, made.item);
-      // A project's first item made its folder: the map now names it (a failed save is caught up by the next reconciliation).
-      if (chosen !== null && target?.isNew) await saveProjectFolders(host, { [chosen.id]: target.entry }).catch(() => undefined);
+      // A project's first item made its folder: the map now names it and the folder is in the project's scope (a failure is caught up by the next reconciliation).
+      if (chosen !== null && target?.isNew) {
+        await saveProjectFolders(host, { [chosen.id]: target.entry }).catch(() => undefined);
+        await addProjectScopeFolder(host, root, chosen.id, target.folder);
+      }
       await onAdded({ path, kind, title: made.item.title }, open);
     } catch (e) {
       setError({ field: "write", message: e instanceof WriteError ? e.message : `Couldn't add it: ${e instanceof Error ? e.message : String(e)}.` });

@@ -177,6 +177,26 @@ test.describe("Planner projects in a real Pomade", () => {
     expect(await titles(p)).toEqual(["Pay the tax", "Ship the planner", "Write release notes"]);
   });
 
+  test("inside Pomade, ⌘-click on its task opens an editor tab with no orange mark; a no-project item's tab has it (T-021)", async () => {
+    const p = panel();
+    await expect(p.getByTestId("view-planner-panel")).toHaveAttribute("data-context", ids().pomade);
+    const editorTab = (name: RegExp) => page.getByTestId("tabstrip").getByRole("tab", { name, selected: true });
+    const headerMark = page.locator('[data-testid="editor-pane"]:visible [data-testid="editor-scope"]');
+
+    await row(p, "Ship the planner").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect(editorTab(/2026-11-16-ship-the-planner/)).toBeVisible();
+    await expect(page.locator('[data-testid="editor-pane"]:visible [data-testid="editor-title"]')).toBeVisible();
+    await expect(headerMark).toHaveCount(0);
+    await expect(editorTab(/2026-11-16-ship-the-planner/).locator('[data-testid^="tab-scope-"]')).toHaveCount(0);
+    await shot(page, "t021-pomade-own-task-in-scope");
+
+    await row(p, "Pay the tax").getByTestId("task-open").click({ modifiers: ["Meta"] });
+    await expect(editorTab(/2026-11-10-pay-the-tax/)).toBeVisible();
+    await expect(headerMark).toBeVisible();
+    await expect(editorTab(/2026-11-10-pay-the-tax/).locator('[data-testid^="tab-scope-"]')).toBeVisible();
+    await shot(page, "t021-pomade-no-project-task-outside");
+  });
+
   test("`pomade-planner today` groups by project; --project narrows; a name two projects share asks for one", async () => {
     const shim = join(fixture.homeDir, "bin/pomade-planner");
     const env = shellEnv();

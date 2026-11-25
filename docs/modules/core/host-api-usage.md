@@ -31,6 +31,7 @@ are met per app. A new need goes to `../Pomade/docs/PLATFORM-INTAKE.md`.
 | Folder read + watch, frontmatter, field-only write, create/move/rename, open file in a tab, active project, groups → projects, stable project ids, per-project settings | `pomade:E-030` |
 | `project renamed`, `active project changed`, `Pomade ready` events | `pomade:E-031` |
 | `project removed` event | `pomade:T-247` |
+| A project's tasks folder in its scope (`project.addScopeFolder` and its siblings) | `pomade:E-047` |
 | Notice with click action, icon badge | `pomade:E-032` |
 | `pomade-planner today` on `PATH` | `pomade:E-028` |
 | Rule-8 banner when the app writes an open dirty file | `pomade:E-035` |
@@ -40,8 +41,9 @@ are met per app. A new need goes to `../Pomade/docs/PLATFORM-INTAKE.md`.
 | Recurrence engine | `pomade-kit:E-003` |
 | Date phrases | `pomade-kit:E-004` |
 
-The apps require Pomade `main`: the platform with `pomade:T-237`–`T-248`. A manifest naming
-`project.removed` does not install on a Pomade without it.
+The apps require Pomade 0.3.3 or later (`pomade-kit` v0.18.0): the platform with
+`pomade:T-237`–`T-248` and `pomade:E-047`. A manifest naming `project.removed` does not install on a
+Pomade without it.
 
 ## How each need is used
 
@@ -65,6 +67,9 @@ The apps require Pomade `main`: the platform with `pomade:T-237`–`T-248`. A ma
   `files.pickFile` (the daily-note template).
 - **Bulk delete.** `files.delete`, at most `FILES_DELETE_MAX_PATHS` (1000) paths a call
   ([[trimming]]).
+- **Scope folders.** The Planner keeps each project's folder in the tasks root in that project's
+  scope (`project.getScopeFolders` / `addScopeFolder` / `removeScopeFolder`, the Planner's only
+  `project.write` calls) ([[projects]] "Scope folders").
 - **Projects.** `project.list`, `project.getActive` / `onChange` (`useActiveProject`: followed
   through every `project.changed`, since a tab Pomade restores at launch receives the project active
   at launch in its `welcome`), and the `project.created` / `renamed` / `updated` / `removed`
@@ -78,8 +83,10 @@ The apps require Pomade `main`: the platform with `pomade:T-237`–`T-248`. A ma
   Workspace at Workspace — and Pomade stays there. Every way in calls `tabs.openFile({ path })`
   with no `projectId`, which Pomade reads as the active project: ⌘-click, **Open in tab**, ⇧⌘↵ in
   quick add, the **Daily** type, an unreadable file's row. A task of another project shown here
-  opens here too. The tasks folder usually lies outside the project, so the tab carries Pomade's
-  orange "Outside this project" mark.
+  opens here too. Each project's folder in the tasks folder is in that project's scope
+  ([[projects]] "Scope folders"), so the project's own task opens with no mark; a no-project item,
+  and another project's task opened inside a project, carry Pomade's orange "Outside this project"
+  mark, and at Workspace nothing is outside.
 - Board: a ticket opens in its board's project (`tabs.openFile` with that `projectId`), from the
   board and from "Needs you".
 
