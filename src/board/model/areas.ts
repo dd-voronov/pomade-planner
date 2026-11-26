@@ -41,8 +41,10 @@ const ET: readonly Kind[] = ["epic", "task"];
 /**
  * The default mapping, after Pomade's process/backlog "Statuses" and [[convention-areas-columns]] "Convention": a signal is new, then
  * triaged (linked to a problem) or dismissed; a problem runs backlog → grooming → planned →
- * delivering → review → done, or dropped / parked; an epic planned → in-progress → review → done,
- * or dropped / parked; a task (backlog →) planned → in-progress → review → done, or dropped.
+ * delivering → review → reviewed → done, or dropped / parked; an epic planned → in-progress →
+ * review → reviewed → done, or dropped / parked; a task (backlog →) planned → in-progress → review →
+ * reviewed → done, or dropped. `reviewed` is the Owner's hand-back: a ticket leaves `review` for it
+ * once the Owner is finished with it.
  */
 export const DEFAULT_AREAS: readonly AreaDef[] = [
   {
@@ -61,6 +63,7 @@ export const DEFAULT_AREAS: readonly AreaDef[] = [
       column("planned", "Planned", P),
       column("delivering", "Delivering", P),
       column("review", "Review", P),
+      column("reviewed", "Reviewed", P),
       column("done", "Done", P, "main", true),
       column("dropped", "Dropped", P, "side"),
       column("parked", "Parked", P, "side"),
@@ -75,6 +78,7 @@ export const DEFAULT_AREAS: readonly AreaDef[] = [
       column("planned", "Planned", ET),
       column("in-progress", "In progress", ET),
       column("review", "Review", ET),
+      column("reviewed", "Reviewed", ET),
       column("done", "Done", ET, "main", true),
       column("dropped", "Dropped", ET, "side"),
       column("parked", "Parked", ["epic"], "side"),

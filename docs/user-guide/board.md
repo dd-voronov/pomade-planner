@@ -48,14 +48,17 @@ The switcher at the top picks an area; areas never mix. Each tab shows the area'
 | Area | Kinds | Columns | Collapsed at the side |
 |---|---|---|---|
 | **Signals** | signal | New · Triaged | Dismissed |
-| **Problems** | problem | Backlog · Grooming · Planned · Delivering · Review · Done | Dropped · Parked |
-| **Solutions** | epic, task | Backlog · Planned · In progress · Review · Done | Dropped · Parked |
+| **Problems** | problem | Backlog · Grooming · Planned · Delivering · Review · Reviewed · Done | Dropped · Parked |
+| **Solutions** | epic, task | Backlog · Planned · In progress · Review · Reviewed · Done | Dropped · Parked |
 
 - **Done** starts collapsed; Dropped, Parked and Dismissed are narrow collapsed columns at the right.
   A collapsed column shows its label and count — click it to expand; an expanded one collapses again
   from the ‹ in its header.
 - A kind can only be dropped where the convention allows it: on Solutions, **Backlog** takes tasks
-  only and **Parked** epics only; **Review** takes both.
+  only and **Parked** epics only; **Review** and **Reviewed** take both.
+- **Review** holds what waits for you; **Reviewed** is where you hand a ticket back. Drag a card
+  from Review to Reviewed when you are finished with it: its file gets `status: reviewed`, it leaves
+  [Needs you](#needs-you), and it still counts as open.
 - A ticket always sits in the column of its `status:`, even one its kind couldn't be dropped into
   (the file is the truth).
 - **Order** in a column: priority (P0 first, none last), then ID.
@@ -158,7 +161,7 @@ A signal that already has a problem is triaged without asking.
 
 The Board icon's side panel. Inside a project: two groups, **In review** (tickets of any kind with
 `status: review`) and **New signals** (`status: new`), each by priority then ID. Empty groups are left
-out; with nothing at all: "Nothing needs you". A row shows kind badge, ID, priority and title; click
+out; with nothing at all: "Nothing needs you". A ticket you moved to **Reviewed** is not listed. A row shows kind badge, ID, priority and title; click
 it to open the ticket in an editor tab. It follows the active project and updates within about a
 second. A project without a backlog folder: "No backlog found … Choose one on its Board."
 
@@ -178,5 +181,6 @@ time you come back to Workspace.
 
 With no active project the Board tab shows **"Choose a project"**: every project whose backlog
 resolves, in sidebar order with its group, each with its open count (not done, dropped, parked,
-triaged or dismissed) and what needs you — "14 open · 2 in review · 1 new signal". Counts are live; a
-project removed from the workspace leaves the list at once. Click a project to open its board.
+triaged or dismissed — a reviewed ticket is open) and what needs you — "14 open · 2 in review · 1
+new signal". Counts are live; a project removed from the workspace leaves the list at once. Click a
+project to open its board.

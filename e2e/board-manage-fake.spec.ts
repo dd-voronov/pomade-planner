@@ -25,7 +25,7 @@ const pathOf = (folder: string, id: string): string => {
   return `${folder}/${ticketPath(spec)}`;
 };
 
-test.use({ viewport: { width: 1680, height: 900 } });
+test.use({ viewport: { width: 1920, height: 900 } });
 
 let pageErrors: Error[] = [];
 
@@ -425,6 +425,43 @@ test.describe("Needs you", () => {
     await expect(app.getByTestId("needs-you-empty")).toBeVisible({ timeout: 1_000 });
     await expect(app.getByTestId("needs-you-empty")).toContainText("No tickets in review and no new signals in Alpha.");
     await shot(page, "e002-fake-needs-you-empty");
+  });
+
+  test("a ticket handed back leaves the panel: dragged from Review to Reviewed on the board, or its file saved with status: reviewed while the panel is open", async ({ page }) => {
+    const panel = await openPanel(page, "alpha");
+    const ids = (app: FrameLocator) => app.getByTestId("needs-you-review").getByTestId("needs-you-row").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
+    expect(await ids(panel)).toEqual(["E-017", "P-005"]);
+
+    // The Board tab on the same fake host: the Owner drags E-017 from Review to Reviewed.
+    await page.evaluate(() => {
+      window.mounted?.close();
+      window.mountNow({ surface: "tab", icon: "board" });
+    });
+    const board = frame(page);
+    await board.getByTestId("area-solutions").click();
+    const e017 = pathOf(ALPHA, "E-017");
+    const before = await readFile(page, e017);
+    await drag(page, card(board, "E-017"), column(board, "reviewed"));
+    await expect(column(board, "reviewed").locator('[data-id="E-017"]')).toBeVisible();
+    await expect.poll(() => readFile(page, e017)).toBe(withStatus(before, "reviewed"));
+
+    // The panel again: E-017 is gone, P-005 still waits.
+    await page.evaluate(() => {
+      window.mounted?.close();
+      window.mountNow({ surface: "panel", icon: "board" });
+    });
+    const again = frame(page);
+    await expect(again.getByTestId("view-needs-you-panel")).toHaveAttribute("aria-busy", "false");
+    await expect.poll(() => ids(again)).toEqual(["P-005"]);
+    await expect(again.locator('[data-testid="needs-you-row"][data-id="E-017"]')).toHaveCount(0);
+    await shot(page, "t022-fake-needs-you-after-hand-back");
+
+    // Live: P-005 saved as reviewed leaves within ~1 s; only the new signal still needs you.
+    const p005 = pathOf(ALPHA, "P-005");
+    await writeFile(page, p005, (await readFile(page, p005)).replace("status: review", "status: reviewed"));
+    await expect(again.locator('[data-testid="needs-you-row"][data-id="P-005"]')).toHaveCount(0, { timeout: 1_000 });
+    await expect(again.getByTestId("needs-you-review")).toHaveCount(0);
+    await expect(again.getByTestId("needs-you-signals").getByTestId("needs-you-row")).toHaveCount(1);
   });
 
   test("the panel follows the active project; a project without a backlog says so", async ({ page }) => {

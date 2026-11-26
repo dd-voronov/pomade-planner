@@ -47,6 +47,23 @@ describe("planDrop", () => {
   });
 
   it.each([
+    ["E-1", "review", "reviewed"],
+    ["T-1", "review", "reviewed"],
+    ["P-1", "review", "reviewed"],
+    ["E-1", "reviewed", "in-progress"],
+    ["T-1", "reviewed", "review"],
+    ["P-1", "reviewed", "delivering"],
+  ] as const)("%s %s → %s writes status and updated in place", (id, from, to) => {
+    expect(plan(t(id, { status: from }), id.startsWith("P-") ? PROBLEMS : SOLUTIONS, to)).toEqual({ kind: "write", path: `${BACKLOG}/${id}-x.md`, fields: fields(to), move: null });
+  });
+
+  it.each(["epic", "task"] as const)("moves a reviewed %s into done/ when it lands in done; a reviewed problem stays", (kind) => {
+    const id = kind === "epic" ? "E-1" : "T-1";
+    expect(plan(t(id, { status: "reviewed" }), SOLUTIONS, "done")).toMatchObject({ kind: "write", fields: fields("done"), move: { to: `${BACKLOG}/done/${id}-x.md` } });
+    expect(plan(t("P-1", { status: "reviewed" }), PROBLEMS, "done")).toMatchObject({ kind: "write", fields: fields("done"), move: null });
+  });
+
+  it.each([
     ["T-1", "parked", "Tasks can't be in Parked"],
     ["E-1", "backlog", "Epics can't be in Backlog"],
   ])("refuses %s onto %s", (id, status, reason) => {

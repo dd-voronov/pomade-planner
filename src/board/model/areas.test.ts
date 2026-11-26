@@ -42,6 +42,7 @@ describe("DEFAULT_AREAS", () => {
       ["planned", "main", false],
       ["delivering", "main", false],
       ["review", "main", false],
+      ["reviewed", "main", false],
       ["done", "main", true],
       ["dropped", "side", true],
       ["parked", "side", true],
@@ -54,6 +55,7 @@ describe("DEFAULT_AREAS", () => {
       ["planned", "main", false],
       ["in-progress", "main", false],
       ["review", "main", false],
+      ["reviewed", "main", false],
       ["done", "main", true],
       ["dropped", "side", true],
       ["parked", "side", true],
@@ -78,6 +80,7 @@ describe("canTake — which kind may sit in which column (Pomade process/backlog
       planned: ["problem"],
       delivering: ["problem"],
       review: ["problem"],
+      reviewed: ["problem"],
       done: ["problem"],
       dropped: ["problem"],
       parked: ["problem"],
@@ -87,6 +90,7 @@ describe("canTake — which kind may sit in which column (Pomade process/backlog
       planned: ["epic", "task"],
       "in-progress": ["epic", "task"],
       review: ["epic", "task"],
+      reviewed: ["epic", "task"],
       done: ["epic", "task"],
       dropped: ["epic", "task"],
       parked: ["epic"],
@@ -107,6 +111,8 @@ describe("refusalText", () => {
     [SOLUTIONS, "backlog", "epic", "Epics can't be in Backlog"],
     [SOLUTIONS, "parked", "task", "Tasks can't be in Parked"],
     [PROBLEMS, "delivering", "task", "Tasks can't be in Delivering"],
+    [PROBLEMS, "reviewed", "epic", "Epics can't be in Reviewed"],
+    [SOLUTIONS, "reviewed", "problem", "Problems can't be in Reviewed"],
     [SIGNALS, "triaged", "problem", "Problems can't be in Triaged"],
   ] as const)("%s %s refuses %s: %s", (area, status, kind, text) => {
     expect(refusalText(col(area, status), kind)).toBe(text);
@@ -147,6 +153,7 @@ describe("buildArea", () => {
       planned: [],
       "in-progress": [],
       review: ["E-2", "E-1", "T-1"],
+      reviewed: [],
       done: ["E-5"],
       dropped: [],
       parked: ["T-4"],
@@ -162,6 +169,25 @@ describe("buildArea", () => {
     const board = buildArea(SOLUTIONS, [t("T-7", { status: "review" })]);
     expect(board.columns.find((c) => c.def.status === "review")?.cards.map((x) => x.id)).toEqual(["T-7"]);
     expect(board.misfits).toEqual([]);
+  });
+
+  it("puts a reviewed epic and task in Solutions › Reviewed and a reviewed problem in Problems › Reviewed, right after Review", () => {
+    const reviewed = [t("T-8", { status: "reviewed" }), t("E-8", { status: "reviewed" }), t("P-8", { status: "reviewed" })];
+    for (const [area, ids] of [
+      [SOLUTIONS, ["E-8", "T-8"]],
+      [PROBLEMS, ["P-8"]],
+    ] as const) {
+      const board = buildArea(area, reviewed);
+      expect(board.columns.find((c) => c.def.status === "reviewed")?.cards.map((x) => x.id)).toEqual(ids);
+      expect(board.misfits).toEqual([]);
+      const statuses = area.columns.map((c) => c.status);
+      expect(statuses.indexOf("reviewed")).toBe(statuses.indexOf("review") + 1);
+      expect(col(area, "reviewed").label).toBe("Reviewed");
+    }
+  });
+
+  it("a reviewed signal has no column: Signals lists it as a misfit", () => {
+    expect(buildArea(SIGNALS, [t("S-8", { status: "reviewed" })]).misfits).toEqual([{ ticket: expect.objectContaining({ id: "S-8" }) as unknown, reason: "status “reviewed” has no column" }]);
   });
 
   it("lists tickets with no status or a status without a column as misfits", () => {
@@ -212,9 +238,14 @@ describe("counts", () => {
     expect(countOpen([PROBLEMS, SOLUTIONS], tickets)).toBe(3);
   });
 
+  it("countOpen counts a reviewed problem, epic and task as open", () => {
+    expect(countOpen(DEFAULT_AREAS, [t("P-9", { status: "reviewed" }), t("E-9", { status: "reviewed" }), t("T-9", { status: "reviewed" }), t("E-2", { status: "done" })])).toBe(3);
+  });
+
   it.each([
     ["planned", true],
     ["review", true],
+    ["reviewed", true],
     ["new", true],
     [null, true],
     ["wip", true],
@@ -252,6 +283,8 @@ describe("create targets", () => {
     [SOLUTIONS, "planned", ["epic", "task"]],
     [SOLUTIONS, "in-progress", ["epic", "task"]],
     [SOLUTIONS, "review", ["epic", "task"]],
+    [SOLUTIONS, "reviewed", ["epic", "task"]],
+    [PROBLEMS, "reviewed", ["problem"]],
     [SOLUTIONS, "parked", ["epic"]],
     [SOLUTIONS, "dropped", ["epic", "task"]],
     [PROBLEMS, "grooming", ["problem"]],

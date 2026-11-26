@@ -243,7 +243,7 @@ test.describe("E-002 in a real Pomade", () => {
     await app?.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(860, 760));
     const b = await openBoard("pomade", "solutions");
     await b.getByTestId("board-columns").evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
-    await column(b, "review").getByTestId("column-add").click();
+    await column(b, "reviewed").getByTestId("column-add").click();
     await expectInsideBoard(b, "create-form");
     await shot(page, "e002-pomade-create-narrow");
     await page.keyboard.press("Escape");

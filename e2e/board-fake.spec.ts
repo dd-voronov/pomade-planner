@@ -28,7 +28,7 @@ function spec(id: string) {
 const alphaPath = (id: string, inDone = spec(id).inDone ?? false): string => `${ALPHA}/${ticketPath({ ...spec(id), inDone })}`;
 
 // Wide enough for every Problems column, so a drag never has to scroll the board.
-test.use({ viewport: { width: 1680, height: 900 } });
+test.use({ viewport: { width: 1920, height: 900 } });
 
 let pageErrors: Error[] = [];
 
@@ -69,7 +69,7 @@ test.describe("reading and showing", () => {
   test("Problems: every problem in its status column; done collapsed with its count; dropped and parked narrow on the right", async ({ page }) => {
     const app = await openBoard(page);
     await expect(app.getByTestId("area-problems")).toHaveAttribute("aria-selected", "true");
-    await expect(app.getByTestId("column")).toHaveCount(8);
+    await expect(app.getByTestId("column")).toHaveCount(9);
     const statuses = await app.getByTestId("column").evaluateAll((els) => els.map((e) => [e.getAttribute("data-status"), e.getAttribute("data-collapsed")]));
     expect(statuses).toEqual([
       ["backlog", "false"],
@@ -77,6 +77,7 @@ test.describe("reading and showing", () => {
       ["planned", "false"],
       ["delivering", "false"],
       ["review", "false"],
+      ["reviewed", "false"],
       ["done", "true"],
       ["dropped", "true"],
       ["parked", "true"],
@@ -86,6 +87,8 @@ test.describe("reading and showing", () => {
     expect(await idsIn(app, "planned")).toEqual(["P-001"]);
     expect(await idsIn(app, "delivering")).toEqual(["P-004"]);
     expect(await idsIn(app, "review")).toEqual(["P-005"]);
+    expect(await idsIn(app, "reviewed")).toEqual(["P-009"]);
+    await expect(column(app, "reviewed").getByTestId("column-label")).toHaveText("Reviewed");
     await expect(column(app, "done").getByTestId("column-count")).toHaveText("1");
     await expect(column(app, "dropped").getByTestId("column-count")).toHaveText("1");
     await expect(column(app, "parked").getByTestId("column-count")).toHaveText("1");
@@ -94,9 +97,11 @@ test.describe("reading and showing", () => {
     const parked = await column(app, "parked").boundingBox();
     const dropped = await column(app, "dropped").boundingBox();
     const done = await column(app, "done").boundingBox();
+    const reviewed = await column(app, "reviewed").boundingBox();
     const review = await column(app, "review").boundingBox();
-    expect([parked?.width, dropped?.width, done?.width, review?.width]).toEqual([40, 40, 40, 264]);
-    expect((review?.x ?? 0) + 264 + 8).toBe(done?.x);
+    expect([parked?.width, dropped?.width, done?.width, reviewed?.width, review?.width]).toEqual([40, 40, 40, 264, 264]);
+    expect((review?.x ?? 0) + 264 + 8).toBe(reviewed?.x);
+    expect((reviewed?.x ?? 0) + 264 + 8).toBe(done?.x);
     expect((done?.x ?? 0) + 40 + 8).toBe(dropped?.x);
     expect((dropped?.x ?? 0) + 40 + 8).toBe(parked?.x);
 
@@ -112,11 +117,14 @@ test.describe("reading and showing", () => {
   test("Solutions: epics and tasks from the folder and done/; wide tinted epics, tasks with their parent epic; ordered by priority then ID", async ({ page }) => {
     const app = await openBoard(page);
     await app.getByTestId("area-solutions").click();
-    await expect(app.getByTestId("column")).toHaveCount(7);
+    await expect(app.getByTestId("column")).toHaveCount(8);
+    expect(await app.getByTestId("column").evaluateAll((els) => els.map((e) => e.getAttribute("data-status")))).toEqual(["backlog", "planned", "in-progress", "review", "reviewed", "done", "dropped", "parked"]);
     expect(await idsIn(app, "backlog")).toEqual(["T-003"]);
     expect(await idsIn(app, "planned")).toEqual(["E-002", "T-004", "T-002"]);
     expect(await idsIn(app, "in-progress")).toEqual(["E-001", "T-001"]);
     expect(await idsIn(app, "review")).toEqual(["E-017"]);
+    expect(await idsIn(app, "reviewed")).toEqual(["E-003", "T-006"]);
+    await expect(column(app, "reviewed")).toHaveAttribute("data-collapsed", "false");
     await expect(column(app, "done").getByTestId("column-count")).toHaveText("2");
 
     const epic = await card(app, "E-002").boundingBox();
@@ -139,8 +147,8 @@ test.describe("reading and showing", () => {
 
   test("BACKLOG.md, other non-ticket files and signals don't appear; the area counts say so", async ({ page }) => {
     const app = await openBoard(page);
-    await expect(app.getByTestId("area-problems")).toContainText("8");
-    await expect(app.getByTestId("area-solutions")).toContainText("12");
+    await expect(app.getByTestId("area-problems")).toContainText("9");
+    await expect(app.getByTestId("area-solutions")).toContainText("14");
     await expect(app.locator('[data-testid="card"][data-id="S-001"]')).toHaveCount(0);
     await app.getByTestId("area-solutions").click();
     await expect(app.locator('[data-testid="card"][data-id="S-001"]')).toHaveCount(0);
@@ -170,6 +178,30 @@ test.describe("reading and showing", () => {
 
     await strip.getByTestId("unreadable-card").first().click();
     await expect.poll(() => page.evaluate(() => window.fakeHost.openedTabs.at(-1))).toEqual({ kind: "file", projectId: "alpha", path: `${ALPHA}/${BROKEN_TICKET.path}` });
+  });
+
+  test("a ticket whose file says status: reviewed is a card in Reviewed — a problem, an epic and a task — and never in the Unreadable strip", async ({ page }) => {
+    const app = await openBoard(page);
+    const strip = app.getByTestId("unreadable-strip");
+    await expect(column(app, "reviewed").getByTestId("column-count")).toHaveText("1");
+    await expect(card(app, "P-009")).toHaveAttribute("data-path", alphaPath("P-009"));
+    await expect(strip).not.toContainText("reviewed");
+    await shot(page, "t022-fake-problems");
+
+    await app.getByTestId("area-solutions").click();
+    await expect(column(app, "reviewed").getByTestId("column-count")).toHaveText("2");
+    await expect(card(app, "E-003")).toHaveClass(/card--epic/);
+    await expect(card(app, "T-006").getByTestId("card-parent")).toHaveText("E-003");
+    await expect(strip.getByTestId("unreadable-card")).toHaveCount(2);
+    await expect(strip).not.toContainText("reviewed");
+    await shot(page, "t022-fake-solutions");
+
+    // An editor saves the status into a ticket of another column: the card moves there, the strip stays as it was.
+    const path = alphaPath("T-002");
+    await writeFile(page, path, (await readFile(page, path)).replace("status: planned", "status: reviewed"));
+    await expect(column(app, "reviewed").locator('[data-id="T-002"]')).toBeVisible();
+    expect(await idsIn(app, "reviewed")).toEqual(["E-003", "T-002", "T-006"]);
+    await expect(strip.getByTestId("unreadable-card")).toHaveCount(2);
   });
 
   test("a card click opens its file in an editor tab; Enter does too", async ({ page }) => {
@@ -342,12 +374,12 @@ test.describe("Workspace", () => {
     expect(await rows.evaluateAll((els) => els.map((e) => e.getAttribute("data-project")))).toEqual(["alpha", "gamma", "delta", "scale"]);
     await expect(rows.nth(0)).toContainText("Alpha");
     await expect(rows.nth(0)).toContainText("Building tools");
-    // Open = shown tickets not done, dropped, parked, triaged or dismissed: 5 problems + 9 epics and tasks + 1 new signal of the sample.
-    await expect(rows.nth(0).getByTestId("chooser-count")).toHaveText("14 open");
+    // Open = shown tickets not done, dropped, parked, triaged or dismissed: 6 problems + 10 epics and tasks + 1 new signal of the sample.
+    await expect(rows.nth(0).getByTestId("chooser-count")).toHaveText("17 open");
     await expect(rows.nth(1).getByTestId("chooser-count")).toHaveText("1 open");
 
     await writeFile(page, `${ALPHA}/E-050-live.md`, ticketFile({ id: "E-050", kind: "epic", title: "Live", status: "planned" }));
-    await expect(rows.nth(0).getByTestId("chooser-count")).toHaveText("15 open");
+    await expect(rows.nth(0).getByTestId("chooser-count")).toHaveText("18 open");
 
     await rows.nth(1).click();
     await expect.poll(() => page.evaluate(() => window.fakeHost.openedTabs.at(-1))).toEqual({ kind: "app", projectId: "gamma", route: "board" });
@@ -467,6 +499,84 @@ test.describe("drag", () => {
     await expect(alpha.getByTestId("chooser-needs-you")).toHaveText("3 in review · 1 new signal");
   });
 
+  test("an epic drops from Review into Reviewed: its file gets status: reviewed and today's updated in place; it stays open and stops needing you", async ({ page }) => {
+    const app = await openBoard(page);
+    await app.getByTestId("area-solutions").click();
+    const path = alphaPath("E-017");
+    const before = await readFile(page, path);
+    await drag(page, card(app, "E-017"), column(app, "reviewed"), async () => {
+      await expect(column(app, "reviewed")).toHaveAttribute("data-over", "true");
+      await expect(column(app, "reviewed")).toHaveAttribute("data-refused", "false");
+      await expect(app.getByTestId("drop-refusal")).toHaveCount(0);
+      await shot(page, "t022-fake-dragging-into-reviewed");
+    });
+    await expect(column(app, "reviewed").locator('[data-id="E-017"]')).toBeVisible();
+    await expect.poll(() => readFile(page, path)).toBe(withStatus(before, "reviewed"));
+    expect(await idsIn(app, "reviewed")).toEqual(["E-017", "E-003", "T-006"]);
+    expect(await idsIn(app, "review")).toEqual([]);
+    await expect(app.getByTestId("card-error")).toHaveCount(0);
+    await expect(app.getByTestId("unreadable-strip")).not.toContainText("E-017");
+
+    await page.evaluate(() => window.fakeHost.setActiveProject(null));
+    const alpha = app.locator('[data-testid="chooser-project"][data-project="alpha"]');
+    await expect(alpha.getByTestId("chooser-count")).toHaveText("17 open");
+    await expect(alpha.getByTestId("chooser-needs-you")).toHaveText("1 in review · 1 new signal");
+  });
+
+  test("a task and a problem drop into Reviewed too; a card leaves Reviewed like any other column, into done/ when it lands in Done", async ({ page }) => {
+    const app = await openBoard(page);
+    const p005 = alphaPath("P-005");
+    const problem = await readFile(page, p005);
+    await drag(page, card(app, "P-005"), column(app, "reviewed"));
+    await expect(column(app, "reviewed").locator('[data-id="P-005"]')).toBeVisible();
+    await expect.poll(() => readFile(page, p005)).toBe(withStatus(problem, "reviewed"));
+
+    // Back out: the session's rework sends a reviewed problem to Delivering again.
+    const p009 = alphaPath("P-009");
+    const handedBack = await readFile(page, p009);
+    await drag(page, card(app, "P-009"), column(app, "delivering"));
+    await expect(column(app, "delivering").locator('[data-id="P-009"]')).toBeVisible();
+    await expect.poll(() => readFile(page, p009)).toBe(withStatus(handedBack, "delivering"));
+
+    await app.getByTestId("area-solutions").click();
+    const t001 = alphaPath("T-001");
+    const task = await readFile(page, t001);
+    await drag(page, card(app, "T-001"), column(app, "reviewed"), async () => {
+      await expect(column(app, "reviewed")).toHaveAttribute("data-refused", "false");
+    });
+    await expect(column(app, "reviewed").locator('[data-id="T-001"]')).toBeVisible();
+    await expect.poll(() => readFile(page, t001)).toBe(withStatus(task, "reviewed"));
+
+    const t006 = alphaPath("T-006");
+    const reviewedTask = await readFile(page, t006);
+    await drag(page, card(app, "T-006"), column(app, "review"));
+    await expect(column(app, "review").locator('[data-id="T-006"]')).toBeVisible();
+    await expect.poll(() => readFile(page, t006)).toBe(withStatus(reviewedTask, "review"));
+
+    const e003 = alphaPath("E-003");
+    const epic = await readFile(page, e003);
+    await drag(page, card(app, "E-003"), column(app, "done"));
+    await expect(column(app, "done").getByTestId("column-count")).toHaveText("3");
+    await expect.poll(() => exists(page, e003)).toBe(false);
+    await expect.poll(() => readFile(page, alphaPath("E-003", true))).toBe(withStatus(epic, "done"));
+    await expect(app.getByTestId("card-error")).toHaveCount(0);
+  });
+
+  test("a drop into Reviewed is never written over a newer file: the card shows the inline error and stays in Review", async ({ page }) => {
+    const app = await openBoard(page);
+    await app.getByTestId("area-solutions").click();
+    const path = alphaPath("E-017");
+    const changed = (await readFile(page, path)).replace('title: "Icon picker redesign"', 'title: "Icon picker redesign, edited elsewhere"');
+    await drag(page, card(app, "E-017"), column(app, "reviewed"), async () => {
+      await writeFile(page, path, changed);
+      await expect(card(app, "E-017").getByTestId("card-title")).toHaveText("Icon picker redesign, edited elsewhere");
+    });
+    await expect(card(app, "E-017").getByTestId("card-error")).toContainText("Changed on disk since the board read it");
+    await expect(column(app, "review").locator('[data-id="E-017"]')).toBeVisible();
+    expect(await readFile(page, path)).toBe(changed);
+    expect(await idsIn(app, "reviewed")).toEqual(["E-003", "T-006"]);
+  });
+
   test("a file changed during the drag is not written: the card shows an inline error and the file as it is now", async ({ page }) => {
     const app = await openBoard(page);
     const path = alphaPath("P-001");
@@ -515,6 +625,22 @@ test.describe("drag", () => {
     await page.keyboard.press("Space");
     await expect(column(app, "grooming").locator('[data-id="P-003"]')).toBeVisible();
     await expect.poll(() => readFile(page, alphaPath("P-003"))).toContain("status: grooming");
+  });
+
+  test("keyboard: from Review, → lands on Reviewed — the next column — and Space writes status: reviewed", async ({ page }) => {
+    const app = await openBoard(page);
+    const path = alphaPath("P-005");
+    const before = await readFile(page, path);
+    await card(app, "P-005").focus();
+    await page.keyboard.press("Space");
+    await expect(app.getByTestId("card-overlay")).toBeVisible();
+    // dnd-kit measures the lifted card on the next frames; a key pressed before that has nothing to move.
+    await app.locator("html").evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    await page.keyboard.press("ArrowRight");
+    await expect(column(app, "reviewed")).toHaveAttribute("data-over", "true");
+    await page.keyboard.press("Space");
+    await expect(column(app, "reviewed").locator('[data-id="P-005"]')).toBeVisible();
+    await expect.poll(() => readFile(page, path)).toBe(withStatus(before, "reviewed"));
   });
 });
 

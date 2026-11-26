@@ -69,11 +69,13 @@ export const SAMPLE_TICKETS: readonly TicketSpec[] = [
   { id: "P-006", kind: "problem", title: "Resolved long ago", status: "done", priority: "P3" },
   { id: "P-007", kind: "problem", title: "Not a problem after all", status: "dropped" },
   { id: "P-008", kind: "problem", title: "Wait for the platform", status: "parked", priority: "P2" },
+  { id: "P-009", kind: "problem", title: "Settings are hard to find", status: "reviewed", priority: "P2", reporter: "d.voronov" },
   { id: "E-001", kind: "epic", title: "Fast start", status: "in-progress", priority: "P1", parent: "P-001", reporter: "d.voronov" },
   { id: "E-002", kind: "epic", title: "Sync rewrite", status: "planned", priority: "P0", parent: "P-002", reporter: "claude" },
   { id: "E-017", kind: "epic", title: "Icon picker redesign", status: "review", priority: "P1", parent: "P-003", reporter: "d.voronov" },
   { id: "E-004", kind: "epic", title: "Abandoned idea", status: "dropped", priority: "P3" },
   { id: "E-005", kind: "epic", title: "Waiting for the dashboard", status: "parked", priority: "P2" },
+  { id: "E-003", kind: "epic", title: "Settings in one place", status: "reviewed", priority: "P2", parent: "P-009", reporter: "claude" },
   { id: "E-000", kind: "epic", title: "Repository setup", status: "done", priority: "P1", inDone: true },
   { id: "T-001", kind: "task", title: "Cache the index", status: "in-progress", priority: "P1", parent: "E-001", reporter: "claude" },
   { id: "T-002", kind: "task", title: "Lazy-load the panels", status: "planned", priority: "P2", parent: "E-001", reporter: "d.voronov" },
@@ -81,6 +83,7 @@ export const SAMPLE_TICKETS: readonly TicketSpec[] = [
   { id: "T-004", kind: "task", title: "Conflict resolution UI", status: "planned", priority: "P1", parent: "E-002", reporter: "d.voronov" },
   { id: "T-000", kind: "task", title: "Set up the repository", status: "done", priority: "P2", parent: "E-000", inDone: true },
   { id: "T-005", kind: "task", title: "Status nobody knows", status: "wip", priority: "P2", parent: "E-001" },
+  { id: "T-006", kind: "task", title: "Move the reporter setting", status: "reviewed", priority: "P3", parent: "E-003", reporter: "claude" },
   { id: "S-001", kind: "signal", title: "Cmd+click opened random files", status: "new", reporter: "d.voronov" },
 ];
 
@@ -118,9 +121,9 @@ export function sampleBacklog(): Record<string, string> {
 }
 
 const STATUSES = {
-  problem: ["backlog", "grooming", "planned", "delivering", "review", "done", "dropped", "parked"],
-  epic: ["planned", "in-progress", "review", "done", "dropped", "parked"],
-  task: ["backlog", "planned", "in-progress", "review", "done", "dropped"],
+  problem: ["backlog", "grooming", "planned", "delivering", "review", "reviewed", "done", "dropped", "parked"],
+  epic: ["planned", "in-progress", "review", "reviewed", "done", "dropped", "parked"],
+  task: ["backlog", "planned", "in-progress", "review", "reviewed", "done", "dropped"],
 } as const;
 
 /** A large backlog: `count` tickets spread over every kind and status, done epics and tasks in `done/`. */

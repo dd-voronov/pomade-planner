@@ -63,8 +63,8 @@ renders whatever mapping it is given, and the Board tab gives it this one. No se
 | Area | Kinds | Columns |
 |---|---|---|
 | **Signals** | `signal` | new · triaged · *dismissed* |
-| **Problems** | `problem` | backlog · grooming · planned · delivering · review · done · *dropped · parked* |
-| **Solutions** | `epic`, `task` | backlog · planned · in-progress · review · done · *dropped · parked* |
+| **Problems** | `problem` | backlog · grooming · planned · delivering · review · reviewed · done · *dropped · parked* |
+| **Solutions** | `epic`, `task` | backlog · planned · in-progress · review · reviewed · done · *dropped · parked* |
 
 - The switcher at the top of the Board tab picks the area, with each area's count. A board opens on
   **Problems** until another area is picked (`defaultAreaId`).
@@ -74,8 +74,14 @@ renders whatever mapping it is given, and the Board tab gives it this one. No se
   again from its header. The open area and the columns toggled from their default are per-project
   view state ([[settings-and-state]]).
 - A column appears only where the convention lets a kind be in it: `backlog` on Solutions holds
-  standalone tasks; `parked` holds epics; `review` holds epics and tasks — a task runs `(backlog →)
-  planned → in-progress → review → done` / `dropped` (`ColumnDef.kinds`, `canTake`).
+  standalone tasks; `parked` holds epics; `review` and `reviewed` hold epics and tasks — a task runs
+  `(backlog →) planned → in-progress → review → reviewed → done` / `dropped` (`ColumnDef.kinds`,
+  `canTake`).
+- **Reviewed** (`reviewed`) sits right after Review in Problems and in Solutions, open by default:
+  the Owner's hand-back. A ticket in `review` waits for the Owner; moved to `reviewed`, the Owner is
+  finished with it and it is the orchestrating session's turn. It is a column like any other — a
+  card is dragged in and out of it, and created in it, the same way ([[editing-drag-create]] "Drag =
+  status edit").
 - A ticket sits in the column of its status even when its kind could not be dropped there
   (`buildArea`).
 
@@ -106,4 +112,4 @@ epic" (Planned).
 - **Order inside a column** (`compareTickets`): priority (P0 first; none or unknown after P3), then
   ID (by kind letter, then number: `E-9` before `E-10`), then path.
 - **Open tickets** (the chooser's counts): status not done, dropped, parked, triaged or dismissed
-  (`isOpen`).
+  (`isOpen`) — a ticket in `reviewed` is open.

@@ -18,10 +18,19 @@ describe("needsYou", () => {
     t("S-5", { status: "dismissed" }),
     t("P-6", { status: "new" }),
     t("E-10", { status: "done", inDone: true }),
+    t("P-7", { status: "reviewed", priority: "P0" }),
+    t("E-11", { status: "reviewed", priority: "P0" }),
+    t("T-12", { status: "reviewed", priority: "P0" }),
   ];
 
   it("review: any kind in review, by priority then ID", () => {
     expect(needsYou(tickets).review.map((x) => x.id)).toEqual(["E-2", "E-3", "E-17", "P-5", "T-9"]);
+  });
+
+  it("leaves reviewed tickets of every kind out: they wait for the session, not the Owner", () => {
+    const { review, signals } = needsYou(tickets);
+    expect([...review, ...signals].filter((x) => x.status === "reviewed")).toEqual([]);
+    expect(needsYou([t("P-7", { status: "reviewed" }), t("E-11", { status: "reviewed" }), t("T-12", { status: "reviewed" })])).toEqual({ review: [], signals: [] });
   });
 
   it("signals: only signals in new, by priority then ID", () => {

@@ -24,7 +24,10 @@ workspace at Workspace. It is live, so it doubles as an inbox.
 
 `needsYou(tickets)`: tickets in `review` (any kind: a problem, an epic or a task) and signals in `new`, as two groups ("In review",
 "New signals"), each ordered by priority then ID (`compareTickets`); a group with nothing is left
-out, and with nothing at all the panel says "Nothing needs you". A project without a backlog folder
+out, and with nothing at all the panel says "Nothing needs you". A ticket in `reviewed` is not
+listed: the Owner handed it back, so it waits on the orchestrating session
+([[convention-areas-columns]] "Areas and columns") — a card moved from Review to Reviewed leaves the
+panel and the "in review" counts, and stays in the open count. A project without a backlog folder
 says so ("No backlog found"). A row shows kind badge, ID, priority and title; a click opens the
 ticket in an editor tab of its project. The panel follows the active project and updates within ~1 s
 of any file change ([[file-model]] "Live from disk").

@@ -186,9 +186,12 @@ A ticket is a Markdown file directly in the backlog folder or its `done/` sub-fo
 | Kind | Statuses with a column |
 |---|---|
 | signal | `new` · `triaged` · `dismissed` |
-| problem | `backlog` · `grooming` · `planned` · `delivering` · `review` · `done` · `dropped` · `parked` |
-| epic | `planned` · `in-progress` · `review` · `done` · `dropped` · `parked` |
-| task | `backlog` · `planned` · `in-progress` · `review` · `done` · `dropped` |
+| problem | `backlog` · `grooming` · `planned` · `delivering` · `review` · `reviewed` · `done` · `dropped` · `parked` |
+| epic | `planned` · `in-progress` · `review` · `reviewed` · `done` · `dropped` · `parked` |
+| task | `backlog` · `planned` · `in-progress` · `review` · `reviewed` · `done` · `dropped` |
+
+`review` waits for you; `reviewed` is your hand-back — you are finished with the ticket, and it is
+no longer in Needs you.
 
 Done epics and tasks live in `done/` (while the move setting is on). File names are
 `<ID>-<slug>.md`.
