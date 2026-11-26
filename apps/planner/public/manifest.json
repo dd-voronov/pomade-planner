@@ -1,7 +1,7 @@
 {
   "id": "pomade-planner",
   "name": "Planner",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "hostApi": 0,
   "icon": "planner.svg",
   "capabilities": ["project.read", "project.write", "files.read", "files.write", "tabs.open"],
