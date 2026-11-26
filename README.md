@@ -5,8 +5,8 @@ and **Board** (`pomade-board` — kanban over project backlogs). Each is install
 its own and works without the other.
 
 Part of the Pomade family — the platform and its rules live in the sibling repo `Pomade`
-(`docs/PLATFORM.md`, protocol in `docs/HOST-API.md`). Design: `docs/DESIGN.md` (overview), `docs/modules/` (per module). Plan:
-`docs/PLAN.md`. The apps require Pomade `main` — the platform with `pomade:T-237`–`T-248`, `pomade:E-047` and
+(`docs/PLATFORM.md`, protocol in `docs/HOST-API.md`). Architecture: `docs/ARCHITECTURE.md` (overview), `docs/modules/` (per module).
+The apps require Pomade `main` — the platform with `pomade:T-237`–`T-248`, `pomade:E-047` and
 `pomade:T-325` (`panel.show`) (`docs/modules/core/host-api-usage.md`).
 
 User guide — how to use both apps: [`docs/user-guide/index.md`](docs/user-guide/index.md).

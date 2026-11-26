@@ -19,7 +19,7 @@ kind: reference
 ## What it does
 
 The repository builds two Pomade apps, **Planner** (`pomade-planner`) and **Board**
-(`pomade-board`), each installed, opened and removed on its own ([[DESIGN]] §1 "Shape"). Both are
+(`pomade-board`), each installed, opened and removed on its own ([[ARCHITECTURE]] "Shape"). Both are
 the same kind of page: a React app in an iframe that does one handshake with Pomade, then renders
 the view its surface and route ask for. The shell that does this is shared; each app hands it its
 name and its views.
@@ -49,7 +49,7 @@ Neither app calls the other, reads the other's settings or state, or needs it in
 
 ## Manifests
 
-`apps/<app>/public/manifest.json`, copied into the build as it is. The rows of [[DESIGN]] §1 come
+`apps/<app>/public/manifest.json`, copied into the build as it is. The rows of [[ARCHITECTURE]] "Shape" come
 from here: id and name, the strip icon (Planner: `action: "panel"`; Board: `action: "both"`,
 `route: "board"`, `panelRoute: "needs-you"`), the Planner's `startOnLaunch`, its ⌘⇧A shortcut
 (`action: "overlay"`, `route: "quick-add"`) and its `commands` entry, the capabilities, the
