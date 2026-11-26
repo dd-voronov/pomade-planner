@@ -8,7 +8,7 @@ kind: reference
 # Convention, areas and columns — what a board shows
 
 **Module:** `board` · **UI:** the Board tab: the area switcher, the columns, the cards, the
-Unreadable strip · **Code:** `src/board/Board.tsx`, `src/board/Column.tsx`, `src/board/Card.tsx`, `src/board/Reporter.tsx`,
+Unreadable strip · **Code:** `src/board/Board.tsx`, `src/board/Column.tsx`, `src/board/Card.tsx`, `src/core/hints.ts`, `src/board/Reporter.tsx`,
 `src/board/UnreadableStrip.tsx`, `src/board/model/ticket.ts`, `src/board/model/areas.ts`,
 `src/board/model/order.ts`, `src/board/model/view-state.ts`, `src/board/board.css` · **e2e:**
 `board-fake.spec.ts`, `board-manage-fake.spec.ts`, `pomade-board.spec.ts` · **Unit:**
@@ -147,6 +147,11 @@ epic" (Planned).
   `reporter:` shows nothing there. The card popover shows it the same way at the right of its head.
 - Click or Enter opens the file in an editor tab of the board's project ([[host-api-usage]] "Editor
   tabs in their project").
+- **The card's slow tip** (`data-tip-slow`, 1 s, on hover and keyboard focus;
+  [[tooltips-and-popovers]]): "Click: open the file · Drag, or Space then ← →: change the status ·
+  Right-click or Shift+F10: priority and parent" (`CARD_HINT` in `src/core/hints.ts`). While a card
+  is dragged, by pointer or keyboard, no card carries a tip (`Card.tsx` reads
+  `useDndContext().active`); it returns when the drag ends.
 - **Order inside a column** (`compareTickets`): priority (P0 first; none or unknown after P3), then
   ID (by kind letter, then number: `E-9` before `E-10`), then path.
 - **Open tickets** (the chooser's counts): status not done, dropped, parked, triaged or dismissed

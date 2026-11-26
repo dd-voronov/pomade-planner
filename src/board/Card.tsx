@@ -1,5 +1,6 @@
-import { useDraggable } from "@dnd-kit/core";
+import { useDndContext, useDraggable } from "@dnd-kit/core";
 
+import { CARD_HINT } from "../core/hints";
 import type { Rect } from "../core/place";
 import { Reporter } from "./Reporter";
 import type { Kind, Ticket } from "./model/ticket";
@@ -121,10 +122,12 @@ interface CardProps {
 
 /**
  * A ticket card: drag it to another column to change its status; click or Enter opens its file. (A
- * drop is never a click: dnd-kit swallows the click that ends a drag.)
+ * drop is never a click: dnd-kit swallows the click that ends a drag.) Its slow tip says so, and
+ * names the keys of the drag and the popover; no card shows it while a drag is under way.
  */
 export function Card({ ticket, solutions, saving, error, onOpen, onDismissError, onEdit }: CardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: ticket.path, data: { ticket } });
+  const dragging = useDndContext().active !== null;
 
   const extra = `${isDragging ? " card--placeholder" : ""}${saving ? " card--saving" : ""}${error !== undefined ? " card--error" : ""}`;
   return (
@@ -138,6 +141,8 @@ export function Card({ ticket, solutions, saving, error, onOpen, onDismissError,
       {...listeners}
       aria-roledescription="ticket card"
       aria-label={`${ticket.id} ${ticket.title}`}
+      data-tip={dragging ? undefined : CARD_HINT}
+      data-tip-slow=""
       onClick={() => onOpen(ticket)}
       onContextMenu={(e) => {
         e.preventDefault();

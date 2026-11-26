@@ -3,7 +3,9 @@
 // (src/core/Tips.tsx): on hover after a short rest, at once on keyboard focus, inside the frame's
 // edges, gone on a press, Escape and the pointer leaving — in the Planner and on the Board. T-018:
 // every explaining control of the Planner uses that tooltip instead of a `title`, and a row's
-// title says what a click and a ⌘-click do after a second.
+// title says what a click and a ⌘-click do after a second. T-024: the hints of the mechanics no
+// control showed — a row's and a card's menu keys, a card's drag keys, select mode's ranges, the
+// date fields' phrases and the picker's back key.
 
 import { expect, test, type FrameLocator, type Locator, type Page } from "@playwright/test";
 
@@ -297,8 +299,8 @@ test.describe("tooltips", () => {
   });
 });
 
-const ROW_HINT_PANEL = "Click: open in the Planner tab · ⌘-click: open the file in the editor";
-const ROW_HINT_TAB = "Click: open here · ⌘-click: open the file in the editor";
+const ROW_HINT_PANEL = "Click: open in the Planner tab · ⌘-click: open the file in the editor · Right-click or Shift+F10: more actions";
+const ROW_HINT_TAB = "Click: open here · ⌘-click: open the file in the editor · Right-click or Shift+F10: more actions";
 
 /** Every button, field, switch and label of the frame that still explains itself through a `title`. */
 const titled = (a: FrameLocator): Promise<string[]> =>
@@ -456,5 +458,114 @@ test.describe("the controls' hints are the Planner's tooltip (T-018)", () => {
     await selecting.hover();
     await page.waitForTimeout(1300); // eslint-disable-line playwright/no-wait-for-timeout -- past the hint's second
     await expect(tip(a)).toHaveCount(0);
+  });
+});
+
+const CARD_HINT = "Click: open the file · Drag, or Space then ← →: change the status · Right-click or Shift+F10: priority and parent";
+const SELECT_ROW_HINT = "⇧-click or ⇧Space: select the range from the last one · ↑ ↓: the next row";
+const DATE_HINT = "A date or a phrase: today, fri, +3d, nov 20";
+
+/** Select mode from the panel's ⋯ menu, or the tab's Select. */
+async function startSelect(a: FrameLocator, surface: "panel" | "tab"): Promise<void> {
+  if (surface === "panel") {
+    await a.getByTestId("planner-menu-button").click();
+    await a.getByTestId("menu-select").click();
+  } else await a.getByTestId("select-start").click();
+  await expect(a.getByTestId("select-bar")).toBeVisible();
+}
+
+test.describe("a hint for every mechanic no control showed (T-024)", () => {
+  test("a Board card says what a click, a drag and a right-click do after a second, on hover and on keyboard focus; no card says it while one is lifted", async ({ page }) => {
+    await page.setViewportSize({ width: 1680, height: 900 });
+    await page.goto(board);
+    const b = app(page);
+    await expect(b.getByTestId("board")).toBeVisible();
+    const card = b.getByTestId("card").first();
+    await expect(card).not.toHaveAttribute("title");
+    await hoverShowsSlowly(page, b, card, CARD_HINT);
+    await shot(page, "t024-fake-tip-card");
+    await pointerAway(page);
+    await expect(tip(b)).toHaveCount(0);
+    await card.focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    await expect(card).toBeFocused();
+    await expect(tip(b)).toHaveText(CARD_HINT, { timeout: 1500 });
+    await page.keyboard.press("Space");
+    await expect(b.getByTestId("card-overlay")).toBeVisible();
+    await expect(tip(b)).toHaveCount(0);
+    await expect(b.locator('[data-testid="card"][data-tip]')).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(b.getByTestId("card-overlay")).toHaveCount(0);
+    await expect(card).toHaveAttribute("data-tip", CARD_HINT);
+  });
+
+  for (const surface of ["panel", "tab"] as const) {
+    test(`select mode in the ${surface}: a row's box says how to select a range and walk the rows, after a second`, async ({ page }) => {
+      await page.goto(plannerOn(surface, surface === "panel" ? { panelWidth: 240 } : {}));
+      const a = app(page);
+      await expect(a.locator('main[data-daily]:not([data-daily="pending"])')).toHaveCount(1);
+      await a.getByTestId("view-all").click();
+      await startSelect(a, surface);
+      await pointerAway(page);
+      const box = row(a, "Quiz timer idea").locator("label.task-check--select");
+      await hoverShowsSlowly(page, a, box, SELECT_ROW_HINT);
+      await shot(page, `t024-fake-tip-select-row-${surface}`);
+    });
+  }
+
+  test("the add form's Do on and Deadline, and a recurring item's Start and End, say they take phrases", async ({ page }) => {
+    await page.goto(plannerOn("tab"));
+    const a = app(page);
+    await expect(a.locator('main[data-daily]:not([data-daily="pending"])')).toHaveCount(1);
+    await a.getByTestId("planner-add").click();
+    await expect(a.getByTestId("qa-title")).toBeFocused();
+    await hoverShows(a, a.getByTestId("qa-do-on"), DATE_HINT);
+    await shot(page, "t024-fake-tip-do-on");
+    await pointerAway(page);
+    await hoverShows(a, a.getByTestId("qa-deadline"), DATE_HINT);
+    await shot(page, "t024-fake-tip-deadline");
+    await pointerAway(page);
+    await a.getByTestId("qa-type-recurring").check();
+    await hoverShows(a, a.getByTestId("qa-repeat-start"), DATE_HINT);
+    await shot(page, "t024-fake-tip-repeat-start");
+    await pointerAway(page);
+    await hoverShows(a, a.getByTestId("qa-repeat-end"), DATE_HINT);
+  });
+
+  test("the compact view's Do on, showing a date, says it takes phrases too", async ({ page }) => {
+    await page.goto(plannerOn("tab"));
+    const a = app(page);
+    await expect(a.locator('main[data-daily]:not([data-daily="pending"])')).toHaveCount(1);
+    await a.getByTestId("view-all").click();
+    await row(a, "Ship the planner").getByTestId("task-open").click();
+    const pane = a.getByTestId("item-pane");
+    await expect(pane).toBeFocused();
+    await expect(pane.getByTestId("qa-do-on")).toHaveValue("2026-11-17");
+    await hoverShows(a, pane.getByTestId("qa-do-on"), DATE_HINT);
+    await shot(page, "t024-fake-tip-item-do-on");
+  });
+
+  test("the project picker's way back names its key, in the add form and in + Add from…", async ({ page }) => {
+    await page.goto(plannerOn("tab"));
+    const a = app(page);
+    await expect(a.locator('main[data-daily]:not([data-daily="pending"])')).toHaveCount(1);
+    await a.getByTestId("planner-add").click();
+    await a.getByTestId("qa-project").press("ArrowDown");
+    await page.keyboard.type("lif");
+    await page.keyboard.press("Enter");
+    await expect(a.getByTestId("picker-group")).toHaveText("Life");
+    await hoverShows(a, a.getByTestId("picker-back"), "Back to groups (⌫)");
+    await shot(page, "t024-fake-tip-picker-back");
+
+    await page.goto(plannerOn("tab", { project: null }));
+    await expect(a.locator('main[data-daily]:not([data-daily="pending"])')).toHaveCount(1);
+    await a.getByTestId("view-project").click();
+    await a.getByTestId("mix-add").click();
+    await page.keyboard.type("lif");
+    await page.keyboard.press("Enter");
+    await expect(a.getByTestId("picker-group")).toHaveText("Life");
+    await hoverShows(a, a.getByTestId("picker-back"), "Back to groups (⌫)");
+    await shot(page, "t024-fake-tip-mix-back");
   });
 });

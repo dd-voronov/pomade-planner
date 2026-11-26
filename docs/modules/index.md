@@ -45,8 +45,8 @@ theme, and a test harness from pure logic up to a real Pomade.
   tab opens in.
 - [[theme]] — Pomade's tokens and theme on every frame, the surface background, and the rule that
   every colour is a token.
-- [[tooltips-and-popovers]] — the one tooltip layer per frame (`data-tip`, 350 ms, 1 s for a row's
-  title, none right after a press, kept inside the frame) and the anchored popover both apps use,
+- [[tooltips-and-popovers]] — the one tooltip layer per frame (`data-tip`, 350 ms, 1 s for the slow
+  tips — rows, cards, select boxes — and the shared hint wording, none right after a press, kept inside the frame) and the anchored popover both apps use,
   which closes on a click outside, Escape and the frame losing the focus.
 - [[test-harness]] — vitest in Europe/Madrid, the fake-host harness with its query parameters,
   `window.*` helpers (`mountNow`, `pressShortcut`, `hostCalls`, `scopeFolders`) and fixtures, the

@@ -111,7 +111,7 @@ export function ProjectPicker({ groups, value, withNone, initialQuery = "", onPi
     <div className="project-picker" data-testid="project-picker" data-step={group === null ? "group" : "project"}>
       <div className="project-picker__bar">
         {group !== null ? (
-          <button type="button" className="project-picker__back" data-testid="picker-back" aria-label="Back to groups" data-tip="Back to groups" onMouseDown={(e) => e.preventDefault()} onClick={() => show(null, "")}>
+          <button type="button" className="project-picker__back" data-testid="picker-back" aria-label="Back to groups" data-tip="Back to groups (⌫)" onMouseDown={(e) => e.preventDefault()} onClick={() => show(null, "")}>
             <span aria-hidden="true">‹</span>
             <span className="project-picker__crumb" data-testid="picker-group">
               {group.label}

@@ -8,7 +8,7 @@ kind: reference
 # Editing — drag, the card popover, triage, create
 
 **Module:** `board` · **UI:** the Board tab: dragging cards, the card popover, the triage picker,
-the **+** create form; the settings page's reporter field · **Code:** `src/board/Board.tsx`, `src/board/dnd.ts`, `src/board/Card.tsx`,
+the **+** create form; the settings page's reporter field · **Code:** `src/board/Board.tsx`, `src/board/dnd.ts`, `src/board/Card.tsx`, `src/core/hints.ts`,
 `src/board/Column.tsx`, `src/board/CardPopover.tsx`, `src/board/TriagePicker.tsx`,
 `src/board/CreateForm.tsx`, `src/board/ParentList.tsx`, `src/board/PickList.tsx`, `src/board/PrioritySelect.tsx`,
 `src/board/write.ts`, `src/board/model/drop.ts`, `src/board/model/create.ts`,
@@ -33,7 +33,8 @@ index or plan file (`BACKLOG.md`, `PLAN.md`).
   take are dimmed and the dragged card names why ("Epics can't be in Backlog", `refusalText`); a drop
   there is refused. A drop where the card already is does nothing.
 - Keyboard (`dnd.ts`): Space lifts a card, ← → move it a column, Space or Enter drops, Esc cancels;
-  Enter on a resting card opens it.
+  Enter on a resting card opens it. The card's slow tip names the pointer drag and Space then ← →
+  ([[convention-areas-columns]] "Cards"); no card shows it while one is lifted.
 
 ## Never over a newer file
 
@@ -63,7 +64,8 @@ asking.
 
 ## Card popover
 
-Right-click (also the context-menu key or Shift+F10 on a focused card) opens a popover
+Right-click (also the context-menu key or Shift+F10 on a focused card; the card's slow tip says
+"Right-click or Shift+F10: priority and parent") opens a popover
 (`CardPopover`) at that point: priority (P0–P3) and parent (`problem:` for an epic, `epic:` for a
 task, `problem:` for a signal; a problem has none). Each pick is written at once (`planEdit`) — a
 field-only write of that key and `updated`, under the same "never over a newer file" check as a

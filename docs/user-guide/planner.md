@@ -244,7 +244,7 @@ list. One item at a time; another row's click takes the pane over. In a tab narr
 pane replaces the list, with a back arrow. From the panel a click opens the Planner tab with the
 pane. **⌘-click** a row opens the file in Pomade's editor instead; rest the pointer on a row's
 title for a second and its tooltip says so ("Click: open here · ⌘-click: open the file in the
-editor"). Unreadable files always open in the editor. An editor tab opens in the project you are in — Workspace when you use the Planner
+editor · Right-click or Shift+F10: more actions"). Unreadable files always open in the editor. An editor tab opens in the project you are in — Workspace when you use the Planner
 there — and Pomade stays in it. A project's folder in the tasks folder counts as part of that
 project, so its own items open without a mark; a no-project item, or another project's item opened
 here, carries Pomade's orange "Outside this project" mark.

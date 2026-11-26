@@ -4,6 +4,7 @@ import { WORKSPACE_PROJECT_ID, type JsonValue } from "pomade-kit/protocol";
 
 import { EmptyState } from "../core/EmptyState";
 import { GearGlyph } from "../core/glyphs";
+import { OPEN_HINT_PANEL, OPEN_HINT_TAB } from "../core/hints";
 import { errorText, useActiveProject } from "../core/host";
 import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
@@ -42,7 +43,7 @@ import { ItemPane, ItemSplit } from "./ItemPane";
 import { OpenInTabGlyph } from "./OpenInTabGlyph";
 import { PlannerGlyph } from "./PlannerGlyph";
 import { RowMenu, useRowMenu, type RowMenuTrigger } from "./RowMenu";
-import { OPEN_HINT_PANEL, OPEN_HINT_TAB, TaskRow, UnreadableRow, type RowAction, type RowSelect } from "./TaskRow";
+import { TaskRow, UnreadableRow, type RowAction, type RowSelect } from "./TaskRow";
 import { usePlannerItems, usePlannerSettings } from "./usePlannerData";
 import type { AddedAsk } from "./useAddedItem";
 import { useAttention } from "./useAttention";

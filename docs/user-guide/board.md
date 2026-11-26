@@ -114,7 +114,7 @@ Drag a card to another column. The Board writes two frontmatter lines — `statu
 
 ## The card popover: priority and parent
 
-Right-click a card (or the context-menu key, or ⇧F10 on a focused card). Its head shows the ID,
+Right-click a card (or the context-menu key, or Shift+F10 on a focused card); rest the pointer on a card for a second and its tooltip lists these keys. Its head shows the ID,
 the title and the reporter.
 
 - **Priority** — P0 · P1 · P2 · P3.

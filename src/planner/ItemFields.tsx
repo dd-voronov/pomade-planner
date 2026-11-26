@@ -1,6 +1,7 @@
 import { useId, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import type { LocalDate } from "pomade-kit/schedule";
 
+import { DATE_FIELD_HINT } from "../core/hints";
 import type { DateField } from "./model/create";
 import { hasDetails, ITEM_KINDS, stepKind, type DraftCheck, type ItemDraft, type ItemKind } from "./model/item-draft";
 import { longDate } from "./model/labels";
@@ -88,8 +89,8 @@ function Chevron() {
 /** Whether a key types a character (it opens the picker with that character as the query). */
 const isTyping = (e: KeyboardEvent): boolean => e.key.length === 1 && e.key !== " " && !e.metaKey && !e.ctrlKey && !e.altKey;
 
-/** A field with its label and, on the label's line, what the typed text comes to (a date, or why it isn't one). */
-function NotedInput({ id, label, value, onChange, note, error, testId, noteTestId, placeholder, inputMode }: { id: string; label: string; value: string; onChange: (v: string) => void; note: string; error: boolean; testId: string; noteTestId: string; placeholder: string; inputMode?: "decimal" }) {
+/** A field with its label and, on the label's line, what the typed text comes to (a date, or why it isn't one); `tip`: what it takes, as its tooltip. */
+function NotedInput({ id, label, value, onChange, note, error, testId, noteTestId, placeholder, inputMode, tip }: { id: string; label: string; value: string; onChange: (v: string) => void; note: string; error: boolean; testId: string; noteTestId: string; placeholder: string; inputMode?: "decimal"; tip?: string }) {
   return (
     <div className="qa-field">
       <div className="qa-field__top">
@@ -106,6 +107,7 @@ function NotedInput({ id, label, value, onChange, note, error, testId, noteTestI
         data-testid={`qa-${testId}`}
         value={value}
         placeholder={placeholder}
+        data-tip={tip}
         inputMode={inputMode}
         autoComplete="off"
         spellCheck={false}
@@ -367,10 +369,10 @@ export function ItemFields({ draft, onChange, check, groups, chosen, picking, on
           <RepeatEditor draft={draft.repeat} onChange={(repeat) => set({ repeat })} result={check.repeat} anchor={check.repeatAnchor} />
         ) : (
           <div className="qa__fields">
-            <NotedInput id={`${id}-do-on`} label="Do on" value={draft.doOn} onChange={(doOn) => set({ doOn })} note={dateNote(check.doOn, check.day)} error={check.doOn.kind === "error"} testId="do-on" noteTestId="qa-do-on-resolved" placeholder="today, fri" />
+            <NotedInput id={`${id}-do-on`} label="Do on" value={draft.doOn} onChange={(doOn) => set({ doOn })} note={dateNote(check.doOn, check.day)} error={check.doOn.kind === "error"} testId="do-on" noteTestId="qa-do-on-resolved" placeholder="today, fri" tip={DATE_FIELD_HINT} />
             {kind === "task" ? (
               <>
-                <NotedInput id={`${id}-deadline`} label="Deadline" value={draft.deadline} onChange={(deadline) => set({ deadline })} note={dateNote(check.deadline, check.day)} error={check.deadline.kind === "error"} testId="deadline" noteTestId="qa-deadline-resolved" placeholder="nov 20, +3d" />
+                <NotedInput id={`${id}-deadline`} label="Deadline" value={draft.deadline} onChange={(deadline) => set({ deadline })} note={dateNote(check.deadline, check.day)} error={check.deadline.kind === "error"} testId="deadline" noteTestId="qa-deadline-resolved" placeholder="nov 20, +3d" tip={DATE_FIELD_HINT} />
                 <NotedInput
                   id={`${id}-importance`}
                   label="Importance"

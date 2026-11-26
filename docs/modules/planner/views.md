@@ -10,7 +10,7 @@ kind: reference
 **Module:** `planner` · **UI:** the Planner panel (the Planner strip icon) and the Planner tab ·
 **Code:** `src/planner/Planner.tsx`, `src/planner/PlannerPanel.tsx`, `src/planner/PlannerTab.tsx`,
 `src/planner/TaskRow.tsx`, `src/planner/ViewBars.tsx`, `src/planner/DailyCard.tsx`,
-`src/planner/GroupHeading.tsx`, `src/planner/RowMenu.tsx`, `src/planner/model/row-menu.ts`,
+`src/planner/GroupHeading.tsx`, `src/planner/RowMenu.tsx`, `src/planner/model/row-menu.ts`, `src/core/hints.ts`,
 `src/planner/model/scope.ts`, `src/planner/model/today.ts`,
 `src/planner/model/labels.ts`, `src/planner/model/pins.ts`, `src/planner/model/folds.ts`,
 `src/planner/model/view-state.ts`, `src/planner/model/body.ts` (excerpt), `src/core/switcher.css`,
@@ -177,13 +177,18 @@ rows, folded or not (`rowsByGroup`): the open ones, and in Project what `countsI
   (the move back), a thought's **Resolve** (`status: resolved`, `done-on`; field-only, only over the
   version the view read) and, once resolved, **Reopen**.
 - **Opening:** a click on a row's title or Enter on a focused row opens the item in place
-  ([[item-in-place]]); with ⌘ (or Ctrl) held, in the editor tab. The title says so in a delayed
-  tooltip (`data-tip-slow`, 1 s; [[tooltips-and-popovers]] "Tooltips"): "Click: open in the
-  Planner tab · ⌘-click: open the file in the editor" in the panel, "Click: open here ·
-  ⌘-click: open the file in the editor" in the tab (`OPEN_HINT_PANEL`, `OPEN_HINT_TAB`). The daily
-  note's card carries it too. There is none while the row's menu is open or in select mode, and a
-  row shows no file path on hover (the path is in the item's pane). An unreadable file's row
-  shows its path and the reason in the Planner's tooltip.
+  ([[item-in-place]]); with ⌘ (or Ctrl) held, in the editor tab; a right-click or Shift+F10 opens
+  the row's menu. The title says so in a delayed tooltip (`data-tip-slow`, 1 s;
+  [[tooltips-and-popovers]] "Tooltips"): "Click: open in the Planner tab · ⌘-click: open the file
+  in the editor · Right-click or Shift+F10: more actions" in the panel, "Click: open here ·
+  ⌘-click: open the file in the editor · Right-click or Shift+F10: more actions" in the tab
+  (`OPEN_HINT_PANEL`, `OPEN_HINT_TAB` in `src/core/hints.ts`, [[tooltips-and-popovers]] "Hints for
+  hidden mechanics"). The daily note's card carries it too. There is none while the row's menu is
+  open or in select mode, and a row shows no file path on hover (the path is in the item's pane).
+  An unreadable file's row shows its path and the reason in the Planner's tooltip.
+- **In select mode** a row's box (`SelectCheck`) carries a slow tip, "⇧-click or ⇧Space: select
+  the range from the last one · ↑ ↓: the next row" (`SELECT_ROW_HINT`); the range itself is
+  [[trimming]] "The bar and the rows".
 - **Adding:** the **+** in the header and an **Add** button at the foot of every list, under the
   empty view's text when there are no rows ([[quick-add]]); the item starts with the context's
   project, `do-on` today from Today and type Recurring from Recurring ([[quick-add]] "Pre-fills").

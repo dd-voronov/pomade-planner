@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { LocalDate } from "pomade-kit/schedule";
 
+import { DATE_FIELD_HINT } from "../core/hints";
 import { defaultOn, type DraftField, type DraftResult, type RepeatDraft, type RepeatMode, type RepeatUnit } from "./model/repeat-draft";
 
 interface RepeatEditorProps {
@@ -109,6 +110,7 @@ export function RepeatEditor({ draft, onChange, result, anchor }: RepeatEditorPr
             autoComplete="off"
             spellCheck={false}
             placeholder="today"
+            data-tip={DATE_FIELD_HINT}
             value={draft.start}
             aria-invalid={bad("start")}
             onChange={(e) => set({ start: e.target.value })}
@@ -125,6 +127,7 @@ export function RepeatEditor({ draft, onChange, result, anchor }: RepeatEditorPr
             autoComplete="off"
             spellCheck={false}
             placeholder="never"
+            data-tip={DATE_FIELD_HINT}
             value={draft.end}
             aria-invalid={bad("end")}
             onChange={(e) => set({ end: e.target.value })}

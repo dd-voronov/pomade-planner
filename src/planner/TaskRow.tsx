@@ -4,11 +4,8 @@ import type { Hint } from "./model/labels";
 import { importanceText } from "./model/labels";
 import { isTaskType, type PlannerType, type Task, type UnreadableItem } from "./model/items";
 import type { RowActionId } from "./model/row-menu";
+import { SELECT_ROW_HINT } from "../core/hints";
 import { rowMenuHandlers, type RowMenuTrigger } from "./RowMenu";
-
-/** A row title's delayed tooltip: what a click and a ⌘-click open, in the panel and in the tab. */
-export const OPEN_HINT_PANEL = "Click: open in the Planner tab · ⌘-click: open the file in the editor";
-export const OPEN_HINT_TAB = "Click: open here · ⌘-click: open the file in the editor";
 
 /** A row's action, shown over its right end on hover or keyboard focus ("Skip", "Archive", "Resolve"). */
 export interface RowAction {
@@ -61,7 +58,7 @@ interface TaskRowProps {
   /** The row's menu is open. */
   menuOpen?: boolean | undefined;
   failure?: RowFailureText;
-  /** The delayed tooltip of the title (`OPEN_HINT_PANEL` or `OPEN_HINT_TAB`); none while the row's menu is open or the row selects. */
+  /** The delayed tooltip of the title (`OPEN_HINT_PANEL` or `OPEN_HINT_TAB`: what a click, a ⌘-click and a right-click do); none while the row's menu is open or the row selects. */
   openHint?: string | undefined;
 }
 
@@ -123,10 +120,10 @@ const KIND_GLYPHS: Partial<Record<PlannerType, ReactNode>> = {
 
 const KIND_NAMES: Partial<Record<PlannerType, string>> = { note: "Note", thought: "Thought", "daily-note": "Daily note" };
 
-/** The selection checkbox: Space toggles, Shift+Space or Shift-click selects the range from the anchor. */
+/** The selection checkbox: Space toggles, Shift+Space or Shift-click selects the range from the anchor; its slow tip says so. */
 export function SelectCheck({ select, label }: { select: RowSelect; label: string }) {
   return (
-    <label className="task-check task-check--select">
+    <label className="task-check task-check--select" data-tip={SELECT_ROW_HINT} data-tip-slow="">
       <input
         type="checkbox"
         checked={select.selected}
