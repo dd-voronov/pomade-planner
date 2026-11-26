@@ -45,7 +45,7 @@ describe("parseSyncedSettings", () => {
     ['{"backlogPathPattern":"/abs/path"}', "backlogPathPattern must be"],
     ['{"backlogPathPattern":"../other"}', "backlogPathPattern must be"],
     ['{"reporter":""}', "reporter must be"],
-    ['{"reporter":"Daniil Voronov"}', "reporter must be"],
+    ['{"reporter":"Jane Doe"}', "reporter must be"],
     ['{"reporter":3}', "reporter must be"],
   ])("%s falls back to the defaults and says why", (text, problem) => {
     const parsed = parseSyncedSettings(text);
@@ -96,7 +96,7 @@ describe("normalizeReporter", () => {
     ["  claude  ", "claude"],
     ["", null],
     ["   ", null],
-    ["Daniil Voronov", null],
+    ["Jane Doe", null],
     ["a\tb", null],
   ])("%j → %j", (typed, handle) => {
     expect(normalizeReporter(typed)).toBe(handle);

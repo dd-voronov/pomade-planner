@@ -71,7 +71,7 @@ test.describe("the Planner in a real Pomade", () => {
       { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n" } },
       { key: "quizlab", name: "QuizLab", root: "Projects/QuizLab", files: { "README.md": "# QuizLab\n" } },
     ]);
-    // The vault folder the tasks will live in, with a note of Daniil's that isn't a task.
+    // The vault folder the tasks will live in, with a note of the user's that isn't a task.
     await mkdir(abs(TODOS), { recursive: true });
     await writeFile(todo("index.md"), "# To-dos\n\nMy lists.\n");
     const out = execFileSync(process.execPath, [INSTALL_SCRIPT, DIST], { env: pomadeEnv(fixture, { POMADE_BIN }), encoding: "utf8" });

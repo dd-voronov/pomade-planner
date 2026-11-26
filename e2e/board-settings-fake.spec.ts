@@ -328,7 +328,7 @@ test.describe("the settings page", () => {
     await expect(field).toHaveValue("d.voronov");
 
     // A handle with a space is refused, nothing written.
-    await field.fill("Daniil Voronov");
+    await field.fill("Jane Doe");
     await field.press("Enter");
     await expect(app.getByTestId("settings-reporter-error")).toHaveText("A handle without spaces, like d.voronov.");
     expect(await readOrNull(page, SETTINGS)).toBeNull();

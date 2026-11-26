@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-// The Planner's day rules are tested on Daniil's clock: Europe/Madrid, with its DST changes. Set
+// The Planner's day rules are tested in one fixed zone with DST changes: Europe/Madrid. Set
 // before the test workers start, so every worker runs in it.
 process.env.TZ = "Europe/Madrid";
 
