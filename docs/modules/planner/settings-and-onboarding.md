@@ -10,7 +10,8 @@ kind: reference
 **Module:** `planner` · **UI:** the onboarding card (panel and tab, until a tasks root is set); the
 Planner tab's settings page (route `settings`) · **Code:** `src/planner/Planner.tsx`
 (`chooseTasksRoot`, onboarding), `src/planner/SettingsPage.tsx`, `src/planner/PlannerTab.tsx`,
-`src/planner/model/settings.ts`, `src/planner/write.ts` (`saveSettings`, `readTemplate`) · **e2e:**
+`src/planner/model/settings.ts`, `src/planner/write.ts` (`saveSettings`, `readTemplate`),
+`src/core/SettingsShell.tsx`, `src/core/settings.css` · **e2e:**
 `planner-fake.spec.ts`, `planner-notes-fake.spec.ts`, `pomade-planner.spec.ts`,
 `pomade-planner-template.spec.ts` · **Unit:** `src/planner/model/settings.test.ts` · **Contract:**
 `../Pomade/docs/HOST-API.md` §4 `files.pickFolder`, `files.pickFile`
@@ -32,7 +33,8 @@ default. A problem with the settings file shows under the button.
 
 In the Planner tab at route `settings`: the tab's gear, or the panel's ⋯ → "Settings…" (which opens
 the tab there). Closing it (its back button) takes the tab back to route `planner`, so ⋯ → Settings…
-reaches it again.
+reaches it again. The page's shell and rows are the ones the Board's settings page uses too
+(`SettingsShell`, `core/settings.css`; [[settings-and-state]]).
 
 - **Tasks folder:** the current root and **Change…** (the same folder dialog). Changing the root
   re-points the app; no files move.

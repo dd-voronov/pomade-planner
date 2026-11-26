@@ -9,11 +9,11 @@ import type { GroupInfo, ProjectInfo } from "pomade-kit/protocol";
 import type { HostClient } from "pomade-kit/sdk";
 
 import { errorText } from "../core/host";
+import { readSettingsText } from "../core/live-settings";
 import { parseSettingsText } from "../core/settings-file";
 import { projectFolders } from "./model/items";
 import { parseFolderMap, planFolders, PROJECT_FOLDERS_KEY, type FolderCollision, type FolderMap } from "./model/projects";
 import { SYNCED_SETTINGS_PATH } from "./model/settings";
-import { readSettingsText } from "./usePlannerData";
 import { moveProjectFolder, saveProjectFolders, syncScopeFolders, WriteError } from "./write";
 
 export type ProjectList = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; groups: GroupInfo[]; projects: ProjectInfo[] };
@@ -61,7 +61,7 @@ export function collisionText(root: string, c: FolderCollision): string {
 
 /** The map as the settings file holds it now; `null` when the file isn't a JSON object (its problem shows already). */
 async function readFolderMap(host: HostClient): Promise<FolderMap | null> {
-  const text = await readSettingsText(host);
+  const text = await readSettingsText(host, SYNCED_SETTINGS_PATH);
   const { object } = parseSettingsText(text ?? null, SYNCED_SETTINGS_PATH);
   return object === null ? null : parseFolderMap(object[PROJECT_FOLDERS_KEY]).map;
 }

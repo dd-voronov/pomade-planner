@@ -62,10 +62,13 @@ Pomade's file tree, `git mv`). The type is changed in the file's `type:`.
 
 | You see | Means | Do |
 |---|---|---|
-| "No backlog found" | no backlog folder at the pattern (`docs/roadmap/`) or the chosen folder is gone | **Choose backlog folder** |
+| "No backlog found" | the project has no folder at the workspace's default (`private/roadmap/` out of the box), or its own folder is gone | **Choose backlog folder** for this project; or, when every project keeps its tickets elsewhere, **⚙ Settings → Default for this workspace** (the gear is on a board's header and at Workspace) |
+| A board that showed tickets says "No backlog found" for every project | the tickets are in a folder that isn't the workspace's default | **⚙ Settings → Default for this workspace**: type the folder (`docs/roadmap/`) |
+| "A folder inside each project, like private/roadmap/ — not an absolute path or one that leaves the project." | the default folder typed on the settings page starts with `/` or climbs out with `../` | type a folder relative to the project |
 | "… is outside <Project>. Choose a folder inside the project." | the picked folder isn't in the project | pick one inside it |
-| "… — using the defaults." above the board | `Apps/pomade-board/settings.json` isn't valid JSON, or has a bad `backlogPathPattern` or `reporter` | fix the file |
-| "A handle without spaces, like d.voronov." in **Reporter for new tickets** | the handle has a space | type it without |
+| "… — using the defaults." above the board or on its settings page | `Apps/pomade-board/settings.json` isn't valid JSON, or has a bad `backlogPathPattern` or `reporter` | fix the file |
+| "Not saved: … Fix the file first." on the settings page | `Apps/pomade-board/settings.json` isn't a JSON object, so the Board won't write over it | fix the file, then save again |
+| "A handle without spaces, like d.voronov." under **Reporter** on the settings page | the handle has a space | type it without |
 | Unreadable strip: "can't read — open to fix" | a ticket-named file whose frontmatter doesn't parse | click it, fix the YAML |
 | Unreadable strip: "status “wip” has no column — open to fix" | a status this area has no column for, or none | fix `status:` |
 | "Epics can't be in Backlog" while dragging | that column doesn't take this kind | drop elsewhere |
@@ -75,7 +78,7 @@ Pomade's file tree, `git mv`). The type is changed in the file's `type:`.
 | "The file is gone — not saved." | deleted or renamed meanwhile | — |
 | "Its frontmatter can't be read — not saved. Open it to fix." | broken YAML | fix it in the editor |
 | "Give it a title." | create form with an empty title | type one |
-| "No project has a backlog yet. …" (Workspace) | no project's backlog folder resolves | open a project, click the Board icon, choose its folder |
+| "No project has a backlog yet. …" (Workspace) | no project's backlog folder resolves | open a project, click the Board icon, choose its folder; or set the folder for every project with the **⚙** beside "Choose a project" |
 | Needs you: "No backlog found … Choose one on its Board." | the project has no backlog folder | choose it on the Board tab |
 
 ## Both
@@ -98,7 +101,7 @@ Pomade's file tree, `git mv`). The type is changed in the file's `type:`.
   are written in the file.
 - **Board cards** are ordered by priority then ID; there is no manual order inside a column.
 - **Board areas and columns** are fixed (Signals, Problems, Solutions as listed in
-  [Board](board.md#areas-and-columns)). The Board's settings file is edited by hand.
+  [Board](board.md#areas-and-columns)).
 - **A ticket's title and body**, and every key besides status, priority and parent, are edited in
   the file.
 - **The Board's `updated:`** is the calendar day; the Planner's day boundary doesn't apply to it.

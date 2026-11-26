@@ -1,10 +1,16 @@
 // The Board's writes through the Host API: field-only writes conditional on the mtime the board
-// read ([[editing-drag-create]] "Never over a newer file"), and creating a ticket with its ID re-checked at write time.
+// read ([[editing-drag-create]] "Never over a newer file"), creating a ticket with its ID re-checked at write time,
+// and its settings — the synced settings file and a project's own backlog folder ([[backlog-location]]).
 
 import { HostError, type HostClient } from "pomade-kit/sdk";
+import type { ProjectRef } from "pomade-kit/protocol";
 
+import { errorText } from "../core/host";
+import { announceSettingsWrite } from "../core/live-settings";
+import { saveSettingsFile, type SettingsValue } from "../core/settings-file";
 import { bumpId, newTicketContent, newTicketPath, nextId, ticketFileName, type NewTicket } from "./model/create";
 import type { FieldWrite, WriteFailure, WriteStep } from "./model/drop";
+import { PROJECT_KEYS, relativeToProject, SETTINGS_CHANGED_KEY, SYNCED_SETTINGS_PATH } from "./model/settings";
 import type { Kind, Ticket } from "./model/ticket";
 import { readEntries } from "./useBoardData";
 
@@ -84,4 +90,43 @@ export async function createTicket(host: HostClient, request: CreateRequest): Pr
     }
   }
   throw new Failure({ kind: "host", step: "create", code: "already-exists", message: `${MAX_BUMPS} IDs in a row are taken` });
+}
+
+/**
+ * Set (or, with `undefined`, remove) the Board's keys in its synced settings file, keeping every
+ * other key; the Board's other frames re-read it. Throws `SettingsWriteError` (core/settings-file).
+ */
+export async function saveSyncedSettings(host: HostClient, patch: Record<string, SettingsValue | undefined>): Promise<void> {
+  await saveSettingsFile(host, SYNCED_SETTINGS_PATH, patch);
+  await announceSettingsWrite(host, SETTINGS_CHANGED_KEY);
+}
+
+/** Store `folder` (relative to the project's root) as the project's own backlog folder; `null` puts the project back on the workspace's default. */
+export async function setBacklogFolder(host: HostClient, projectId: string, folder: string | null): Promise<void> {
+  await host.project.setSettings({ projectId, settings: { [PROJECT_KEYS.backlogPath]: folder } });
+}
+
+export type FolderChoice =
+  /** Stored as the project's own folder. */
+  | { kind: "chosen"; folder: string }
+  /** The dialog was cancelled: nothing changed. */
+  | { kind: "cancelled" }
+  /** Nothing was stored; `message` says why. */
+  | { kind: "refused"; message: string };
+
+/**
+ * Ask for `project`'s backlog folder with Pomade's folder dialog bounded by the project, and store
+ * the pick as the project's own folder. A folder outside the project is refused.
+ */
+export async function chooseBacklogFolder(host: HostClient, project: ProjectRef): Promise<FolderChoice> {
+  try {
+    const { path } = await host.files.pickFolder({ root: project.id, initial: project.root });
+    if (path === null) return { kind: "cancelled" };
+    const folder = relativeToProject(project.root, path);
+    if (folder === null) return { kind: "refused", message: `${path} is outside ${project.name}. Choose a folder inside the project.` };
+    await setBacklogFolder(host, project.id, folder);
+    return { kind: "chosen", folder };
+  } catch (error) {
+    return { kind: "refused", message: `Couldn't set the backlog folder: ${errorText(error)}` };
+  }
 }

@@ -3,6 +3,7 @@ import { getBody } from "pomade-kit/frontmatter";
 import type { HostClient } from "pomade-kit/sdk";
 import type { LocalDate, Time } from "pomade-kit/schedule";
 
+import { CloseGlyph } from "../core/glyphs";
 import type { Clock } from "./clock";
 import { ItemFields, KIND_META } from "./ItemFields";
 import { checkDraft, type ItemDraft } from "./model/item-draft";
@@ -28,14 +29,6 @@ function typedOver(version: ItemVersion, typed: ItemDraft | null, clock: Clock, 
   if (typed === null) return null;
   const at = clock.now();
   return { typed, file: itemFile(version.task, getBody(version.content), at, boundary), check: checkDraft(typed, at, boundary) };
-}
-
-function CloseGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 function BackGlyph() {

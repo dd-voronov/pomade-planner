@@ -7,20 +7,22 @@ import {
   normalizeReporter,
   parseProjectSettings,
   parseSyncedSettings,
+  patternOf,
   relativeToProject,
 } from "./settings";
 
 describe("parseSyncedSettings", () => {
   it("a missing file is every default, without a problem", () => {
-    expect(parseSyncedSettings(null)).toEqual({ settings: { backlogPathPattern: "docs/roadmap/", reporter: "d.voronov" }, problem: null });
+    expect(parseSyncedSettings(null)).toEqual({ settings: { backlogPathPattern: "private/roadmap/", reporter: "d.voronov" }, problem: null });
   });
 
   it.each([
     ['{"backlogPathPattern":"docs/backlog/"}', "docs/backlog/"],
     ['{"backlogPathPattern":"  roadmap  "}', "roadmap"],
     ['{"backlogPathPattern":"docs/./roadmap"}', "docs/./roadmap"],
-    ['{"tasksRoot":"Tasks"}', "docs/roadmap/"],
-    ["{}", "docs/roadmap/"],
+    ['{"backlogPathPattern":"./"}', "./"],
+    ['{"tasksRoot":"Tasks"}', "private/roadmap/"],
+    ["{}", "private/roadmap/"],
   ])("%s → pattern %j", (text, pattern) => {
     expect(parseSyncedSettings(text)).toEqual({ settings: { backlogPathPattern: pattern, reporter: "d.voronov" }, problem: null });
   });
@@ -30,7 +32,7 @@ describe("parseSyncedSettings", () => {
     ['{"reporter":"  claude "}', "claude"],
     ["{}", "d.voronov"],
   ])("%s → reporter %j", (text, reporter) => {
-    expect(parseSyncedSettings(text)).toEqual({ settings: { backlogPathPattern: "docs/roadmap/", reporter }, problem: null });
+    expect(parseSyncedSettings(text)).toEqual({ settings: { backlogPathPattern: "private/roadmap/", reporter }, problem: null });
   });
 
   it.each([
@@ -53,13 +55,38 @@ describe("parseSyncedSettings", () => {
 
   it("each key falls back on its own; the problems are listed together", () => {
     expect(parseSyncedSettings('{"backlogPathPattern":"/abs","reporter":"a.person"}')).toEqual({
-      settings: { backlogPathPattern: "docs/roadmap/", reporter: "a.person" },
-      problem: 'backlogPathPattern must be a folder inside the project, like "docs/roadmap/"',
+      settings: { backlogPathPattern: "private/roadmap/", reporter: "a.person" },
+      problem: 'backlogPathPattern must be a folder inside the project, like "private/roadmap/"',
     });
     expect(parseSyncedSettings('{"backlogPathPattern":"tickets","reporter":"a b"}').settings).toEqual({ backlogPathPattern: "tickets", reporter: "d.voronov" });
     expect(parseSyncedSettings('{"backlogPathPattern":"/abs","reporter":"a b"}').problem).toBe(
-      'backlogPathPattern must be a folder inside the project, like "docs/roadmap/"; reporter must be a handle without spaces, like "d.voronov"',
+      'backlogPathPattern must be a folder inside the project, like "private/roadmap/"; reporter must be a handle without spaces, like "d.voronov"',
     );
+  });
+});
+
+describe("patternOf", () => {
+  it.each([
+    ["docs/roadmap", "docs/roadmap/"],
+    ["  docs/roadmap/  ", "docs/roadmap/"],
+    ["./docs//roadmap", "docs/roadmap/"],
+    ["tickets", "tickets/"],
+    [".", "./"],
+    ["", undefined],
+    ["   ", undefined],
+    ["/Users/me/roadmap", null],
+    ["../roadmap", null],
+    ["docs/../../roadmap", null],
+    ["docs\\roadmap", null],
+  ])("%j → %j", (typed, written) => {
+    expect(patternOf(typed)).toBe(written);
+  });
+
+  it("what it writes reads back as the same folder", () => {
+    for (const typed of ["docs/roadmap", "tickets/", "."]) {
+      const written = patternOf(typed);
+      expect(parseSyncedSettings(JSON.stringify({ backlogPathPattern: written }))).toEqual({ settings: { backlogPathPattern: written, reporter: "d.voronov" }, problem: null });
+    }
   });
 });
 
@@ -109,8 +136,8 @@ describe("parseProjectSettings", () => {
 describe("backlogLocation", () => {
   it("is the pattern under the project root by default", () => {
     expect(backlogLocation("Projects/alpha", { backlogPath: null, moveDoneToDoneFolder: true }, DEFAULT_SYNCED_SETTINGS)).toEqual({
-      path: "Projects/alpha/docs/roadmap",
-      relative: "docs/roadmap",
+      path: "Projects/alpha/private/roadmap",
+      relative: "private/roadmap",
       source: "pattern",
     });
   });
@@ -129,12 +156,20 @@ describe("backlogLocation", () => {
     });
   });
 
+  it("a pattern that names the project root is the project folder itself", () => {
+    expect(backlogLocation("Projects/alpha", { backlogPath: null, moveDoneToDoneFolder: true }, { ...DEFAULT_SYNCED_SETTINGS, backlogPathPattern: "./" })).toEqual({
+      path: "Projects/alpha",
+      relative: "",
+      source: "pattern",
+    });
+  });
+
   it("a chosen project root is the project folder itself", () => {
     expect(backlogLocation("Projects/alpha", { backlogPath: "", moveDoneToDoneFolder: true }, DEFAULT_SYNCED_SETTINGS).path).toBe("Projects/alpha");
   });
 
   it("a project at the workspace root", () => {
-    expect(backlogLocation("", { backlogPath: null, moveDoneToDoneFolder: true }, DEFAULT_SYNCED_SETTINGS).path).toBe("docs/roadmap");
+    expect(backlogLocation("", { backlogPath: null, moveDoneToDoneFolder: true }, DEFAULT_SYNCED_SETTINGS).path).toBe("private/roadmap");
   });
 });
 

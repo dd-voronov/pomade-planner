@@ -58,8 +58,9 @@ app's scope folders of a project (the fake host keeps them private); and
 `window.pressShortcut(id)` opens the app's overlay shortcut `id` over the mounted frame, which
 stays — as Pomade's shortcut does, so a spec sees the frame follow what the overlay did.
 
-Fixtures (`test/fixtures/workspace.ts`): Alpha (the sample backlog: every kind and status, `done/`,
-an unreadable ticket, an unknown status, a signal), Beta (no `docs/roadmap/`), Gamma (a chosen
+Fixtures (`test/fixtures/workspace.ts`): Alpha (the sample backlog in the default folder
+`private/roadmap/`: every kind and status, `done/`, an unreadable ticket, an unknown status, a
+signal), Beta (no `private/roadmap/`), Gamma (a chosen
 backlog folder), Scale (300 tickets), Delta; the Planner's `Tasks/` dated around Tue 2026-11-17;
 `PLANNER_WORKSPACE` with nested groups, two projects named QuizLab and project folders; `Chores/`,
 a tasks root of recurring items around Wed 2026-12-02; `NOTES_FILES`. `test/fixtures/backlog.ts`

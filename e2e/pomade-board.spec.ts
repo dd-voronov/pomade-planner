@@ -1,6 +1,6 @@
 // E-001's acceptance in a real Pomade ($POMADE_DIR, e2e/fixtures/pomade.ts) with the app
 // dev-linked: a synthetic workspace with Alpha (the sample backlog, a git repo), Beta (no
-// docs/roadmap/, its tickets in tickets/) and Scale (300 tickets). Real files, real watcher, real
+// private/roadmap/, its tickets in tickets/) and Scale (300 tickets). Real files, real watcher, real
 // editor, real restarts.
 
 import { execFileSync } from "node:child_process";
@@ -48,7 +48,7 @@ test.describe("the Board in a real Pomade", () => {
   let page: Page;
   const abs = (rel: string) => join(fixture.workspaceRoot, rel);
   const ALPHA = "Projects/alpha";
-  const roadmap = (rel: string) => abs(`${ALPHA}/docs/roadmap/${rel}`);
+  const roadmap = (rel: string) => abs(`${ALPHA}/private/roadmap/${rel}`);
 
   async function launch(): Promise<void> {
     ({ app, page } = await launchPomade(fixture, { POMADE_DEV_APPS: DIST }));
@@ -70,14 +70,14 @@ test.describe("the Board in a real Pomade", () => {
 
   test.beforeAll(async () => {
     fixture = await createPomadeFixture([
-      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("docs/roadmap", sampleBacklog()) } },
+      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("private/roadmap", sampleBacklog()) } },
       {
         key: "beta",
         name: "Beta",
         root: "Projects/beta",
         files: { "README.md": "# Beta\n", "tickets/E-010-beta-epic.md": ticketFile({ id: "E-010", kind: "epic", title: "Beta epic", status: "planned", priority: "P1" }) },
       },
-      { key: "scale", name: "Scale", root: "Projects/scale", files: under("docs/roadmap", scaleBacklog(300)) },
+      { key: "scale", name: "Scale", root: "Projects/scale", files: under("private/roadmap", scaleBacklog(300)) },
     ]);
     git(abs(ALPHA), "init", "-q");
     git(abs(ALPHA), "add", "-A");
@@ -92,7 +92,7 @@ test.describe("the Board in a real Pomade", () => {
     await fixture.cleanup();
   });
 
-  test("the Board icon opens the project's backlog: every ticket of docs/roadmap/ and done/ in its status column; BACKLOG.md and non-tickets don't appear", async () => {
+  test("the Board icon opens the project's backlog: every ticket of private/roadmap/ and done/ in its status column; BACKLOG.md and non-tickets don't appear", async () => {
     const b = await openBoard("alpha");
     expect(await idsIn(b, "backlog")).toEqual(["P-003"]);
     expect(await idsIn(b, "grooming")).toEqual(["P-002"]);
@@ -119,7 +119,7 @@ test.describe("the Board in a real Pomade", () => {
 
   test("T-999-broken.md with invalid YAML is a greyed “can't read” card that opens in the editor", async () => {
     const b = board(page);
-    const broken = b.getByTestId("unreadable-strip").locator(`[data-path="${ALPHA}/docs/roadmap/${BROKEN_TICKET.path}"]`);
+    const broken = b.getByTestId("unreadable-strip").locator(`[data-path="${ALPHA}/private/roadmap/${BROKEN_TICKET.path}"]`);
     await expect(broken).toContainText("can't read — open to fix");
     await expect(broken).toHaveCSS("border-style", "dashed");
     await broken.click();
@@ -142,7 +142,7 @@ test.describe("the Board in a real Pomade", () => {
     await expect.poll(() => readFile(moved, "utf8").catch(() => null)).toBe(withStatus(before, "done"));
 
     git(abs(ALPHA), "add", "-A");
-    expect(git(abs(ALPHA), "diff", "--cached", "-M", "--name-status").trim()).toMatch(/^R\d+\tdocs\/roadmap\/E-017-icon-picker-redesign\.md\tdocs\/roadmap\/done\/E-017-icon-picker-redesign\.md$/);
+    expect(git(abs(ALPHA), "diff", "--cached", "-M", "--name-status").trim()).toMatch(/^R\d+\tprivate\/roadmap\/E-017-icon-picker-redesign\.md\tprivate\/roadmap\/done\/E-017-icon-picker-redesign\.md$/);
     const changed = git(abs(ALPHA), "diff", "--cached", "-M", "--unified=0")
       .split("\n")
       .filter((l) => /^[-+](?![-+])/.test(l));
@@ -240,9 +240,9 @@ test.describe("the Board in a real Pomade", () => {
     expect(await readFile(problemPath, "utf8")).toBe(problem);
   });
 
-  test("a project without docs/roadmap/ shows “Choose backlog folder”; the chosen folder loads its board and survives a restart", async () => {
+  test("a project without private/roadmap/ shows “Choose backlog folder”; the chosen folder loads its board and survives a restart", async () => {
     const b = await openBoard("beta");
-    await expect(b.getByTestId("choose-backlog-state")).toContainText("Beta has no docs/roadmap/ folder.");
+    await expect(b.getByTestId("choose-backlog-state")).toContainText("Beta has no private/roadmap/ folder.");
     await shot(page, "pomade-board-choose-backlog");
     await queuePickerAnswers(app, [abs("Projects/beta/tickets")]);
     await b.getByTestId("choose-backlog").click();

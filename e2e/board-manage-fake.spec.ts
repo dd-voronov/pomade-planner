@@ -10,8 +10,8 @@ import { boxOf, card, cardsIn, column, createdTicket, drag, idsIn, withFields, w
 import { shot } from "./fixtures/screens";
 
 const APP = BOARD_URL;
-const ALPHA = "Projects/alpha/docs/roadmap";
-const DELTA = "Projects/delta/docs/roadmap";
+const ALPHA = "Projects/alpha/private/roadmap";
+const DELTA = "Projects/delta/private/roadmap";
 
 function harness(project: string, surface: "tab" | "panel" = "tab"): string {
   const params = new URLSearchParams({ app: APP, surface, icon: "board", project });
@@ -514,51 +514,6 @@ test.describe("reporter", () => {
     await card(app, "T-003").click({ button: "right" });
     await expect(app.getByTestId("card-popover")).toBeVisible();
     await expect(app.getByTestId("popover-reporter")).toHaveCount(0);
-  });
-
-  test("⋯ → Reporter for new tickets… changes what the next created ticket writes; empty goes back to d.voronov", async ({ page }) => {
-    const app = await openBoard(page, "delta", "solutions");
-    await app.getByTestId("board-menu-button").click();
-    await app.getByTestId("menu-reporter").click();
-    const form = app.getByTestId("reporter-form");
-    await expect(form).toBeVisible();
-    await expect(form.getByTestId("reporter-input")).toHaveValue("d.voronov");
-    await expect(form.getByTestId("reporter-input")).toBeFocused();
-    await expectInside(page, app, "reporter-form");
-    await shot(page, "t015-fake-reporter-form");
-
-    // A handle with a space is refused, nothing written.
-    await form.getByTestId("reporter-input").fill("Daniil Voronov");
-    await page.keyboard.press("Enter");
-    await expect(form.getByTestId("reporter-error")).toHaveText("A handle without spaces, like d.voronov.");
-    expect(await readOrNull(page, SETTINGS)).toBeNull();
-
-    await form.getByTestId("reporter-input").fill("a.person");
-    await page.keyboard.press("Enter");
-    await expect(form).toHaveCount(0);
-    expect(await focusedTestId(app)).toBe("board-menu-button");
-    await expect.poll(() => readOrNull(page, SETTINGS)).toBe('{\n  "reporter": "a.person"\n}\n');
-
-    await column(app, "planned").getByTestId("column-add").click();
-    await app.getByTestId("kind-task").check();
-    await app.getByTestId("create-title").fill("Mine");
-    await app.getByTestId("create-submit").click();
-    await expect.poll(() => readOrNull(page, `${DELTA}/T-042-mine.md`)).toBe(createdTicket({ id: "T-042", kind: "task", title: "Mine", status: "planned", reporter: "a.person" }));
-    await expect(card(app, "T-042").getByTestId("card-reporter")).toHaveText("a.person");
-
-    // Emptied: the key goes, the default is back; other keys stay.
-    await writeFile(page, SETTINGS, '{\n  "backlogPathPattern": "docs/roadmap/",\n  "reporter": "a.person"\n}\n');
-    await app.getByTestId("board-menu-button").click();
-    await app.getByTestId("menu-reporter").click();
-    await expect(form.getByTestId("reporter-input")).toHaveValue("a.person");
-    await form.getByTestId("reporter-input").fill("");
-    await form.getByTestId("reporter-save").click();
-    await expect.poll(() => readOrNull(page, SETTINGS)).toBe('{\n  "backlogPathPattern": "docs/roadmap/"\n}\n');
-    await column(app, "planned").getByTestId("column-add").click();
-    await app.getByTestId("kind-task").check();
-    await app.getByTestId("create-title").fill("Default again");
-    await app.getByTestId("create-submit").click();
-    await expect.poll(() => readOrNull(page, `${DELTA}/T-043-default-again.md`)).toBe(createdTicket({ id: "T-043", kind: "task", title: "Default again", status: "planned" }));
   });
 
   test("a reporter set in the file by hand is what the next ticket gets; a wrong one falls back and says so", async ({ page }) => {

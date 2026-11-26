@@ -245,7 +245,7 @@ body stay byte for byte.
 | **Board** — drag | `status`, `updated` (+ `problem` on triage); moves into / out of `done/` |
 | popover | `priority` or the parent key, and `updated` |
 | **+** | a new ticket file |
-| ⋯ → Reporter for new tickets… | `reporter` in `Apps/pomade-board/settings.json` |
+| ⚙ Settings (the default folder, the reporter) | `backlogPathPattern`, `reporter` in `Apps/pomade-board/settings.json` |
 
 **Never:** a file without a known `type:`/`kind:`, a ticket's title or body, an index or plan file
 (`BACKLOG.md`, `PLAN.md`), anything else in the tasks folder or backlog. Files whose frontmatter can't be parsed are shown

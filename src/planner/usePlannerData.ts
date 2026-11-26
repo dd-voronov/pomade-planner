@@ -1,69 +1,25 @@
 // The Planner's reads through the Host API: its settings (the synced settings file, live) and the
 // items of the tasks root (its top-level files, live). [[file-model]], [[storage-and-item-types]], [[settings-and-state]].
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { HostClient } from "pomade-kit/sdk";
 import { joinPath } from "pomade-kit/protocol";
 
 import { isNotFound } from "../core/host";
-import { useLiveFolder, type FolderChange, type LiveFolderState } from "../core/live-folder";
+import { useLiveFolder, type LiveFolderState } from "../core/live-folder";
+import { useSettingsFile } from "../core/live-settings";
 import { ARCHIVE_FOLDER, brokenItemType, DAILY_FOLDER, isItemChange, mergeItems, needsText, needsTypeCheck, projectFolders, readItems, type ItemEntry, type Items, type PlannerType } from "./model/items";
 import { parsePlannerSettings, SYNCED_SETTINGS_PATH, type ParsedPlannerSettings } from "./model/settings";
 
-/** The folder the settings file lives in. */
-const SETTINGS_FOLDER = SYNCED_SETTINGS_PATH.slice(0, SYNCED_SETTINGS_PATH.lastIndexOf("/"));
-
 /** A frame that writes the settings tells the app's other frames, which may not see the file's folder yet (state key). */
 export const SETTINGS_CHANGED_KEY = "planner.settingsWritten";
-
-/** The settings file's text (`null`: no file), or `undefined` when its folder doesn't exist either. */
-export async function readSettingsText(host: HostClient): Promise<string | null | undefined> {
-  try {
-    return (await host.files.readFile({ path: SYNCED_SETTINGS_PATH })).content;
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
-  }
-  try {
-    await host.files.readFolder({ path: SETTINGS_FOLDER });
-    return null;
-  } catch (error) {
-    if (isNotFound(error)) return undefined;
-    throw error;
-  }
-}
-
-const isSettingsChange = (change: FolderChange): boolean => change.path === SYNCED_SETTINGS_PATH || change.oldPath === SYNCED_SETTINGS_PATH || change.path === SETTINGS_FOLDER;
 
 export type SettingsState = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; parsed: ParsedPlannerSettings };
 
 /** The Planner's settings, live: re-read when the file changes on disk or another frame wrote it. */
 export function usePlannerSettings(host: HostClient): { state: SettingsState; reload: () => Promise<void> } {
-  const read = useCallback(async () => {
-    const text = await readSettingsText(host);
-    return text === undefined ? null : parsePlannerSettings(text);
-  }, [host]);
-  const { state: live, reload } = useLiveFolder(host, SETTINGS_FOLDER, read, isSettingsChange, { watchWorkspaceTop: true });
-
-  useEffect(
-    () =>
-      host.state.onChange((key) => {
-        if (key === SETTINGS_CHANGED_KEY) void reload();
-      }),
-    [host, reload],
-  );
-
-  const state = useMemo<SettingsState>(() => {
-    switch (live.status) {
-      case "loading":
-        return live;
-      case "error":
-        return { status: "error", message: `${SYNCED_SETTINGS_PATH} can't be read (${live.message})` };
-      case "missing":
-        return { status: "ready", parsed: parsePlannerSettings(null) };
-      case "ready":
-        return { status: "ready", parsed: live.value };
-    }
-  }, [live]);
+  const { state: live, reload } = useSettingsFile(host, SYNCED_SETTINGS_PATH, SETTINGS_CHANGED_KEY, parsePlannerSettings);
+  const state = useMemo<SettingsState>(() => (live.status === "ready" ? { status: "ready", parsed: live.value } : live), [live]);
   return { state, reload };
 }
 

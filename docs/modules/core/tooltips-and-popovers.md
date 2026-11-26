@@ -8,7 +8,7 @@ kind: reference
 # Tooltips and popovers — placed inside the frame
 
 **Module:** `core` · **UI:** every icon-only control of both apps; the Board's create form, card
-popover, triage picker and reporter form; the Planner's row menu, mix-in picker and All's filter
+popover, triage picker and the settings page's project picker; the Planner's row menu, mix-in picker and All's filter
 menus · **Code:** `src/core/Tips.tsx`, `src/core/tips.css`,
 `src/core/Popover.tsx`, `src/core/place.ts` · **e2e:** `tips-fake.spec.ts`, `pomade-tips.spec.ts`,
 `board-manage-fake.spec.ts` · **Unit:** `src/core/place.test.ts`
@@ -63,7 +63,7 @@ element marked `data-autofocus`, else the first focusable one.
 side with more room with its height capped (it scrolls inside); aligned to the anchor's start or
 end, shifted left at the right edge, narrower than a narrow frame. `role` is "dialog" or "menu".
 
-Users: the Board's create form, card popover, triage picker and reporter form
-([[editing-drag-create]]); the Planner's row menu, "+ Add from…" mix-in picker and All's filter
+Users: the Board's create form, card popover and triage picker ([[editing-drag-create]]) and its
+settings page's project picker ([[backlog-location]] "Settings page"); the Planner's row menu, "+ Add from…" mix-in picker and All's filter
 menus (`ViewBars.tsx`, [[views]]). The Board tab's ⋯ menu is not one: it has its own scrim and Escape
 handling and does not close with the window's `blur`.

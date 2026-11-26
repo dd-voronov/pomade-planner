@@ -15,7 +15,8 @@ Two Pomade apps, each installed and removed on its own; neither needs the other.
   project. ⌘⇧A adds an item from anywhere in Pomade. The Planner icon carries a badge of what is
   overdue or due today, a notification sums up the day at Pomade's start, and a daily note is made
   for each day Pomade runs. `pomade-planner today` prints Today in a terminal.
-- **Board** — a kanban over a project's backlog folder (`docs/roadmap/` by default): one ticket per
+- **Board** — a kanban over a project's backlog folder (`private/roadmap/` by default, set on the
+  Board's settings page for the workspace or per project): one ticket per
   Markdown file, in three areas — Signals, Problems, Solutions. Dragging a card changes its
   `status:`; **+** on a column creates a ticket with the next free ID; right-click sets priority
   and parent. The Board icon also opens "Needs you": tickets in review and new signals.
@@ -27,7 +28,7 @@ an agent) show within about a second, and the apps write only the frontmatter ke
 
 - [Getting started](getting-started.md) — how the apps get into Pomade (bundled with a Pomade
   release, or `npm run install-app` for a dev build), removing them, and the first run: choosing the
-  tasks folder and a project's backlog folder.
+  tasks folder and the backlog folder.
 - [Planner](planner.md) — item types, the four views, panel vs tab, adding (quick add and in place),
   the item's compact view, recurring rules, daily notes and the template, pins, projects and
   mix-ins, select mode, the badge and morning summary, and the `pomade-planner today` command.
@@ -36,8 +37,8 @@ an agent) show within about a second, and the apps write only the frontmatter ke
   list.
 - [Keyboard and mouse](shortcuts.md) — every shortcut and mouse modifier of both apps, grouped by
   where it works.
-- [Settings and data](settings.md) — every setting, where it is changed and stored, and where each
-  app keeps its data and machine-local state.
+- [Settings and data](settings.md) — every setting of the Planner's and the Board's settings
+  pages, where it is changed and stored, and where each app keeps its data and machine-local state.
 - [Files and format](files-and-format.md) — what to write by hand: frontmatter per item type, the
   `repeat:` rule syntax, the `## Log`, ticket frontmatter; what the apps write and never touch; what
   happens when a file changed on disk.

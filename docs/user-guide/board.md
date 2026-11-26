@@ -14,6 +14,11 @@ frontmatter carries `kind:` and `status:`. The Board icon opens (or focuses) the
 Board tab and fills the side panel with **Needs you**. The board updates within about a second of
 any file change.
 
+A backlog holds four kinds of ticket: a **signal** is something noticed, not yet analysed; a
+**problem** is a pain, an idea or an open question; an **epic** is a piece of the solution that can
+be shipped and tried by itself; a **task** is one unit of work, in an epic or on its own. None of
+them needs the others. The file format is in [Files and format](files-and-format.md#tickets).
+
 - [Where the backlog is](#where-the-backlog-is)
 - [Areas and columns](#areas-and-columns)
 - [Cards](#cards)
@@ -28,17 +33,21 @@ any file change.
 
 - The Board tab always shows the **active project**: switch projects in Pomade and the board
   switches too. Area and column state are remembered per project.
-- It looks in `docs/roadmap/` under the project's root (the workspace-wide pattern, see
-  [settings](settings.md#board)) and reads that folder and its `done/` sub-folder, not deeper.
+- It looks in `private/roadmap/` under the project's root — the workspace's default folder — and
+  reads that folder and its `done/` sub-folder, not deeper.
+- **⚙ Settings** (the header's gear, right of **⋯**; at Workspace, beside "Choose a project") opens
+  the settings page: change the default for the whole workspace, or give any project a folder of
+  its own, whichever project is open ([settings](settings.md#board)).
 - No backlog there: **"No backlog found"** with **Choose backlog folder** — a folder picker limited
   to the project. The chosen folder is kept for that project, relative to its root.
-- Later: the tab's **⋯** (Board settings) → **Change backlog folder…**.
+- Later: the tab's **⋯** (Board settings) → **Change backlog folder…**, or the project's row on
+  the settings page — the same value.
 - While the folder is missing the Board keeps watching, so a backlog folder created, moved in or
   checked out later loads the board by itself.
 - Files without a known `kind:` (`BACKLOG.md`, `PLAN.md`, lists) are ignored. The Board never
   edits them.
 
-The header shows the backlog folder (`docs/roadmap`) at the right, then **⋯**.
+The header shows the backlog folder (`private/roadmap`) at the right, then **⋯** and **⚙**.
 
 ## Areas and columns
 
@@ -141,7 +150,7 @@ the **+**. The new file opens in an editor tab; its card appears with the next r
 - **File:** `<ID>-<slug>.md` — the title lowercased, words joined by `-`, accents folded, at most 60
   characters. An epic or task created in Done goes into `done/` (while the move setting is on).
 - **Reporter:** every new ticket gets `reporter:` from the Board's setting, `d.voronov` out of the
-  box. Change it: **⋯ → Reporter for new tickets…**, type the handle (no spaces), **Save** or Enter.
+  box. Change it: **⚙ Settings → New tickets → Reporter**, type the handle (no spaces), Enter.
   Left empty, it goes back to `d.voronov`. The setting is workspace-wide
   ([settings](settings.md#board)).
 - **Text:** see [Files and format › Tickets](files-and-format.md#tickets).

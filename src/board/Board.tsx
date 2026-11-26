@@ -14,11 +14,9 @@ import { columnCollision, columnKeyboardCoordinates, KEYBOARD_CODES } from "./dn
 import { buildArea, canTake, countByArea, creatableKinds, createTarget, refusalText, type AreaDef, type ColumnDef } from "./model/areas";
 import { KIND_NAME } from "./model/create";
 import { describeFailure, localDay, planDrop, planEdit, type EditableField } from "./model/drop";
-import { errorText } from "../core/host";
+import { GearGlyph } from "../core/glyphs";
 import type { Rect } from "../core/place";
-import { saveSettingsFile } from "../core/settings-file";
-import { ReporterForm } from "./ReporterForm";
-import { DEFAULT_REPORTER, normalizeReporter, SYNCED_KEYS, SYNCED_SETTINGS_PATH, type BacklogLocation, type ProjectBoardSettings } from "./model/settings";
+import type { BacklogLocation, ProjectBoardSettings } from "./model/settings";
 import { readSyncedSettings } from "./useBoardData";
 import type { Backlog, Kind, Ticket } from "./model/ticket";
 import { isCollapsed, parseView, serializeView, setCollapsed, viewKey, type BoardView } from "./model/view-state";
@@ -39,18 +37,15 @@ interface BoardProps {
   reload: () => Promise<void>;
   onToggleMoveDone: () => void;
   onChangeFolder: () => void;
-  /** The synced settings file was written: re-read it. */
-  onSettingsSaved: () => void;
+  /** Open the Board's settings page. */
+  onShowSettings: () => void;
 }
 
 /** A popover, form or picker open over the board, with what it hangs off. */
 type Overlay =
   | { kind: "create"; column: ColumnDef; initialKind?: Kind; anchor: Rect; align: "start" | "end"; focusBack: string }
   | { kind: "edit"; path: string; anchor: Rect }
-  | { kind: "triage"; ticket: Ticket; target: ColumnDef; anchor: Rect }
-  | { kind: "reporter"; initial: string; anchor: Rect };
-
-const MENU_BUTTON = '[data-testid="board-menu-button"]';
+  | { kind: "triage"; ticket: Ticket; target: ColumnDef; anchor: Rect };
 
 const rectOf = (el: Element): Rect => {
   const r = el.getBoundingClientRect();
@@ -87,7 +82,7 @@ function useView(host: HostClient, projectId: string, areas: readonly AreaDef[])
   return [view, update];
 }
 
-/** The kanban: area switcher and settings menu, the Unreadable strip, and the area's columns. */
+/** The kanban: area switcher, the project's ⋯ menu and the way to the settings page, the Unreadable strip, and the area's columns. */
 export function Board(props: BoardProps) {
   const { host, project, areas, location, settings, settingsProblem, backlog, reload } = props;
   const [view, setView] = useView(host, project.id, areas);
@@ -209,30 +204,6 @@ export function Board(props: BoardProps) {
     [host, location.path, settings.moveDoneToDoneFolder, reload, open],
   );
 
-  /** The reporter form hangs under ⋯, filled from the settings file as it is now. */
-  const openReporter = useCallback(async () => {
-    const { settings: synced } = await readSyncedSettings(host);
-    const button = document.querySelector(MENU_BUTTON);
-    if (button) setOverlay({ kind: "reporter", initial: synced.reporter, anchor: rectOf(button) });
-  }, [host]);
-
-  const { onSettingsSaved } = props;
-  const saveReporter = useCallback(
-    async (typed: string): Promise<string | null> => {
-      const handle = typed.trim() === "" ? undefined : normalizeReporter(typed);
-      if (handle === null) return `A handle without spaces, like ${DEFAULT_REPORTER}.`;
-      try {
-        await saveSettingsFile(host, SYNCED_SETTINGS_PATH, { [SYNCED_KEYS.reporter]: handle });
-      } catch (error) {
-        return errorText(error);
-      }
-      setOverlay(null);
-      onSettingsSaved();
-      return null;
-    },
-    [host, onSettingsSaved],
-  );
-
   const openEdit = useCallback((ticket: Ticket, anchor: Rect) => {
     setEditError(null);
     setOverlay({ kind: "edit", path: ticket.path, anchor });
@@ -352,12 +323,12 @@ export function Board(props: BoardProps) {
           <span className="board__location" data-testid="backlog-location" title={location.path}>
             {location.relative === "" ? project.name : location.relative}
           </span>
-          <BoardMenu
-            moveDone={settings.moveDoneToDoneFolder}
-            onToggleMoveDone={props.onToggleMoveDone}
-            onChangeFolder={props.onChangeFolder}
-            onEditReporter={() => void openReporter()}
-          />
+          <div className="board__actions">
+            <BoardMenu moveDone={settings.moveDoneToDoneFolder} onToggleMoveDone={props.onToggleMoveDone} onChangeFolder={props.onChangeFolder} />
+            <button type="button" className="icon-btn" aria-label="Settings" data-tip="Settings" data-testid="board-settings" onClick={props.onShowSettings}>
+              <GearGlyph />
+            </button>
+          </div>
         </div>
       </header>
       {settingsProblem !== null ? (
@@ -440,9 +411,6 @@ export function Board(props: BoardProps) {
           onCancel={() => setOverlay(null)}
           restoreFocus={focusSelector(cardSelector(overlay.ticket.path))}
         />
-      ) : null}
-      {overlay?.kind === "reporter" ? (
-        <ReporterForm anchor={overlay.anchor} initial={overlay.initial} onSave={saveReporter} onClose={() => setOverlay(null)} restoreFocus={focusSelector(MENU_BUTTON)} />
       ) : null}
     </main>
   );

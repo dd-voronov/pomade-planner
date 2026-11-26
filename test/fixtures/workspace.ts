@@ -1,9 +1,9 @@
 // A synthetic workspace for the fake host: projects with frontmatter backlogs and a tasks folder.
 // `npm run dev:fake` and the fake-host e2e serve it; it never touches a real workspace.
 //
-// - Alpha: the sample backlog in docs/roadmap/ (every kind and status, done/, an unreadable
+// - Alpha: the sample backlog in private/roadmap/, the Board's default folder (every kind and status, done/, an unreadable
 //   ticket, a ticket with an unknown status, a signal, BACKLOG.md).
-// - Beta: no docs/roadmap/ — its tickets are in tickets/, so the Board asks for the folder.
+// - Beta: no private/roadmap/ — its tickets are in tickets/, so the Board asks for the folder.
 // - Gamma: its backlog folder chosen as plans/ (a per-project setting).
 // - Scale: 300 tickets.
 // - Delta: E-002's acceptance backlog (the highest task ID only in done/, no signals).
@@ -55,12 +55,12 @@ export const FIXTURE_WORKSPACE = {
   ],
   activeProject: "alpha",
   files: {
-    ...under("Projects/alpha/docs/roadmap", sampleBacklog()),
+    ...under("Projects/alpha/private/roadmap", sampleBacklog()),
     "Projects/beta/README.md": "# Beta\n",
     "Projects/beta/tickets/E-010-beta-epic.md": ticketFile({ id: "E-010", kind: "epic", title: "Beta epic", status: "planned", priority: "P1" }),
     "Projects/gamma/plans/P-001-gamma.md": ticketFile({ id: "P-001", kind: "problem", title: "Gamma problem", status: "review", priority: "P0" }),
-    ...under("Projects/scale/docs/roadmap", scaleBacklog(300)),
-    ...under("Projects/delta/docs/roadmap", deltaBacklog()),
+    ...under("Projects/scale/private/roadmap", scaleBacklog(300)),
+    ...under("Projects/delta/private/roadmap", deltaBacklog()),
     ...Object.fromEntries(Object.entries(PLANNER_TASKS).map(([name, text]) => [`Tasks/${name}`, text])),
   },
 } satisfies FakeHostOptions;

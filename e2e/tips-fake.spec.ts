@@ -268,13 +268,14 @@ test.describe("tooltips", () => {
     await shot(page, "t002-fake-tip-above");
   });
 
-  test("the Board: ⋯, a column's + and its collapse show their names; the tip leaves when the column collapses", async ({ page }) => {
+  test("the Board: ⋯, the gear, a column's + and its collapse show their names; the tip leaves when the column collapses", async ({ page }) => {
     await page.setViewportSize({ width: 1680, height: 900 });
     await page.goto(board);
     const b = app(page);
     await expect(b.getByTestId("board")).toBeVisible();
     await hoverShows(b, b.getByTestId("board-menu-button"), "Board settings");
     await shot(page, "t002-fake-tip-board-menu");
+    await hoverShows(b, b.getByTestId("board-settings"), "Settings");
     const add = b.getByTestId("column-add").first();
     await add.hover();
     await expect(tip(b)).toHaveText(/^New .+ in .+$/);

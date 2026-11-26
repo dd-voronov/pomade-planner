@@ -8,7 +8,7 @@ kind: reference
 # Theme — both apps look like Pomade
 
 **Module:** `core` · **UI:** every frame of both apps · **Code:** `src/core/mount.tsx`,
-`src/core/app.css`, `src/core/switcher.css`, `src/core/tips.css`, the apps' styles
+`src/core/app.css`, `src/core/settings.css`, `src/core/switcher.css`, `src/core/tips.css`, the apps' styles
 (`src/planner/*.css`, `src/board/board.css`), the icons (`apps/*/public/*.svg`) · **e2e:**
 `fake-host.spec.ts` (`?theme=dark`, `fakeHost.setTheme`), `pomade-planner.spec.ts` · **Unit:**
 `test/colors.test.ts` · **Contract:** `../Pomade/docs/HOST-API.md` §3 `welcome.theme`, §4

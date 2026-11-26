@@ -3,7 +3,7 @@ import { connect, HostError, type HostClient } from "pomade-kit/sdk";
 import { describe, expect, it } from "vitest";
 
 import manifest from "../../apps/board/public/manifest.json" with { type: "json" };
-import { createTicket, Failure, writeFields } from "./write";
+import { chooseBacklogFolder, createTicket, Failure, saveSyncedSettings, setBacklogFolder, writeFields } from "./write";
 
 const B = "Projects/alpha/docs/roadmap";
 
@@ -105,5 +105,85 @@ describe("writeFields", () => {
     fake.deleteFile(`${B}/E-1.md`);
     const ticket = { path: `${B}/E-1.md`, mtimeMs } as Parameters<typeof writeFields>[1];
     await expect(writeFields(host, ticket, [{ key: "priority", value: "P0" }])).rejects.toMatchObject({ failure: { kind: "host", step: "field", code: "not-found" } });
+  });
+});
+
+describe("the Board's settings writes", () => {
+  const SETTINGS = "Apps/pomade-board/settings.json";
+
+  /** A workspace of two projects with Alpha active — Beta is the project that isn't. */
+  async function twoProjects(files: Record<string, string> = {}) {
+    const fake = createFakeHost({
+      manifest,
+      projects: [
+        { id: "alpha", name: "Alpha", root: "Projects/alpha" },
+        { id: "beta", name: "Beta", root: "Projects/beta", settings: { moveDoneToDoneFolder: false } },
+      ],
+      activeProject: "alpha",
+      files: { "Projects/alpha/README.md": "# Alpha\n", "Projects/beta/tickets/E-001-x.md": "---\nid: E-001\nkind: epic\n---\n", ...files },
+    });
+    const result = await connect({ transport: fake.transport });
+    if (result.status !== "connected") throw new Error(result.status);
+    const { projects } = await result.host.project.list();
+    const beta = projects.find((p) => p.id === "beta");
+    if (!beta) throw new Error("no beta");
+    return { fake, host: result.host, beta };
+  }
+
+  it("saveSyncedSettings sets and removes its keys, keeps the others, and tells the other frames", async () => {
+    const { fake, host } = await twoProjects({ [SETTINGS]: '{ "reporter": "a.person", "other": true }' });
+    await saveSyncedSettings(host, { backlogPathPattern: "tickets/" });
+    expect(JSON.parse(fake.readFile(SETTINGS))).toEqual({ reporter: "a.person", other: true, backlogPathPattern: "tickets/" });
+    expect(fake.state["board.settingsWritten"]).toEqual(expect.any(Number));
+    await saveSyncedSettings(host, { backlogPathPattern: undefined, reporter: "claude" });
+    expect(JSON.parse(fake.readFile(SETTINGS))).toEqual({ reporter: "claude", other: true });
+  });
+
+  it("saveSyncedSettings makes the file on the first write, and never writes over one that isn't a JSON object", async () => {
+    const { fake, host } = await twoProjects();
+    await saveSyncedSettings(host, { reporter: "claude" });
+    expect(fake.readFile(SETTINGS)).toBe('{\n  "reporter": "claude"\n}\n');
+    fake.writeFile(SETTINGS, "[1, 2]");
+    await expect(saveSyncedSettings(host, { reporter: "a.person" })).rejects.toThrow(`Not saved: ${SETTINGS} is not a JSON object. Fix the file first.`);
+    expect(fake.readFile(SETTINGS)).toBe("[1, 2]");
+  });
+
+  it("chooseBacklogFolder stores the pick of a project that is not the active one, relative to its root, and keeps its other settings", async () => {
+    const { fake, host, beta } = await twoProjects();
+    fake.answerPick("Projects/beta/tickets");
+    expect(await chooseBacklogFolder(host, beta)).toEqual({ kind: "chosen", folder: "tickets" });
+    expect(fake.pickRequests).toEqual([{ kind: "folder", root: "Projects/beta", initial: "Projects/beta" }]);
+    expect((await host.project.getSettings({ projectId: "beta" })).settings).toEqual({ moveDoneToDoneFolder: false, backlogPath: "tickets" });
+    expect((await host.project.getSettings({ projectId: "alpha" })).settings).toEqual({});
+  });
+
+  it("chooseBacklogFolder: the project's own root is the folder \"\"; a cancelled dialog stores nothing", async () => {
+    const { fake, host, beta } = await twoProjects();
+    fake.answerPick(null);
+    expect(await chooseBacklogFolder(host, beta)).toEqual({ kind: "cancelled" });
+    expect((await host.project.getSettings({ projectId: "beta" })).settings).toEqual({ moveDoneToDoneFolder: false });
+    fake.answerPick("Projects/beta");
+    expect(await chooseBacklogFolder(host, beta)).toEqual({ kind: "chosen", folder: "" });
+    expect((await host.project.getSettings({ projectId: "beta" })).settings).toEqual({ moveDoneToDoneFolder: false, backlogPath: "" });
+  });
+
+  it("chooseBacklogFolder refuses a folder outside the project, and says what the host refused", async () => {
+    const { host, beta } = await twoProjects();
+    const answering = (path: string): HostClient =>
+      new Proxy(host, { get: (t, p, r) => (p === "files" ? new Proxy(t.files, { get: (f, q, s) => (q === "pickFolder" ? () => Promise.resolve({ path }) : (Reflect.get(f, q, s) as unknown)) }) : (Reflect.get(t, p, r) as unknown)) });
+    expect(await chooseBacklogFolder(answering("Projects/alpha/docs"), beta)).toEqual({
+      kind: "refused",
+      message: "Projects/alpha/docs is outside Beta. Choose a folder inside the project.",
+    });
+    expect((await host.project.getSettings({ projectId: "beta" })).settings).toEqual({ moveDoneToDoneFolder: false });
+    expect(await chooseBacklogFolder(host, { ...beta, id: "gone" })).toEqual({ kind: "refused", message: expect.stringMatching(/^Couldn't set the backlog folder: /) as string });
+  });
+
+  it("setBacklogFolder(null) removes the project's folder and keeps its other settings", async () => {
+    const { host } = await twoProjects();
+    await setBacklogFolder(host, "beta", "plans");
+    expect((await host.project.getSettings({ projectId: "beta" })).settings).toEqual({ moveDoneToDoneFolder: false, backlogPath: "plans" });
+    await setBacklogFolder(host, "beta", null);
+    expect((await host.project.getSettings({ projectId: "beta" })).settings).toEqual({ moveDoneToDoneFolder: false });
   });
 });

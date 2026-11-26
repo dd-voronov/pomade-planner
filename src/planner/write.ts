@@ -14,6 +14,7 @@ import { formatSchedule, type LocalDate } from "pomade-kit/schedule";
 import { FILES_DELETE_MAX_PATHS, joinPath } from "pomade-kit/protocol";
 
 import { diskReason, errorText, isNotFound } from "../core/host";
+import { announceSettingsWrite } from "../core/live-settings";
 import { parseSettingsText, saveSettingsFile, type SettingsValue } from "../core/settings-file";
 import { archivePath, restorePath } from "./model/archive";
 import { newTaskContent, taskFilePath, type NewTask } from "./model/create";
@@ -312,5 +313,5 @@ export async function saveSettings(host: HostClient, patch: Record<string, Setti
   } catch (error) {
     throw new WriteError(errorText(error));
   }
-  await host.state.set(SETTINGS_CHANGED_KEY, Date.now()).catch(() => undefined);
+  await announceSettingsWrite(host, SETTINGS_CHANGED_KEY);
 }

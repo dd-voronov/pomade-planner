@@ -10,7 +10,7 @@ import { card, cardsIn, column, drag, idsIn, withStatus } from "./fixtures/board
 import { shot } from "./fixtures/screens";
 
 const APP = BOARD_URL;
-const ALPHA = "Projects/alpha/docs/roadmap";
+const ALPHA = "Projects/alpha/private/roadmap";
 
 function harness(project?: string): string {
   const params = new URLSearchParams({ app: APP, surface: "tab", icon: "board" });
@@ -257,9 +257,9 @@ test.describe("live from disk", () => {
     await expect(column(app, "review").locator(`[data-id="${id}"]`)).toBeVisible();
     await expect(column(app, "in-progress").locator(`[data-id="${id}"]`)).toHaveCount(0);
 
-    await writeFile(page, "Projects/scale/docs/roadmap/T-900-new.md", ticketFile({ id: "T-900", kind: "task", title: "New from Finder", status: "in-progress", priority: "P0" }));
+    await writeFile(page, "Projects/scale/private/roadmap/T-900-new.md", ticketFile({ id: "T-900", kind: "task", title: "New from Finder", status: "in-progress", priority: "P0" }));
     await expect(column(app, "in-progress").locator('[data-id="T-900"]')).toBeVisible();
-    await page.evaluate(() => window.fakeHost.deleteFile("Projects/scale/docs/roadmap/T-900-new.md"));
+    await page.evaluate(() => window.fakeHost.deleteFile("Projects/scale/private/roadmap/T-900-new.md"));
     await expect(card(app, "T-900")).toHaveCount(0);
 
     await expect(app.getByTestId("board")).toHaveAttribute("data-area", "solutions");
@@ -303,13 +303,13 @@ test.describe("live from disk", () => {
 });
 
 test.describe("backlog location", () => {
-  test("a project without docs/roadmap/ asks for its backlog folder; the choice is stored and loads the board", async ({ page }) => {
+  test("a project without private/roadmap/ asks for its backlog folder; the choice is stored and loads the board", async ({ page }) => {
     const app = await openBoard(page, "beta");
-    await expect(app.getByTestId("choose-backlog-state")).toContainText("Beta has no docs/roadmap/ folder.");
+    await expect(app.getByTestId("choose-backlog-state")).toContainText("Beta has no private/roadmap/ folder.");
     await shot(page, "board-fake-choose-backlog");
 
     // Cancelling changes nothing; a folder outside the project is refused by the picker.
-    await page.evaluate(() => window.fakeHost.answerPick("Projects/alpha/docs"));
+    await page.evaluate(() => window.fakeHost.answerPick("Projects/alpha/private"));
     await app.getByTestId("choose-backlog").click();
     await expect.poll(() => page.evaluate(() => window.fakeHost.pickRequests.at(-1))).toEqual({ kind: "folder", root: "Projects/beta", initial: "Projects/beta" });
     await expect(app.getByTestId("choose-backlog-state")).toBeVisible();
@@ -327,17 +327,17 @@ test.describe("backlog location", () => {
   test("a backlog folder made after “No backlog found” loads the board by itself; removed again, the board asks again", async ({ page }) => {
     const app = await openBoard(page, "beta");
     await expect(app.getByTestId("choose-backlog-state")).toBeVisible();
-    await writeFile(page, "Projects/beta/docs/notes.md", "# Not the backlog\n");
+    await writeFile(page, "Projects/beta/private/notes.md", "# Not the backlog\n");
     await expect(app.getByTestId("choose-backlog-state")).toBeVisible();
-    await writeFile(page, "Projects/beta/docs/roadmap/E-020-late.md", ticketFile({ id: "E-020", kind: "epic", title: "Late", status: "planned" }));
+    await writeFile(page, "Projects/beta/private/roadmap/E-020-late.md", ticketFile({ id: "E-020", kind: "epic", title: "Late", status: "planned" }));
     await app.getByTestId("area-solutions").click();
     await expect(card(app, "E-020")).toBeVisible();
     // The folder is watched now: a second ticket shows up too.
-    await writeFile(page, "Projects/beta/docs/roadmap/E-021-later.md", ticketFile({ id: "E-021", kind: "epic", title: "Later", status: "planned" }));
+    await writeFile(page, "Projects/beta/private/roadmap/E-021-later.md", ticketFile({ id: "E-021", kind: "epic", title: "Later", status: "planned" }));
     await expect(card(app, "E-021")).toBeVisible();
-    await page.evaluate(() => window.fakeHost.rename("Projects/beta/docs/roadmap", "Projects/beta/docs/old-roadmap"));
+    await page.evaluate(() => window.fakeHost.rename("Projects/beta/private/roadmap", "Projects/beta/private/old-roadmap"));
     await expect(app.getByTestId("choose-backlog-state")).toBeVisible();
-    await page.evaluate(() => window.fakeHost.rename("Projects/beta/docs/old-roadmap", "Projects/beta/docs/roadmap"));
+    await page.evaluate(() => window.fakeHost.rename("Projects/beta/private/old-roadmap", "Projects/beta/private/roadmap"));
     await expect(card(app, "E-021")).toBeVisible();
   });
 
@@ -355,7 +355,7 @@ test.describe("backlog location", () => {
     await shot(page, "board-fake-settings-problem");
   });
 
-  test("Change backlog folder… in the settings menu re-points the board", async ({ page }) => {
+  test("Change backlog folder… in the ⋯ menu re-points the board", async ({ page }) => {
     const app = await openBoard(page);
     await app.getByTestId("board-menu-button").click();
     await shot(page, "board-fake-settings-menu");

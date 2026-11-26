@@ -47,18 +47,31 @@ If the template can't be used later (deleted, unreadable frontmatter), the setti
 
 ## Board
 
+**Settings page:** the Board tab's **⚙ Settings** — in the board's header, right of **⋯**, and
+beside the title of "Choose a project" at Workspace. **← Board** goes back. The page is the same
+whichever project is open: it holds the workspace's settings and the folder of any project.
+
+| Section | Setting | Stored | Default | Does |
+|---|---|---|---|---|
+| **Backlog folder** | **Default for this workspace** | `backlogPathPattern` in `Apps/pomade-board/settings.json` | `private/roadmap/` | the folder of tickets in every project, relative to the project's own folder. Saved on Enter or leaving the field. Emptied, it goes back to the default. An absolute path, or one that leaves the project (`../`), is refused |
+| **Backlog folder** | **Folder for a project** — a row per project with **Change…** and **×**; **Add a project…** | per-project app setting `backlogPath`, relative to the project's root | none — the project uses the default | a project whose tickets are somewhere else. **Add a project…** lists the projects that have no folder of their own (type to filter, Enter or a click picks), then opens the folder dialog limited to that project. **Change…** picks another folder; **×** puts the project back on the default |
+| **New tickets** | **Reporter** | `reporter` in `Apps/pomade-board/settings.json` | `d.voronov` | the handle written as `reporter:` on every ticket the Board creates; no spaces. Saved on Enter or leaving the field. Emptied, it goes back to the default |
+
+Each change saves at once, the page says so ("Default folder saved."), and every open board
+follows it without a reload.
+
+Two settings belong to the open project and stay in its board's **⋯** menu:
+
 | Setting | Where it is changed | Stored | Default |
 |---|---|---|---|
-| Backlog folder pattern | by hand: `backlogPathPattern` in `Apps/pomade-board/settings.json` | synced settings | `docs/roadmap/` — relative to each project's root |
-| Reporter for new tickets | **⋯ → Reporter for new tickets…**, or by hand: `reporter` | synced settings | `d.voronov` — the handle written as `reporter:` on every ticket the Board creates; no spaces; emptied in the form, back to the default |
-| Backlog folder of one project | **Choose backlog folder** (no backlog found) or **⋯ → Change backlog folder…** | per-project app setting `backlogPath`, relative to the project root; overrides the pattern | none |
+| Backlog folder of this project | **⋯ → Change backlog folder…** — the same value as the project's row on the settings page; also **Choose backlog folder** when no backlog is found | per-project app setting `backlogPath` | none |
 | Move done epics and tasks to `done/` | **⋯** menu, a checkmark item | per-project app setting `moveDoneToDoneFolder` | on |
 
 Example `Apps/pomade-board/settings.json`:
 
 ```json
 {
-  "backlogPathPattern": "docs/roadmap/",
+  "backlogPathPattern": "private/roadmap/",
   "reporter": "d.voronov"
 }
 ```

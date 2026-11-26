@@ -48,9 +48,9 @@ test.describe("a project deleted in a real Pomade", () => {
 
   test.beforeAll(async () => {
     fixture = await createPomadeFixture([
-      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("docs/roadmap", sampleBacklog()) } },
-      { key: "delta", name: "Delta", root: "Projects/delta", files: { "README.md": "# Delta\n", ...under("docs/roadmap", deltaBacklog()) } },
-      { key: "gamma", name: "Gamma", root: "Projects/gamma", files: { "README.md": "# Gamma\n", ...under("docs/roadmap", deltaBacklog()) } },
+      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("private/roadmap", sampleBacklog()) } },
+      { key: "delta", name: "Delta", root: "Projects/delta", files: { "README.md": "# Delta\n", ...under("private/roadmap", deltaBacklog()) } },
+      { key: "gamma", name: "Gamma", root: "Projects/gamma", files: { "README.md": "# Gamma\n", ...under("private/roadmap", deltaBacklog()) } },
       { key: "beta", name: "Beta", root: "Projects/beta", files: { "README.md": "# Beta\n" } },
     ]);
     await mkdir(abs(`${TODOS}/Beta`), { recursive: true });

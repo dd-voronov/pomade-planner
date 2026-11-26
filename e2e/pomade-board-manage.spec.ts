@@ -50,7 +50,7 @@ test.describe("E-002 in a real Pomade", () => {
   let page: Page;
   const abs = (rel: string) => join(fixture.workspaceRoot, rel);
   const POMADE = "Projects/pomade";
-  const roadmap = (rel: string) => abs(`${POMADE}/docs/roadmap/${rel}`);
+  const roadmap = (rel: string) => abs(`${POMADE}/private/roadmap/${rel}`);
   const deltaName = (id: string) => {
     const spec = DELTA_TICKETS.find((t) => t.id === id);
     if (!spec) throw new Error(id);
@@ -88,8 +88,8 @@ test.describe("E-002 in a real Pomade", () => {
 
   test.beforeAll(async () => {
     fixture = await createPomadeFixture([
-      { key: "pomade", name: "Pomade", root: "Projects/pomade", files: { "README.md": "# Pomade\n", ...under("docs/roadmap", deltaBacklog()) } },
-      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("docs/roadmap", sampleBacklog()) } },
+      { key: "pomade", name: "Pomade", root: "Projects/pomade", files: { "README.md": "# Pomade\n", ...under("private/roadmap", deltaBacklog()) } },
+      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("private/roadmap", sampleBacklog()) } },
       { key: "beta", name: "Beta", root: "Projects/beta", files: { "README.md": "# Beta\n" } },
     ]);
     git(abs(POMADE), "init", "-q");
@@ -213,14 +213,14 @@ test.describe("E-002 in a real Pomade", () => {
     await shot(page, "e002-pomade-workspace");
 
     // Live at Workspace too: a new signal in Alpha shows in both within ~1 s.
-    await writeFile(abs("Projects/alpha/docs/roadmap/S-002-seen-at-workspace.md"), ticketFile({ id: "S-002", kind: "signal", title: "Seen at Workspace", status: "new", priority: "P0" }));
+    await writeFile(abs("Projects/alpha/private/roadmap/S-002-seen-at-workspace.md"), ticketFile({ id: "S-002", kind: "signal", title: "Seen at Workspace", status: "new", priority: "P0" }));
     await expect(row("alpha").getByTestId("chooser-needs-you")).toHaveText("2 in review · 2 new signals", { timeout: 1_500 });
     await expect(listed("alpha")).toHaveText(["2 in review", "2 new signals"], { timeout: 1_500 });
   });
 
   test("dragging a signal without a problem to Triaged asks for its problem first; the pick is written with the status", async () => {
     const b = await openBoard("alpha", "signals");
-    const path = abs(`Projects/alpha/docs/roadmap/${sampleName("S-001")}`);
+    const path = abs(`Projects/alpha/private/roadmap/${sampleName("S-001")}`);
     const before = await readFile(path, "utf8");
     await drag(page, card(b, "S-001"), column(b, "triaged"));
     await expect(b.getByTestId("triage-picker")).toBeVisible();
@@ -234,8 +234,8 @@ test.describe("E-002 in a real Pomade", () => {
   test("a backlog folder made after “No backlog found” loads the board without a refresh", async () => {
     const b = await openBoard("beta");
     await expect(b.getByTestId("choose-backlog-state")).toBeVisible();
-    await mkdir(abs("Projects/beta/docs/roadmap"), { recursive: true });
-    await writeFile(abs("Projects/beta/docs/roadmap/P-001-late.md"), ticketFile({ id: "P-001", kind: "problem", title: "Late backlog", status: "backlog" }));
+    await mkdir(abs("Projects/beta/private/roadmap"), { recursive: true });
+    await writeFile(abs("Projects/beta/private/roadmap/P-001-late.md"), ticketFile({ id: "P-001", kind: "problem", title: "Late backlog", status: "backlog" }));
     await expect(card(b, "P-001")).toBeVisible({ timeout: 3_000 });
   });
 

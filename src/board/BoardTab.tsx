@@ -6,19 +6,27 @@ import { EmptyState } from "../core/EmptyState";
 import { errorText, useActiveProject } from "../core/host";
 import { Board } from "./Board";
 import { BoardGlyph } from "./BoardGlyph";
+import { BoardSettingsPage } from "./BoardSettingsPage";
 import { ProjectChooser } from "./ProjectChooser";
 import { DEFAULT_AREAS } from "./model/areas";
-import { PROJECT_KEYS, relativeToProject } from "./model/settings";
+import { PROJECT_KEYS } from "./model/settings";
 import { useBacklog, useProjectBoard } from "./useBoardData";
+import { chooseBacklogFolder } from "./write";
 
-/** The Board tab: the active project's board; at Workspace, the project chooser. */
+/**
+ * The Board tab: the active project's board; at Workspace, the project chooser; and, from either,
+ * the settings page — the same whichever project is active, until **← Board** leaves it.
+ */
 export function BoardTab({ host }: { host: HostClient }) {
   const project = useActiveProject(host);
-  if (project.kind === "workspace") return <ProjectChooser host={host} areas={DEFAULT_AREAS} />;
-  return <ProjectBoard key={project.id} host={host} project={project} />;
+  const [showSettings, setShowSettings] = useState(false);
+  const openSettings = useCallback(() => setShowSettings(true), []);
+  if (showSettings) return <BoardSettingsPage host={host} onBack={() => setShowSettings(false)} />;
+  if (project.kind === "workspace") return <ProjectChooser host={host} areas={DEFAULT_AREAS} onShowSettings={openSettings} />;
+  return <ProjectBoard key={project.id} host={host} project={project} onShowSettings={openSettings} />;
 }
 
-function ProjectBoard({ host, project }: { host: HostClient; project: ProjectRef }) {
+function ProjectBoard({ host, project, onShowSettings }: { host: HostClient; project: ProjectRef; onShowSettings: () => void }) {
   const { state, reload } = useProjectBoard(host, project);
   const location = state.status === "ready" ? state.location : null;
   const { state: backlog, reload: reloadBacklog } = useBacklog(host, location?.path ?? null);
@@ -26,19 +34,9 @@ function ProjectBoard({ host, project }: { host: HostClient; project: ProjectRef
 
   const chooseFolder = useCallback(async () => {
     setActionError(null);
-    try {
-      const { path } = await host.files.pickFolder({ root: project.id, initial: project.root });
-      if (path === null) return;
-      const relative = relativeToProject(project.root, path);
-      if (relative === null) {
-        setActionError(`${path} is outside ${project.name}. Choose a folder inside the project.`);
-        return;
-      }
-      await host.project.setSettings({ projectId: project.id, settings: { [PROJECT_KEYS.backlogPath]: relative } });
-      await reload();
-    } catch (error) {
-      setActionError(`Couldn't set the backlog folder: ${errorText(error)}`);
-    }
+    const choice = await chooseBacklogFolder(host, project);
+    if (choice.kind === "refused") setActionError(choice.message);
+    if (choice.kind === "chosen") await reload();
   }, [host, project, reload]);
 
   const moveDone = state.status === "ready" ? state.settings.moveDoneToDoneFolder : true;
@@ -105,7 +103,7 @@ function ProjectBoard({ host, project }: { host: HostClient; project: ProjectRef
         reload={reloadBacklog}
         onToggleMoveDone={() => void toggleMoveDone()}
         onChangeFolder={() => void chooseFolder()}
-        onSettingsSaved={() => void reload()}
+        onShowSettings={onShowSettings}
       />
       {actionError !== null ? (
         <div className="toast" role="alert" data-testid="board-action-error">

@@ -56,12 +56,16 @@ workspace. Change it later in the Planner's [settings](settings.md#planner); no 
 ## First run — Board
 
 Open a project and click the Board icon: a Board tab opens on the project's backlog, and the side
-panel shows "Needs you". The Board looks in `docs/roadmap/` under the project's root. When that
+panel shows "Needs you". The Board looks in `private/roadmap/` under the project's root. When that
 folder isn't there it says **"No backlog found"** with **Choose backlog folder** — pick the folder
 inside the project that holds the tickets. The choice is kept per project, relative to its root.
 
+When your projects keep their tickets in another folder (`docs/roadmap/`, say), set it once for the
+whole workspace: **⚙ Settings → Backlog folder → Default for this workspace**. The same page gives
+any single project a folder of its own ([settings](settings.md#board)).
+
 At Workspace (no active project) the Board tab lists every project that has a backlog; click one to
-open its board.
+open its board. Its **⚙** opens the settings page too.
 
 ## Next
 

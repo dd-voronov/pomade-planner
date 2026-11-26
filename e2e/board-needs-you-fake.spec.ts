@@ -10,8 +10,8 @@ import { boxOf } from "./fixtures/board";
 import { shot } from "./fixtures/screens";
 
 const APP = BOARD_URL;
-const ALPHA = "Projects/alpha/docs/roadmap";
-const DELTA = "Projects/delta/docs/roadmap";
+const ALPHA = "Projects/alpha/private/roadmap";
+const DELTA = "Projects/delta/private/roadmap";
 const GAMMA = "Projects/gamma/plans";
 const SCALE_REVIEW = Object.values(scaleBacklog(300)).filter((text) => text.includes("\nstatus: review\n")).length;
 
@@ -147,7 +147,7 @@ test("the list is live: counts follow the files, a project with something new jo
   await expect(counts(app.getByTestId("needs-you-all"))).toHaveText([`${4 + SCALE_REVIEW} in review`, "2 new signals"]);
 
   // Beta gets a backlog with a ticket in review: it joins between Alpha and Delta's group, in sidebar order.
-  await writeFile(page, "Projects/beta/docs/roadmap/E-001-beta.md", ticketFile({ id: "E-001", kind: "epic", title: "Beta epic", status: "review" }));
+  await writeFile(page, "Projects/beta/private/roadmap/E-001-beta.md", ticketFile({ id: "E-001", kind: "epic", title: "Beta epic", status: "review" }));
   await expect(counts(listRow(app, "beta"))).toHaveText(["1 in review"], { timeout: 1_000 });
   expect(await listed(app)).toEqual(["alpha", "delta", "beta", "scale"]);
   await expect(rows(app)).toHaveCount(0);
@@ -192,7 +192,7 @@ test("with nothing waiting anywhere the panel says “Nothing needs you”, on t
   await expect(app.getByTestId("needs-you-project")).toHaveCount(4);
   // Every backlog moves away: nothing is left to wait on.
   await page.evaluate(() => {
-    for (const folder of ["Projects/alpha/docs/roadmap", "Projects/delta/docs/roadmap", "Projects/scale/docs/roadmap", "Projects/gamma/plans"]) window.fakeHost.rename(folder, `${folder}-old`);
+    for (const folder of ["Projects/alpha/private/roadmap", "Projects/delta/private/roadmap", "Projects/scale/private/roadmap", "Projects/gamma/plans"]) window.fakeHost.rename(folder, `${folder}-old`);
   });
   await expect(app.getByTestId("needs-you-empty")).toContainText("No tickets in review and no new signals in any project.");
   await expect(app.getByTestId("needs-you-project")).toHaveCount(0);

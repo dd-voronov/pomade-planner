@@ -3,6 +3,7 @@ import type { HostClient } from "pomade-kit/sdk";
 import { WORKSPACE_PROJECT_ID, type JsonValue } from "pomade-kit/protocol";
 
 import { EmptyState } from "../core/EmptyState";
+import { GearGlyph } from "../core/glyphs";
 import { errorText, useActiveProject } from "../core/host";
 import { itemRoute, quickAddOverlay, ROUTES, type QuickAddPrefill } from "../core/views";
 import { useClock, usePlannerDay, type Clock } from "./clock";
@@ -275,15 +276,6 @@ function SelectGlyph() {
       <path d="M4.8 6.6l1.4 1.4 2.6-2.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M12.8 6v5.7c0 .6-.5 1.1-1.1 1.1H6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
-  );
-}
-
-/** Pomade's own Settings glyph (the gear of its sidebar's Settings row). */
-function GearGlyph() {
-  return (
-    <span className="gear-glyph" aria-hidden="true">
-      ⚙
-    </span>
   );
 }
 

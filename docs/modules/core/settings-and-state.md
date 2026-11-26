@@ -1,19 +1,21 @@
 ---
 doc: docs/modules/core/settings-and-state.md
 audience: engineers, product
-holds: what each app keeps where: synced settings in `Apps/<app id>/settings.json`, the Board's per-project settings, machine-local state with every key and its shape, and the Planner's `test.clock` hook
+holds: what each app keeps where: synced settings in `Apps/<app id>/settings.json` and how they are read live, the Board's per-project settings, machine-local state with every key and its shape, and the Planner's `test.clock` hook
 kind: reference
 ---
 
 # Settings and state — what each app keeps, and where
 
-**Module:** `core` · **UI:** the Planner's settings page ([[settings-and-onboarding]]), the Board
-tab's ⋯ menu ([[backlog-location]]) · **Code:** `src/core/settings-file.ts`,
+**Module:** `core` · **UI:** the Planner's settings page ([[settings-and-onboarding]]), the Board's
+settings page and its tab's ⋯ menu ([[backlog-location]]) · **Code:** `src/core/settings-file.ts`,
+`src/core/live-settings.ts`, `src/core/SettingsShell.tsx`, `src/core/settings.css`,
 `src/planner/model/settings.ts`, `src/planner/model/view-state.ts`, `src/planner/model/pins.ts`,
 `src/planner/model/folds.ts`, `src/planner/model/daily.ts`, `src/planner/model/attention.ts`,
 `src/planner/usePlannerState.ts`, `src/planner/clock.ts`, `src/planner/write.ts` (`saveSettings`,
 `saveProjectFolders`), `src/board/model/settings.ts`, `src/board/model/view-state.ts`,
-`src/board/useBoardData.ts`, `src/board/ReporterForm.tsx` · **e2e:** `pomade-two-apps.spec.ts`, `planner-fake.spec.ts`,
+`src/board/useBoardData.ts`, `src/board/write.ts` (`saveSyncedSettings`, `setBacklogFolder`),
+`src/board/BoardSettingsPage.tsx` · **e2e:** `pomade-two-apps.spec.ts`, `board-settings-fake.spec.ts`, `planner-fake.spec.ts`,
 `planner-today-fake.spec.ts`, `planner-project-fake.spec.ts`, `planner-projects-fake.spec.ts`,
 `pomade-planner-template.spec.ts` · **Unit:** `src/core/settings-file.test.ts`,
 `src/planner/model/settings.test.ts`, `src/planner/model/view-state.test.ts`,
@@ -30,9 +32,9 @@ ever written into an item file.
 
 | What | Planner | Board |
 |---|---|---|
-| Synced settings, `<workspace>/Apps/<app id>/settings.json` | `Apps/pomade-planner/settings.json`: `tasksRoot` (workspace-relative; no default), `dailyNoteTemplate` (workspace-relative `.md`), `dayBoundary` (`H:MM`, default `3:00`), `projectFolders` (the project-id → folder map, [[projects]]) | `Apps/pomade-board/settings.json`: `backlogPathPattern` (default `docs/roadmap/`, [[backlog-location]]), `reporter` (the handle written as `reporter:` on created tickets, default `d.voronov`, [[editing-drag-create]] "Reporter setting") |
+| Synced settings, `<workspace>/Apps/<app id>/settings.json` | `Apps/pomade-planner/settings.json`: `tasksRoot` (workspace-relative; no default), `dailyNoteTemplate` (workspace-relative `.md`), `dayBoundary` (`H:MM`, default `3:00`), `projectFolders` (the project-id → folder map, [[projects]]) | `Apps/pomade-board/settings.json`: `backlogPathPattern` (default `private/roadmap/`, [[backlog-location]]), `reporter` (the handle written as `reporter:` on created tickets, default `d.voronov`, [[editing-drag-create]] "Reporter setting") |
 | Per-project settings (Host API per-project app settings, kept per app id in the workspace config) | none | `backlogPath` (backlog folder override, relative to the project root), `moveDoneToDoneFolder` (default on) |
-| Machine-local state (Host API `state`), `<userData>/app-state/<app id>/` | the keys below | `board.view.<projectId>` |
+| Machine-local state (Host API `state`), `<userData>/app-state/<app id>/` | the keys below | `board.view.<projectId>`, `board.settingsWritten` |
 
 ## Synced settings file
 
@@ -52,13 +54,23 @@ value falls back to its default on its own and the problems are returned togethe
 say what is wrong ("dayBoundary must be a time like "3:00" — using the defaults.") while working on
 the defaults.
 
-The Planner's writes (`saveSettings`, `saveProjectFolders` in `src/planner/write.ts`) go through
-`saveSettingsFile` and bump the state key `planner.settingsWritten` (`SETTINGS_CHANGED_KEY`) so the
-app's other frames re-read. The settings folder itself is a live folder ([[file-model]] "Live from
-disk"), so a hand edit shows too. The Board writes `reporter` from its ⋯ menu through
-`saveSettingsFile` and reads it fresh at each create; `backlogPathPattern` is edited by hand and
-read when a board loads. Its per-project settings are set from the Board tab and followed through
-`project.updated` (`useProjectSettingsChanges`).
+**Read live** (`live-settings.ts`, `useSettingsFile`): each app reads its file through one hook —
+the settings folder is a live folder ([[file-model]] "Live from disk"), so a hand edit or a pull
+shows, and a frame that writes the file bumps a state key of the app (`announceSettingsWrite`), so
+the app's other frames re-read at once even where the folder is not there yet.
+
+- The Planner (`usePlannerSettings`): its writes (`saveSettings`, `saveProjectFolders` in
+  `src/planner/write.ts`) go through `saveSettingsFile` and bump `planner.settingsWritten`.
+- The Board (`useSyncedSettings`): its settings page writes `backlogPathPattern` and `reporter`
+  through `saveSyncedSettings` (`src/board/write.ts`), which bumps `board.settingsWritten`; every
+  board, panel and chooser follows ([[backlog-location]] "Every board follows"). A create reads
+  the file fresh for the reporter (`readSyncedSettings`). The Board's per-project settings are
+  set from the settings page and the Board tab, and followed through `project.updated`
+  (`useProjectSettingsChanges`).
+
+Both apps' settings pages share one shell and one set of styles (`SettingsShell`,
+`core/settings.css`): the header with the way back, sections, and rows of a name and its help
+beside the control.
 
 ## Machine-local state
 
@@ -73,6 +85,7 @@ read when a board loads. Its per-project settings are set from the Board tab and
 | `planner.dailyNoteUnpinned` | the planner day the daily note was unpinned on, in every context |
 | `planner.summaryDay` | the day the morning summary was last posted |
 | `planner.settingsWritten` | a timestamp, bumped by a settings write so the app's other frames re-read |
+| `board.settingsWritten` | the same for the Board's settings file |
 | `board.view.<projectId>` | `{ area, toggled: { <areaId>: string[] } }`: the open area and, per area, the statuses of the columns toggled against their default |
 | `test.clock` | `{ offsetMs }`, the test hook below |
 

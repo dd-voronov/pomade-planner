@@ -9,6 +9,7 @@ import "pomade-kit/tokens.css";
 import { App, type AppShell } from "./App";
 import { Tips } from "./Tips";
 import "./app.css";
+import "./settings.css";
 import "./switcher.css";
 import "./tips.css";
 

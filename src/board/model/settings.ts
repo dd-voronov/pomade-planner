@@ -1,10 +1,11 @@
 // The Board's settings ([[settings-and-state]]) and where a project's backlog is ([[backlog-location]]).
 //
 // - Synced settings: `<workspace>/Apps/pomade-board/settings.json` (core/settings-file), git-synced
-//   with the workspace. The Board reads `backlogPathPattern` (default `docs/roadmap/`): the backlog folder,
+//   with the workspace. The Board reads `backlogPathPattern` (default `private/roadmap/`): the backlog folder,
 //   relative to a project's root; and `reporter` (default `d.voronov`): the handle written as
 //   `reporter:` on the tickets it creates. A missing file means every default; the app never
-//   creates it on read. A key with a wrong value falls back to its default on its own.
+//   creates it on read. A key with a wrong value falls back to its default on its own. Both are
+//   edited on the Board's settings page.
 // - Per-project app settings (Host API `project.getSettings`): `backlogPath` — the folder the user
 //   chose, relative to the project root, overriding the pattern — and `moveDoneToDoneFolder`
 //   (default true).
@@ -16,8 +17,13 @@ import { parseSettingsText, settingsPathOf } from "../../core/settings-file";
 /** Workspace-relative path of the Board's synced settings file. */
 export const SYNCED_SETTINGS_PATH = settingsPathOf("pomade-board");
 
-export const DEFAULT_BACKLOG_PATTERN = "docs/roadmap/";
+/** The default backlog folder, relative to a project's root. */
+const DEFAULT_BACKLOG_FOLDER = "private/roadmap";
+export const DEFAULT_BACKLOG_PATTERN = `${DEFAULT_BACKLOG_FOLDER}/`;
 export const DEFAULT_REPORTER = "d.voronov";
+
+/** A frame that writes the synced settings tells the Board's other frames, which may not see the file's folder yet (state key). */
+export const SETTINGS_CHANGED_KEY = "board.settingsWritten";
 
 export const SYNCED_KEYS = { backlogPathPattern: "backlogPathPattern", reporter: "reporter" } as const;
 
@@ -48,6 +54,19 @@ export function normalizeReporter(value: string): string | null {
   return handle !== "" && !/\s/.test(handle) ? handle : null;
 }
 
+/**
+ * What the settings page writes as `backlogPathPattern` for a typed folder: the folder with a
+ * trailing slash (`./` for the project's root); `undefined` for an empty field — the key is removed
+ * and the default applies; `null` when it is absolute or climbs out of the project.
+ */
+export function patternOf(typed: string): string | undefined | null {
+  const text = typed.trim();
+  if (text === "") return undefined;
+  const relative = normalizeRelative(text);
+  if (relative === null) return null;
+  return relative === "" ? "./" : `${relative}/`;
+}
+
 /** Synced settings from the file's text (`null` = the file does not exist). */
 export function parseSyncedSettings(text: string | null): ParsedSyncedSettings {
   const { object, problem } = parseSettingsText(text, SYNCED_SETTINGS_PATH);
@@ -57,7 +76,7 @@ export function parseSyncedSettings(text: string | null): ParsedSyncedSettings {
 
   const pattern = object[SYNCED_KEYS.backlogPathPattern];
   if (typeof pattern === "string" && pattern.trim() !== "" && normalizeRelative(pattern.trim()) !== null) settings.backlogPathPattern = pattern.trim();
-  else if (pattern !== undefined) problems.push(`backlogPathPattern must be a folder inside the project, like "docs/roadmap/"`);
+  else if (pattern !== undefined) problems.push(`backlogPathPattern must be a folder inside the project, like "${DEFAULT_BACKLOG_PATTERN}"`);
 
   const reporter = object[SYNCED_KEYS.reporter];
   const handle = typeof reporter === "string" ? normalizeReporter(reporter) : null;
@@ -95,11 +114,11 @@ export interface BacklogLocation {
 }
 
 /** Where to look for a project's backlog: the chosen folder when set, else the pattern under the project root. */
-export function backlogLocation(projectRoot: string, project: ProjectBoardSettings, synced: SyncedSettings): BacklogLocation {
+export function backlogLocation(projectRoot: string, project: ProjectBoardSettings, synced: Pick<SyncedSettings, "backlogPathPattern">): BacklogLocation {
   if (project.backlogPath !== null) {
     return { path: joinPath(projectRoot, project.backlogPath), relative: project.backlogPath, source: "chosen" };
   }
-  const relative = normalizeRelative(synced.backlogPathPattern) ?? normalizeRelative(DEFAULT_BACKLOG_PATTERN) ?? "docs/roadmap";
+  const relative = normalizeRelative(synced.backlogPathPattern) ?? DEFAULT_BACKLOG_FOLDER;
   return { path: joinPath(projectRoot, relative), relative, source: "pattern" };
 }
 

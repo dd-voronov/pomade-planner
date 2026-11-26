@@ -57,7 +57,7 @@ Each manifest asks for exactly what its app's source uses (`test/manifest.test.t
 | | Planner | Board |
 |---|---|---|
 | Capabilities | `project.read`, `project.write`, `files.read`, `files.write`, `tabs.open` | the same five |
-| What `project.write` is for | `project.addScopeFolder` / `removeScopeFolder` only | `project.setSettings` (the per-project backlog settings) |
+| What `project.write` is for | `project.addScopeFolder` / `removeScopeFolder` only | `project.setSettings` (the per-project backlog settings — of the active project from its board, of any project from the settings page) |
 | Events subscribed | `pomade.ready`, `project.created`, `project.renamed`, `project.removed`, `project.updated`, `pomade-planner:item.added` | `project.created`, `project.renamed`, `project.removed`, `project.updated` |
 | Events published | `item.added` | none |
 
@@ -91,7 +91,8 @@ Calls that need no capability: `state.*`, `tabs.openApp`, `overlay.open` / `resi
   conditional on the mtime read (`ifMtime`, refused as `changed-on-disk`) ([[file-model]] "Never
   over a newer file").
 - **Pickers.** `files.pickFolder`: the Planner's tasks root (the dialog starts at the folder
-  set), the Board's backlog folder (bounded by the project, starting at its root). `files.pickFile`
+  set), the Board's backlog folder (bounded by the project, starting at its root — for the active
+  project from its board, for any project from the settings page, [[backlog-location]]). `files.pickFile`
   with `extensions: ["md"]` and no `under`: the daily-note template, chosen from the whole
   workspace ([[settings-and-onboarding]]).
 - **Bulk delete.** `files.delete`, at most `FILES_DELETE_MAX_PATHS` (1000) paths a call

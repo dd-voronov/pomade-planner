@@ -91,7 +91,7 @@ const DEFAULT_PROJECTS: FixtureProject[] = [
     root: "Projects/alpha",
     files: {
       "README.md": "# Alpha\n",
-      "docs/roadmap/E-001-first.md": "---\nid: E-001\nkind: epic\ntitle: First\nstatus: planned\npriority: P1\n---\n\n# E-001 — First\n",
+      "private/roadmap/E-001-first.md": "---\nid: E-001\nkind: epic\ntitle: First\nstatus: planned\npriority: P1\n---\n\n# E-001 — First\n",
     },
   },
 ];

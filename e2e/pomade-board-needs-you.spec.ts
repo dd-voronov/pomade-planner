@@ -48,9 +48,9 @@ test.describe("“Needs you” at Workspace in a real Pomade", () => {
 
   test.beforeAll(async () => {
     fixture = await createPomadeFixture([
-      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("docs/roadmap", sampleBacklog()) } },
+      { key: "alpha", name: "Alpha", root: "Projects/alpha", files: { "README.md": "# Alpha\n", ...under("private/roadmap", sampleBacklog()) } },
       { key: "beta", name: "Beta", root: "Projects/beta", files: { "README.md": "# Beta\n" } },
-      { key: "delta", name: "Delta", root: "Projects/delta", files: { "README.md": "# Delta\n", ...under("docs/roadmap", deltaBacklog()) } },
+      { key: "delta", name: "Delta", root: "Projects/delta", files: { "README.md": "# Delta\n", ...under("private/roadmap", deltaBacklog()) } },
     ]);
     ({ app, page } = await launchPomade(fixture, { POMADE_DEV_APPS: DIST }));
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1400, 900));
@@ -104,16 +104,16 @@ test.describe("“Needs you” at Workspace in a real Pomade", () => {
   });
 
   test("the list and an opened project follow the files within ~1 s; a project that empties while open says “Nothing needs you” and keeps the back row", async () => {
-    await writeFile(abs("Projects/alpha/docs/roadmap/S-002-seen-at-workspace.md"), ticketFile({ id: "S-002", kind: "signal", title: "Seen at Workspace", status: "new", priority: "P0" }));
+    await writeFile(abs("Projects/alpha/private/roadmap/S-002-seen-at-workspace.md"), ticketFile({ id: "S-002", kind: "signal", title: "Seen at Workspace", status: "new", priority: "P0" }));
     await expect(counts(listRow("alpha"))).toHaveText(["2 in review", "2 new signals"], { timeout: 1_500 });
     await expect(counts(p.getByTestId("needs-you-all"))).toHaveText(["4 in review", "2 new signals"], { timeout: 1_500 });
 
     await listRow("delta").click();
     expect(await rowIds()).toEqual(["E-018", "P-013"]);
-    const e018 = abs(`Projects/delta/docs/roadmap/${deltaFile("E-018")}`);
+    const e018 = abs(`Projects/delta/private/roadmap/${deltaFile("E-018")}`);
     await writeFile(e018, (await readFile(e018, "utf8")).replace("status: review", "status: in-progress"));
     await expect.poll(() => rowIds(), { timeout: 1_500 }).toEqual(["P-013"]);
-    const p013 = abs(`Projects/delta/docs/roadmap/${deltaFile("P-013")}`);
+    const p013 = abs(`Projects/delta/private/roadmap/${deltaFile("P-013")}`);
     await writeFile(p013, (await readFile(p013, "utf8")).replace("status: review", "status: delivering"));
     await expect(p.getByTestId("needs-you-empty")).toContainText("No tickets in review and no new signals in Delta.", { timeout: 1_500 });
     await expect(p.getByTestId("needs-you-back")).toContainText("Delta");

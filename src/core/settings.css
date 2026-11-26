@@ -1,0 +1,239 @@
+/* An app's settings page in its tab (core/SettingsShell): a 36px header on --panel with the way
+   back, then rows of a name and its help beside the control, in a 720px column. The Planner's and
+   the Board's pages are both built from these. */
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.settings-page__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: var(--tabstrip-h);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.settings-page__title {
+  margin-right: auto;
+  font-weight: var(--fw-semibold);
+}
+
+.settings-page__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.settings__problem {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  color: var(--git-modified);
+  font-size: var(--fs-sm);
+}
+
+/* A section's heading over its rows: a side-panel header, as the Board's column headers. */
+.settings__section {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings__row + .settings__section {
+  margin-top: var(--space-2);
+}
+
+.settings__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings__name {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+}
+
+.settings__help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.settings__control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.settings__path {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  height: 30px;
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A control that is a list of things, each with its own actions (the Board's folder per project),
+   and what it says while the list is empty. */
+.settings__none {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  min-height: 30px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.settings__list {
+  display: flex;
+  flex-basis: 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--space-1);
+  padding: 6px var(--space-1) 6px var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.settings__item-title {
+  display: flex;
+  grid-column: 1;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.settings__item-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings__item-group {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings__item-path {
+  grid-column: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings__item > .btn,
+.settings__item > .icon-btn {
+  grid-row: 1 / span 2;
+}
+
+.settings__item > .btn {
+  grid-column: 2;
+  margin-left: var(--space-2);
+}
+
+.settings__item > .icon-btn {
+  grid-column: 3;
+}
+
+.settings__time {
+  width: 88px;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings__file {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.settings__warning {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--git-modified);
+  font-size: var(--fs-sm);
+}
+
+.settings__error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+
+.settings__foot {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.settings__foot code {
+  font-size: var(--fs-xs);
+}
+
+.settings__saved {
+  color: var(--badge-fg);
+}
+
+@media (max-width: 520px) {
+  .settings__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

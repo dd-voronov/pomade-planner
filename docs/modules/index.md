@@ -34,7 +34,8 @@ theme, and a test harness from pure logic up to a real Pomade.
   through the Host API watcher, only recognised files count, unreadable ones stay visible, every
   edit is field-only, and an action's first write is conditional on the mtime read.
 - [[settings-and-state]] — what each app keeps where: synced settings in
-  `Apps/<app id>/settings.json`, the Board's per-project settings, every machine-local state key
+  `Apps/<app id>/settings.json` read live, the settings page both apps build theirs from, the
+  Board's per-project settings, every machine-local state key
   with its shape (view state, pins, folds, the daily-note and summary days), and the Planner's
   `test.clock` hook.
 - [[host-api-usage]] — which Pomade and `pomade-kit` features the apps need (Pomade 0.3.3 and later,
@@ -93,12 +94,13 @@ it is opened.
 
 ## board — the Board app
 
-A kanban over each project's frontmatter backlog in the Pomade convention: where the backlog is,
-three fixed areas with their columns, edits that are field-only writes, ticket creation with the
+A kanban over each project's frontmatter backlog in the Pomade convention: where the backlog is
+and the settings page that says so, three fixed areas with their columns, edits that are field-only writes, ticket creation with the
 next free ID, and "Needs you" in the side panel.
 
-- [[backlog-location]] — the backlog folder from the workspace pattern or a per-project choice,
-  live even while missing, and the Workspace project chooser with its counts.
+- [[backlog-location]] — the backlog folder from the workspace's default or a per-project choice,
+  the settings page that edits both (and the reporter), every board following a change, live even
+  while missing, and the Workspace project chooser with its counts.
 - [[convention-areas-columns]] — the ticket convention and the `signal` kind, the fixed areas and
   columns, the Unreadable strip, empty areas, cards and their order.
 - [[editing-drag-create]] — drag as a status write (never over a newer file), `done/` moves, signal

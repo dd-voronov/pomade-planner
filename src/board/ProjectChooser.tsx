@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { HostClient } from "pomade-kit/sdk";
 
 import { EmptyState } from "../core/EmptyState";
+import { GearGlyph } from "../core/glyphs";
 import { ROUTES } from "../core/views";
 import { BoardGlyph } from "./BoardGlyph";
 import { countOpen, type AreaDef } from "./model/areas";
 import { needsYou, needsYouCounts, needsYouParts } from "./model/needs-you";
+import { groupLabel } from "./model/project-folders";
 import { useBacklog, useCandidates, type Candidate } from "./useBoardData";
 
 interface RowProps {
@@ -34,7 +36,7 @@ function ProjectRow({ host, candidate, areas, onShown }: RowProps) {
         onClick={() => void host.tabs.openApp({ route: ROUTES.board, projectId: project.id })}
       >
         <span className="chooser__name">{project.name}</span>
-        {project.groupPath.length > 0 ? <span className="chooser__group">{project.groupPath.join(" › ")}</span> : null}
+        {project.groupPath.length > 0 ? <span className="chooser__group">{groupLabel(project)}</span> : null}
         <span className="chooser__stats">
           <span className="chooser__count" data-testid="chooser-count">
             {open} open
@@ -50,8 +52,8 @@ function ProjectRow({ host, candidate, areas, onShown }: RowProps) {
   );
 }
 
-/** The Workspace's Board tab: every project whose backlog resolves; a click opens that project's board. */
-export function ProjectChooser({ host, areas }: { host: HostClient; areas: readonly AreaDef[] }) {
+/** The Workspace's Board tab: every project whose backlog resolves; a click opens that project's board. The gear opens the settings page. */
+export function ProjectChooser({ host, areas, onShowSettings }: { host: HostClient; areas: readonly AreaDef[]; onShowSettings: () => void }) {
   const state = useCandidates(host);
   const [shown, setShown] = useState<Record<string, boolean>>({});
   const onShown = useCallback((id: string, isShown: boolean) => setShown((s) => (s[id] === isShown ? s : { ...s, [id]: isShown })), []);
@@ -70,9 +72,14 @@ export function ProjectChooser({ host, areas }: { host: HostClient; areas: reado
   return (
     <main className="chooser" data-testid="project-chooser" aria-busy={state.status === "loading" || !settled}>
       <div className="chooser__inner">
-        <h1 className="chooser__title" data-testid="view-title">
-          Choose a project
-        </h1>
+        <div className="chooser__head">
+          <h1 className="chooser__title" data-testid="view-title">
+            Choose a project
+          </h1>
+          <button type="button" className="icon-btn" aria-label="Settings" data-tip="Settings" data-testid="board-settings" onClick={onShowSettings}>
+            <GearGlyph />
+          </button>
+        </div>
         <p className="chooser__text">Projects with a backlog. Open one to see its board.</p>
         <ul className="chooser__list" data-testid="chooser-list">
           {candidates.map((c) => (
@@ -81,7 +88,7 @@ export function ProjectChooser({ host, areas }: { host: HostClient; areas: reado
         </ul>
         {state.status === "ready" && settled && !anyShown ? (
           <p className="chooser__empty" data-testid="chooser-empty">
-            No project has a backlog yet. Open a project and click the Board icon to choose its backlog folder.
+            No project has a backlog yet. Open a project and click the Board icon to choose its backlog folder, or set the folder for every project in the settings (⚙).
           </p>
         ) : null}
       </div>

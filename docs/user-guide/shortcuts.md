@@ -122,6 +122,15 @@ Also the **+ Add from…** mix-in picker.
 |---|---|
 | Enter or leaving the field | saves **Day starts at** / **Daily note template** |
 
+## Board — settings page
+
+| Key | Does |
+|---|---|
+| Enter or leaving the field | saves **Default for this workspace** / **Reporter** |
+| typing in **Add a project…** | filters the projects by name or group |
+| ↑ / ↓, Enter | highlight a project, pick it (the folder dialog opens next) |
+| Esc, **Cancel**, click outside | closes the project list, focus back on **Add a project…** |
+
 ## Board — cards
 
 | Key / mouse | Does |

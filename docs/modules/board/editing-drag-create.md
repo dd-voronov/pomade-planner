@@ -8,12 +8,12 @@ kind: reference
 # Editing — drag, the card popover, triage, create
 
 **Module:** `board` · **UI:** the Board tab: dragging cards, the card popover, the triage picker,
-the **+** create form, the reporter setting · **Code:** `src/board/Board.tsx`, `src/board/dnd.ts`, `src/board/Card.tsx`,
+the **+** create form; the settings page's reporter field · **Code:** `src/board/Board.tsx`, `src/board/dnd.ts`, `src/board/Card.tsx`,
 `src/board/Column.tsx`, `src/board/CardPopover.tsx`, `src/board/TriagePicker.tsx`,
-`src/board/CreateForm.tsx`, `src/board/ParentList.tsx`, `src/board/PrioritySelect.tsx`,
+`src/board/CreateForm.tsx`, `src/board/ParentList.tsx`, `src/board/PickList.tsx`, `src/board/PrioritySelect.tsx`,
 `src/board/write.ts`, `src/board/model/drop.ts`, `src/board/model/create.ts`,
-`src/board/model/parents.ts`, `src/board/BoardMenu.tsx`, `src/board/ReporterForm.tsx`, `src/core/settings-file.ts`, `src/core/Popover.tsx` · **e2e:** `board-fake.spec.ts`,
-`board-manage-fake.spec.ts`, `pomade-board.spec.ts`, `pomade-board-manage.spec.ts` · **Unit:**
+`src/board/model/parents.ts`, `src/board/BoardMenu.tsx`, `src/board/BoardSettingsPage.tsx`, `src/core/settings-file.ts`, `src/core/Popover.tsx` · **e2e:** `board-fake.spec.ts`,
+`board-manage-fake.spec.ts`, `board-settings-fake.spec.ts`, `pomade-board.spec.ts`, `pomade-board-manage.spec.ts` · **Unit:**
 `src/board/model/drop.test.ts`, `src/board/model/create.test.ts`, `src/board/model/parents.test.ts`,
 `src/board/write.test.ts` · **Contract:** `../Pomade/docs/HOST-API.md` §4 `files.setField` /
 `removeField` / `move` / `create` ("Conditional writes")
@@ -73,7 +73,7 @@ too, and focus stays where the user sent it.
 
 ## Parent list
 
-`ParentList`, `parents.ts`: a search field over a short list — "No …" first, then open candidates,
+`ParentList` (on `PickList`, the Board's filterable list), `parents.ts`: a search field over a short list — "No …" first, then open candidates,
 then closed ones (done, dropped, parked), each newest ID first. Typing filters by ID and title
 (every word must match). ↑ ↓ move, Page Up / Page Down jump to the first / last row. In the create
 form the highlighted row is the parent (typing picks the first match); in the popover and the triage
@@ -110,13 +110,12 @@ closes it, focus left where the user sent it.
 
 ## Reporter setting
 
-⋯ → **Reporter for new tickets…** opens `ReporterForm` under the ⋯, filled from the settings file
-as it is now: one field, the handle (`normalizeReporter`: trimmed, no spaces — "A handle without
-spaces, like d.voronov." otherwise, nothing written). **Save** or Enter writes `reporter` into
-`Apps/pomade-board/settings.json` (`saveSettingsFile`, every other key kept; the file is created
-when missing, a broken one is never overwritten and the form says why); an emptied field removes
-the key, so the default applies. Escape, **Cancel** or a click outside closes it and focus returns
-to the ⋯; the frame losing the focus closes it, focus left where the user sent it. It is
+The settings page ([[backlog-location]] "Settings page"), section **New tickets** → **Reporter**:
+one field, the handle, showing what the settings file holds now (`normalizeReporter`: trimmed, no
+spaces — "A handle without spaces, like d.voronov." otherwise, nothing written). Enter or leaving
+the field writes `reporter` into `Apps/pomade-board/settings.json` (`saveSyncedSettings`, every
+other key kept; the file is created when missing, a broken one is never overwritten and the field
+says why); an emptied field removes the key, so the default applies and the field shows it. It is
 workspace-wide, like `backlogPathPattern` ([[settings-and-state]]).
 
 ## Placement
