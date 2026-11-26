@@ -38,7 +38,7 @@ function typeAware(project) {
 }
 
 export default tseslint.config(
-  { ignores: [".claude/**", "dist/**", "test-results/**", "playwright-report/**", "**/*.d.ts"] },
+  { ignores: ["private/**", ".claude/**", "dist/**", "test-results/**", "playwright-report/**", "**/*.d.ts"] },
   tseslint.configs.base,
   { name: "pomade-planner/config", files: ["eslint.config.mjs"], rules: baseHygieneRules },
   {

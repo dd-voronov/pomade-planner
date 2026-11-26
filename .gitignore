@@ -7,3 +7,6 @@ coverage/
 .claude/worktrees/
 test-results/
 playwright-report/
+
+# the private repo, checked out beside the code
+/private/
