@@ -13,21 +13,59 @@ Unreadable strip · **Code:** `src/board/Board.tsx`, `src/board/Column.tsx`, `sr
 `src/board/model/order.ts`, `src/board/model/view-state.ts`, `src/board/board.css` · **e2e:**
 `board-fake.spec.ts`, `board-manage-fake.spec.ts`, `pomade-board.spec.ts` · **Unit:**
 `src/board/model/ticket.test.ts`, `src/board/model/areas.test.ts`, `src/board/model/order.test.ts`,
-`src/board/model/view-state.test.ts` · **Contract:** `../Pomade/docs/process/backlog.md` "One item = one
-file", "Statuses"
+`src/board/model/view-state.test.ts`
 
 ## What it does
 
-A board is a kanban view over a backlog folder in the Pomade family's Problem → Epic → Task
-convention, plus signals. It splits the tickets into three areas that never mix — Signals ·
+A board is a kanban view over a backlog folder kept in one convention — signals, and problems
+that lead to epics and tasks ("Convention" below). It splits the tickets into three areas that never mix — Signals ·
 Problems · Solutions — each with the columns its kinds can be in. The file is the truth: a ticket
 sits where its `status:` says, and one the Board can't place is shown, never dropped.
 
 ## Convention
 
-The Problem → Epic → Task backlog convention of `../Pomade/docs/process/backlog.md` ("One item =
-one file", "Statuses"), plus the minimal `signal` kind, with the same keys in the same order and no
-`type`:
+The Board reads a backlog kept as plain files: one ticket per Markdown file, its facts in the
+frontmatter. It knows four kinds of ticket. Together they describe one way of working — from what
+was noticed, to what hurts, to what is built:
+
+- **Signal** (`S-NNN`) — a raw observation: something seen, not yet analysed, with no solution
+  attached. It commits nobody to any work. A signal is `new` until someone triages it: links it to
+  the problem it is evidence for (`triaged`), or sets it aside (`dismissed`).
+- **Problem** (`P-NNN`) — a pain, an idea or an open question, stated from the user's side. It is
+  examined until a solution is designed, then the solution is built, and it is done when the
+  problem is confirmed solved.
+- **Epic** (`E-NNN`) — a piece of the solution that can be shipped and tried by itself. A problem
+  leads to one or more epics; an epic names its problem in `problem:`.
+- **Task** (`T-NNN`) — one unit of implementation. A task belongs to an epic (`epic:`) or stands
+  alone: a small fix needs neither an epic nor a problem.
+
+No level is obligatory: a problem can be solved without an epic, and a signal can stay without a
+problem.
+
+**Statuses.** A ticket's `status:` says where it is in its life:
+
+| Kind | Flow | Set aside |
+|---|---|---|
+| signal | `new` → `triaged` | `dismissed` |
+| problem | `backlog` → `grooming` → `planned` → `delivering` → `review` → `reviewed` → `done` | `dropped`, `parked` |
+| epic | `planned` → `in-progress` → `review` → `reviewed` → `done` | `dropped`, `parked` |
+| task | (`backlog` →) `planned` → `in-progress` → `review` → `reviewed` → `done` | `dropped` |
+
+- **`grooming`**, **`planned`**, **`delivering`** (a problem): being examined; its solution is
+  designed and its epics exist; they are being built.
+- **`backlog`** (a task): a task that stands alone and waits to be picked up. A task under an epic
+  starts at `planned`.
+- **`review`**: the work is delivered and waits for the person who reviews it. These tickets, and
+  the signals in `new`, are what [[needs-you]] lists.
+- **`reviewed`**: the reviewer is finished and hands the ticket back to whoever does the work — to
+  close it, or to go on with it.
+- **`dropped`**: will not be done. **`parked`**: understood and deliberately put off.
+- Epics and tasks that reach `done` move into the backlog folder's `done/` sub-folder
+  ([[editing-drag-create]] "Done moves the file"); problems and signals stay where they are.
+
+**The file.** Every key the Board reads and writes is in the user guide's
+[files-and-format](../../user-guide/files-and-format.md#tickets). A signal has the same keys in the
+same order as the other kinds, without `type`:
 
 ```yaml
 ---

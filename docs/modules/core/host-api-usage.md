@@ -22,7 +22,7 @@ Each app uses only the Host API (`pomade-kit` SDK) and `pomade-kit`'s pure logic
 `frontmatter-write` (through the Host API), `schedule`, `dates` / `date-phrases`, `frontmatter`
 reads, `tokens.css`, and `pomade-kit/node` for the command. Each of the two apps is an ordinary app
 to Pomade — its own manifest, install, dev link, new-tab menu row and frames — and the needs below
-are met per app. A new need goes to `../Pomade/docs/PLATFORM-INTAKE.md`.
+are met per app.
 
 ## Needs and where they are met
 

@@ -7,8 +7,7 @@ kind: reference
 
 # pomade-planner — modules
 
-A module is a real area of the apps with a home in the code. Tickets name one in `module:`
-(`../Pomade/docs/process/backlog.md`). Each module folder here holds one doc per feature area: what it
+A module is a real area of the apps with a home in the code. Tickets name one in `module:`. Each module folder here holds one doc per feature area: what it
 does and why, and how it is built — code paths, data flow, key functions, state, edge cases,
 invariants, tests — each opening with a header line of its module, UI, code, e2e specs, unit tests
 and Host API contract. The cross-cutting shape is in [DESIGN](../DESIGN.md); how to *use* each
